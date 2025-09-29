@@ -24,7 +24,7 @@ const AdminCourseManager = () => {
     try {
       const response = await axiosInstance.get('/academic/courses');
       // Ensure we're working with an array
-      if (Array.isArray(response.data)) {
+      if (Array.isArray(response.data)){
         setCourses(response.data);
       } else {
         console.error('Unexpected response format for courses:', response.data);
@@ -43,14 +43,14 @@ const AdminCourseManager = () => {
   const fetchLecturers = async () => {
     try {
       // Fixed the endpoint path from /lecturers to /admin/lecturers
-      const response = await axiosInstance.get('/admin/lecturers');
+      const response =await axiosInstance.get('/admin/lecturers');
       // Ensure we're working with an array
       if (Array.isArray(response.data)) {
         setLecturers(response.data);
       } else {
         console.error('Unexpected response format for lecturers:', response.data);
         setLecturers([]);
-        setError('Unexpected data format received for lecturers');
+        setError('Unexpecteddata format received for lecturers');
       }
     } catch (error) {
       console.error('Failed to fetch lecturers:', error);
@@ -59,7 +59,7 @@ const AdminCourseManager = () => {
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange =(e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -72,7 +72,7 @@ const AdminCourseManager = () => {
     try {
       if (editingCourse) {
         // Update existing course
-        await axiosInstance.put(`/academic/courses/${formData.courseId}`, formData);
+       await axiosInstance.put(`/academic/courses/${formData.courseId}`, formData);
       } else {
         // Create new course
         await axiosInstance.post('/academic/courses', formData);
@@ -82,7 +82,7 @@ const AdminCourseManager = () => {
       setFormData({
         courseId: '',
         courseName: '',
-        creditScore: '',
+        creditScore:'',
         lecturerId: ''
       });
       setEditingCourse(null);
@@ -92,7 +92,7 @@ const AdminCourseManager = () => {
       console.error('Failed to save course:', error);
       setError('Failed to save course: ' + (error.response?.data?.message || error.message));
     }
-  };
+ };
 
   const handleEdit = (course) => {
     setFormData({
@@ -102,7 +102,7 @@ const AdminCourseManager = () => {
       // Fixed accessing lecturerId from the correct path
       lecturerId: course.lecturer?.lecturerId || ''
     });
-    setEditingCourse(course);
+setEditingCourse(course);
     setShowForm(true);
   };
 
@@ -121,7 +121,7 @@ const AdminCourseManager = () => {
 
   const handleCancel = () => {
     setFormData({
-      courseId: '',
+      courseId:'',
       courseName: '',
       creditScore: '',
       lecturerId: ''
@@ -133,7 +133,7 @@ const AdminCourseManager = () => {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto p-6">
-        <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="bg-white rounded-lgshadow-lg p-6">
           <h1 className="text-3xl font-bold text-gray-800 mb-6">Course Management</h1>
           <p>Loading...</p>
         </div>
@@ -147,7 +147,7 @@ const AdminCourseManager = () => {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Course Management</h1>
           <button
-            onClick={() => setShowForm(!showForm)}
+onClick={() => setShowForm(!showForm)}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             {showForm ? 'Cancel' : 'Add New'}
@@ -155,14 +155,14 @@ const AdminCourseManager = () => {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+         <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
             {error}
           </div>
         )}
 
         {showForm && (
           <form onSubmit={handleSubmit} className="mb-8 p-4 border rounded-lg bg-gray-50">
-            <h2 className="text-xl font-bold mb-4">
+           <h2 className="text-xl font-bold mb-4">
               {editingCourse ? 'Edit Course' : 'Add New Course'}
             </h2>
             
@@ -177,7 +177,7 @@ const AdminCourseManager = () => {
                   className="w-full p-2 border rounded"
                   required
                   disabled={editingCourse}
-                />
+/>
               </div>
               
               <div>
@@ -187,7 +187,7 @@ const AdminCourseManager = () => {
                   name="courseName"
                   value={formData.courseName}
                   onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
+                  className="w-fullp-2 border rounded"
                   required
                 />
               </div>
@@ -227,14 +227,14 @@ const AdminCourseManager = () => {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                className="px-4py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
+             >
                 {editingCourse ? 'Update' : 'Create'}
               </button>
             </div>
@@ -242,40 +242,53 @@ const AdminCourseManager = () => {
         )}
 
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="py-3 px-4 border-b text-left">Course ID</th>
-                <th className="py-3 px-4 border-b text-left">Course Name</th>
-                <th className="py-3 px-4 border-b text-left">Credit Score</th>
-                <th className="py-3 px-4 border-b text-left">Lecturer</th>
-                <th className="py-3 px-4 border-b text-left">Actions</th>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Course ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Course Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Credit Score
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Lecturer
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white divide-y divide-gray-200">
               {Array.isArray(courses) && courses.map((course) => (
-                <tr key={course.courseId} className="hover:bg-gray-50">
-                  <td className="py-3 px-4 border-b">{course.courseId}</td>
-                  <td className="py-3 px-4 border-b">{course.courseName}</td>
-                  <td className="py-3 px-4 border-b">{course.creditScore}</td>
-                  <td className="py-3 px-4 border-b">
-                    {course.lecturer ? course.lecturer.name : 'N/A'}
+               <tr key={course.courseId}>
+<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {course.courseId}
                   </td>
-                  <td className="py-3 px-4 border-b">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEdit(course)}
-                        className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(course.courseId)}
-                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {course.courseName}
+                 </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {course.creditScore}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {course.lecturer? course.lecturer.name : 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => handleEdit(course)}
+                      className="text-indigo-600 hover:text-indigo-900 mr-3"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(course.courseId)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}

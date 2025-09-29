@@ -46,7 +46,7 @@ const AdminDepartmentManager = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e)=> {
     e.preventDefault();
     try {
       if (editingDepartment) {
@@ -57,7 +57,7 @@ const AdminDepartmentManager = () => {
         await axiosInstance.post('/academic/departments', formData);
       }
       
-      // Reset form and refresh data
+// Reset form and refresh data
       setFormData({
         departmentId: '',
         departmentName: '',
@@ -95,9 +95,9 @@ const AdminDepartmentManager = () => {
       console.error('Failed to delete department:', error);
       setError('Failed to delete department: ' + (error.response?.data?.message || error.message));
     }
-  };
+ };
 
-  const handleCancel = () => {
+  const handleCancel= () => {
     setFormData({
       departmentId: '',
       departmentName: '',
@@ -119,7 +119,7 @@ const AdminDepartmentManager = () => {
     );
   }
 
-  return (
+return (
     <div className="max-w-7xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
@@ -130,7 +130,7 @@ const AdminDepartmentManager = () => {
           >
             {showForm ? 'Cancel' : 'Add New'}
           </button>
-        </div>
+</div>
 
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
@@ -139,7 +139,7 @@ const AdminDepartmentManager = () => {
         )}
 
         {showForm && (
-          <form onSubmit={handleSubmit} className="mb-8 p-4 border rounded-lg bg-gray-50">
+          <form onSubmit={handleSubmit} className="mb-8 p-4border rounded-lg bg-gray-50">
             <h2 className="text-xl font-bold mb-4">
               {editingDepartment ? 'Edit Department' : 'Add New Department'}
             </h2>
@@ -164,7 +164,7 @@ const AdminDepartmentManager = () => {
                   type="text"
                   name="departmentName"
                   value={formData.departmentName}
-                  onChange={handleInputChange}
+                 onChange={handleInputChange}
                   className="w-full p-2 border rounded"
                   required
                 />
@@ -196,7 +196,7 @@ const AdminDepartmentManager = () => {
             <div className="flex justify-end space-x-2">
               <button
                 type="button"
-                onClick={handleCancel}
+               onClick={handleCancel}
                 className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
               >
                 Cancel
@@ -212,38 +212,53 @@ const AdminDepartmentManager = () => {
         )}
 
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="py-3 px-4 border-b text-left">Department ID</th>
-                <th className="py-3 px-4 border-b text-left">Department Name</th>
-                <th className="py-3 px-4 border-b text-left">Head of Department</th>
-                <th className="py-3 px-4 border-b text-left">Email</th>
-                <th className="py-3 px-4 border-b text-left">Actions</th>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Department ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Department Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Head of Department
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white divide-y divide-gray-200">
               {Array.isArray(departments) && departments.map((department) => (
-                <tr key={department.departmentId} className="hover:bg-gray-50">
-                  <td className="py-3 px-4 border-b">{department.departmentId}</td>
-                  <td className="py-3 px-4 border-b">{department.departmentName}</td>
-                  <td className="py-3 px-4 border-b">{department.headOfDepartment || 'N/A'}</td>
-                  <td className="py-3 px-4 border-b">{department.email || 'N/A'}</td>
-                  <td className="py-3 px-4 border-b">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEdit(department)}
-                        className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(department.departmentId)}
-                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                      >
-                        Delete
-                      </button>
-                    </div>
+               <tr key={department.departmentId}>
+<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {department.departmentId}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {department.departmentName}
+                 </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {department.headOfDepartment || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                   {department.email|| 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => handleEdit(department)}
+                      className="text-indigo-600 hover:text-indigo-900 mr-3"
+                    >
+Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(department.departmentId)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -255,7 +270,7 @@ const AdminDepartmentManager = () => {
               <p className="text-gray-500 text-lg">No departments found</p>
             </div>
           )}
-        </div>
+</div>
       </div>
     </div>
   );

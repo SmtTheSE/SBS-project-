@@ -5,7 +5,7 @@ const AdminSemesterManager = () => {
   const [semesters, setSemesters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showForm, setShowForm] = useState(false);
+ const[showForm, setShowForm] = useState(false);
   const [editingSemester, setEditingSemester] = useState(null);
   const [formData, setFormData] = useState({
     semesterId: '',
@@ -15,7 +15,7 @@ const AdminSemesterManager = () => {
   });
 
   useEffect(() => {
-    fetchSemesters();
+   fetchSemesters();
   }, []);
 
   const fetchSemesters = async () => {
@@ -25,14 +25,14 @@ const AdminSemesterManager = () => {
       if (Array.isArray(response.data)) {
         setSemesters(response.data);
       } else {
-        console.error('Unexpected response format for semesters:', response.data);
+       console.error('Unexpected response format for semesters:', response.data);
         setSemesters([]);
         setError('Unexpected data format received for semesters');
       }
       setLoading(false);
     } catch (error) {
       console.error('Failed to fetch semesters:', error);
-      setError('Failed to fetch semesters: ' + (error.response?.data?.message || error.message));
+      setError('Failed to fetch semesters: ' +(error.response?.data?.message || error.message));
       setSemesters([]);
       setLoading(false);
     }
@@ -46,7 +46,7 @@ const AdminSemesterManager = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit =async (e) => {
     e.preventDefault();
     try {
       const semesterData = {
@@ -66,7 +66,7 @@ const AdminSemesterManager = () => {
       setFormData({
         semesterId: '',
         year: '',
-        intakeMonth: '',
+       intakeMonth: '',
         term: ''
       });
       setEditingSemester(null);
@@ -87,7 +87,7 @@ const AdminSemesterManager = () => {
     });
     setEditingSemester(semester);
     setShowForm(true);
-  };
+};
 
   const handleDelete = async (semesterId) => {
     try {
@@ -96,7 +96,7 @@ const AdminSemesterManager = () => {
 
       await axiosInstance.delete(`/academic/semesters/${semesterId}`);
       fetchSemesters();
-    } catch (error) {
+   }catch(error) {
       console.error('Failed to delete semester:', error);
       setError('Failed to delete semester: ' + (error.response?.data?.message || error.message));
     }
@@ -106,7 +106,7 @@ const AdminSemesterManager = () => {
     setFormData({
       semesterId: '',
       year: '',
-      intakeMonth: '',
+      intakeMonth:'',
       term: ''
     });
     setEditingSemester(null);
@@ -126,32 +126,32 @@ const AdminSemesterManager = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
+<div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Semester Management</h1>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             {showForm ? 'Cancel' : 'Add New'}
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+          <div className="mb-4 p-3bg-red-100 text-red-700 rounded">
             {error}
           </div>
         )}
 
         {showForm && (
           <form onSubmit={handleSubmit} className="mb-8 p-4 border rounded-lg bg-gray-50">
-            <h2 className="text-xl font-bold mb-4">
+            <h2 className="text-xl font-boldmb-4">
               {editingSemester ? 'Edit Semester' : 'Add New Semester'}
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-gray-700 mb-2">Semester ID</label>
+                <label className="block text-gray-700mb-2">Semester ID</label>
                 <input
                   type="text"
                   name="semesterId"
@@ -161,9 +161,8 @@ const AdminSemesterManager = () => {
                   required
                   disabled={editingSemester}
                 />
-              </div>
-              
-              <div>
+</div>
+<div>
                 <label className="block text-gray-700 mb-2">Year</label>
                 <input
                   type="date"
@@ -172,7 +171,7 @@ const AdminSemesterManager = () => {
                   onChange={handleInputChange}
                   className="w-full p-2 border rounded"
                   required
-                />
+/>
               </div>
               
               <div>
@@ -194,7 +193,7 @@ const AdminSemesterManager = () => {
                   name="term"
                   value={formData.term}
                   onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
+                 className="w-full p-2 border rounded"
                   required
                 />
               </div>
@@ -204,7 +203,7 @@ const AdminSemesterManager = () => {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                className="px-4 py-2bg-gray-500 text-white rounded hover:bg-gray-600"
               >
                 Cancel
               </button>
@@ -212,46 +211,59 @@ const AdminSemesterManager = () => {
                 type="submit"
                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               >
-                {editingSemester ? 'Update' : 'Create'}
+                {editingSemester ?'Update' : 'Create'}
               </button>
             </div>
           </form>
         )}
 
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="py-3 px-4 border-b text-left">Semester ID</th>
-                <th className="py-3 px-4 border-b text-left">Year</th>
-                <th className="py-3 px-4 border-b text-left">Intake Month</th>
-                <th className="py-3 px-4 border-b text-left">Term</th>
-                <th className="py-3 px-4 border-b text-left">Actions</th>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Semester ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+Year</th>
+<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Intake Month
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500uppercase tracking-wider">
+Term</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                 Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white divide-y divide-gray-200">
               {Array.isArray(semesters) && semesters.map((semester) => (
-                <tr key={semester.semesterId} className="hover:bg-gray-50">
-                  <td className="py-3 px-4 border-b">{semester.semesterId}</td>
-                  <td className="py-3 px-4 border-b">{semester.year}</td>
-                  <td className="py-3 px-4 border-b">{semester.intakeMonth}</td>
-                  <td className="py-3 px-4 border-b">{semester.term}</td>
-                  <td className="py-3 px-4 border-b">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEdit(semester)}
-                        className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(semester.semesterId)}
-                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                      >
-                        Delete
-                      </button>
-                    </div>
+               <tr key={semester.semesterId}>
+<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {semester.semesterId}
                   </td>
+                  <td className="px-6py-4 whitespace-nowrap text-sm text-gray-500">
+                    {semester.year}
+                 </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {semester.intakeMonth}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {semester.term}
+</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => handleEdit(semester)}
+                      className="text-indigo-600 hover:text-indigo-900 mr-3"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(semester.semesterId)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Delete
+                    </button>
+                </td>
                 </tr>
               ))}
             </tbody>
