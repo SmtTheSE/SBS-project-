@@ -50,6 +50,7 @@ public class TuitionPaymentService {
     // Conversion methods
     private TuitionPaymentDto toDto(TuitionPayment entity) {
         TuitionPaymentDto dto = new TuitionPaymentDto();
+        dto.setId(entity.getId());
         // Convert Student/Scholarship entities to their IDs
         if (entity.getStudent() != null) {
             dto.setStudentId(entity.getStudent().getStudentId());
@@ -65,6 +66,13 @@ public class TuitionPaymentService {
 
     private TuitionPayment toEntity(TuitionPaymentDto dto) {
         TuitionPayment entity = new TuitionPayment();
+        
+        // Set ID for updates
+        if (dto.getId() != null) {
+            entity = tuitionPaymentRepository.findById(dto.getId()).orElse(new TuitionPayment());
+            entity.setId(dto.getId());
+        }
+        
         if (dto.getStudentId() != null) {
             Student student = studentRepository.findById(dto.getStudentId())
                     .orElseThrow(() -> new RuntimeException("Student not found: " + dto.getStudentId()));

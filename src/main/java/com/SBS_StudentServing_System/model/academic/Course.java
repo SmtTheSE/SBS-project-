@@ -1,7 +1,6 @@
 package com.SBS_StudentServing_System.model.academic;
 
 import com.SBS_StudentServing_System.model.lecturer.Lecturer;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,6 +26,5 @@ public class Course {
 
     @ManyToOne
     @JoinColumn(name = "lecturer_id", nullable = false)
-    @JsonIgnore
     private Lecturer lecturer;
 }

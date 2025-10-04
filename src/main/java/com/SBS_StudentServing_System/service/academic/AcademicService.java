@@ -2,9 +2,12 @@ package
         com.SBS_StudentServing_System.service.academic;
 
 import com.SBS_StudentServing_System.dto.academic.*;
+import com.SBS_StudentServing_System.mapping.CourseMapper;
 import com.SBS_StudentServing_System.mapping.StudyPlanMapper;
 import com.SBS_StudentServing_System.model.academic.*;
+import com.SBS_StudentServing_System.model.lecturer.Lecturer;
 import com.SBS_StudentServing_System.repository.academic.*;
+import com.SBS_StudentServing_System.repository.lecturer.LecturerRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,11 @@ public class AcademicService {
     @Autowired public CourseRepository courseRepo;
     @Autowired public SemesterRepository semesterRepo;
     @Autowired public DepartmentRepository departmentRepo;
+    @Autowired public LecturerRepository lecturerRepo;
+    
+    public LecturerRepository getLecturerRepo() {
+        return lecturerRepo;
+    }
     @Autowired public TranscriptRequestRepository transcriptRequestRepo;
     @Autowired public StudentEnrollmentRepository studentEnrollmentRepo;
     @Autowired public AttendanceSummaryRepository attendanceSummaryRepo;
@@ -172,8 +180,10 @@ public class AcademicService {
     }
 
     // --- Course ---
-    public List<Course> getAllCourses() {
-        return courseRepo.findAll();
+    public List<CourseDto> getAllCourses() {
+        return courseRepo.findAll().stream()
+                .map(CourseMapper::toDto)
+                .toList();
     }
     public List<ClassTimelineDto> getClassTimelinesByStudentId(String studentId) {
         return classScheduleRepo.findClassTimelinesByStudentId(studentId);

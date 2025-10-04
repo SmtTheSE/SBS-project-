@@ -32,6 +32,7 @@ public class AdminTuitionPaymentController {
 
     @PutMapping("/{id}")
     public ResponseEntity<TuitionPaymentDto> update(@PathVariable Long id, @RequestBody TuitionPaymentDto dto) {
+        dto.setId(id);
         return ResponseEntity.ok(tuitionPaymentService.save(dto));
     }
 

@@ -1,7 +1,9 @@
 package com.SBS_StudentServing_System.controller;
 
 import com.SBS_StudentServing_System.dto.academic.*;
+import com.SBS_StudentServing_System.mapping.CourseMapper;
 import com.SBS_StudentServing_System.model.academic.*;
+import com.SBS_StudentServing_System.model.lecturer.Lecturer;
 import com.SBS_StudentServing_System.service.academic.AcademicService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -154,7 +156,7 @@ return academicService.getGrade(id)
 
    // --- Course ---
     @GetMapping("/courses")
-    public List<Course> getAllCourses() {
+    public List<CourseDto> getAllCourses() {
         return academicService.getAllCourses();
     }
     @GetMapping("/course-results/total-credits/{studentId}")
@@ -170,8 +172,19 @@ return academicService.getGrade(id)
                 .orElse(ResponseEntity.notFound().build());
     }
     @PostMapping("/courses")
-    public Course saveCourse(@RequestBody Course entity) {
-        return academicService.saveCourse(entity);
+    public ResponseEntity<Course> saveCourse(@RequestBody CourseDto dto) {
+        // Find the lecturer by ID
+        Lecturer lecturer = null;
+        if (dto.getLecturerId() != null && !dto.getLecturerId().isEmpty()) {
+            lecturer = academicService.getLecturerRepo().findById(dto.getLecturerId()).orElse(null);
+        }
+        
+        // Convert DTO to entity
+        Course course = CourseMapper.toEntity(dto, lecturer);
+        
+        // Save and return the course
+        Course savedCourse = academicService.saveCourse(course);
+        return ResponseEntity.ok(savedCourse);
     }
     @DeleteMapping("/courses/{id}")
     public ResponseEntity<Void> deleteCourse(@PathVariable String id) {
@@ -220,6 +233,14 @@ return academicService.getGrade(id)
     public Department saveDepartment(@RequestBody Department entity) {
         return academicService.saveDepartment(entity);
     }
+    
+    @PutMapping("/departments/{id}")
+    public ResponseEntity<Department> updateDepartment(@PathVariable String id, @RequestBody Department entity) {
+        entity.setDepartmentId(id);
+        Department updatedDepartment = academicService.saveDepartment(entity);
+        return ResponseEntity.ok(updatedDepartment);
+    }
+    
     @DeleteMapping("/departments/{id}")
     public ResponseEntity<Void> deleteDepartment(@PathVariable String id) {
         academicService.deleteDepartment(id);

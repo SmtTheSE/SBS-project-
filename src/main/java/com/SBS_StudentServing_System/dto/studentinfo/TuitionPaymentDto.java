@@ -6,6 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TuitionPaymentDto {
+    private Long id;
     private String studentId;
     private String scholarshipId; // can be null
     private int paymentStatus;
