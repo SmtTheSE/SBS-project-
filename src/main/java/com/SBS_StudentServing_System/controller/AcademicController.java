@@ -19,7 +19,8 @@ public class AcademicController {
     private AcademicService academicService;
 
     // --- StudentAcademicBackground ---
-    @GetMapping("/student-academic-backgrounds")
+    /*
+@GetMapping("/student-academic-backgrounds")
     public List<StudentAcademicBackground> getAllStudentAcademicBackgrounds() {
         return academicService.getAllStudentAcademicBackgrounds();
     }
@@ -38,8 +39,9 @@ public class AcademicController {
         academicService.deleteStudentAcademicBackground(id);
         return ResponseEntity.noContent().build();
     }
-
-    // --- StudentEnglishPlacementTest ---
+*/
+    
+    // ---StudentEnglishPlacementTest ---
     @GetMapping("/student-english-placement-tests")
     public List<StudentEnglishPlacementTest> getAllStudentEnglishPlacementTests() {
         return academicService.getAllStudentEnglishPlacementTests();
@@ -115,7 +117,7 @@ public class AcademicController {
     }
     @GetMapping("/grades/{id}")
     public ResponseEntity<Grade> getGrade(@PathVariable String id) {
-        return academicService.getGrade(id)
+return academicService.getGrade(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -124,7 +126,7 @@ public class AcademicController {
         return academicService.saveGrade(entity);
     }
     @DeleteMapping("/grades/{id}")
-    public ResponseEntity<Void> deleteGrade(@PathVariable String id) {
+     public ResponseEntity<Void> deleteGrade(@PathVariable String id) {
         academicService.deleteGrade(id);
         return ResponseEntity.noContent().build();
     }
@@ -145,12 +147,12 @@ public class AcademicController {
         return academicService.saveClassSchedule(entity);
     }
     @DeleteMapping("/class-schedules/{id}")
-    public ResponseEntity<Void> deleteClassSchedule(@PathVariable String id) {
+     public ResponseEntity<Void> deleteClassSchedule(@PathVariable String id) {
         academicService.deleteClassSchedule(id);
         return ResponseEntity.noContent().build();
     }
 
-    // --- Course ---
+   // --- Course ---
     @GetMapping("/courses")
     public List<Course> getAllCourses() {
         return academicService.getAllCourses();
@@ -211,7 +213,7 @@ public class AcademicController {
     @GetMapping("/departments/{id}")
     public ResponseEntity<Department> getDepartment(@PathVariable String id) {
         return academicService.getDepartment(id)
-                .map(ResponseEntity::ok)
+               .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
     @PostMapping("/departments")
@@ -266,7 +268,7 @@ public class AcademicController {
         return ResponseEntity.noContent().build();
     }
 
-    // --- AttendanceSummary ---
+    // --- AttendanceSummary---
     @GetMapping("/attendance-summaries")
     public List<AttendanceSummary> getAllAttendanceSummaries() {
         return academicService.getAllAttendanceSummaries();
@@ -315,7 +317,7 @@ public class AcademicController {
 
 
 
-    // --- StudentProgressSummary ---
+    // ---StudentProgressSummary ---
     @GetMapping("/student-progress-summaries")
     public List<StudentProgressSummary> getAllStudentProgressSummaries() {
         return academicService.getAllStudentProgressSummaries();
@@ -357,7 +359,7 @@ public class AcademicController {
         return ResponseEntity.noContent().build();
     }
 
-    // --- LecturerCourse ---
+    // ---LecturerCourse ---
     @GetMapping("/lecturer-courses")
     public List<LecturerCourse> getAllLecturerCourses() {
         return academicService.getAllLecturerCourses();
@@ -382,7 +384,7 @@ public class AcademicController {
 
 
     // --- DailyAttendance ---
-    @GetMapping("/daily-attendance/student/{studentId}")
+@GetMapping("/daily-attendance/student/{studentId}")
     public List<DailyAttendanceDto> getDailyAttendanceByStudentId(@PathVariable String studentId) {
         return academicService.getDailyAttendanceByStudentId(studentId);
     }

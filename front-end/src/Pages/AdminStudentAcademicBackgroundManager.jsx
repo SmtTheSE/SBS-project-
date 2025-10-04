@@ -24,7 +24,7 @@ const AdminStudentAcademicBackgroundManager = () => {
 
   const fetchStudentAcademicBackgrounds = async () => {
     try {
-      const response = await axiosInstance.get('/academic/student-academic-backgrounds');
+      const response = await axiosInstance.get('/admin/academic/student-academic-backgrounds');
       setBackgrounds(response.data);
       setLoading(false);
     } catch (error) {
@@ -47,10 +47,31 @@ const AdminStudentAcademicBackgroundManager = () => {
     try {
       if (editingBackground) {
         // Update existing record
-        await axiosInstance.put(`/academic/student-academic-backgrounds/${formData.backgroundId}`, formData);
+        console.log('Updating with data:', formData);
+        console.log('Background ID for update:', formData.backgroundId);
+        // Trim all form data to remove any whitespace characters
+        const trimmedFormData = {
+          backgroundId: formData.backgroundId?.trim(),
+          studentId: formData.studentId?.trim(),
+          highestQualification: formData.highestQualification?.trim(),
+          institutionName: formData.institutionName?.trim(),
+          englishQualification: formData.englishQualification?.trim(),
+          englishScore: formData.englishScore,
+          requiredForPlacementTest: formData.requiredForPlacementTest,
+          documentUrl: formData.documentUrl?.trim()
+        };
+        console.log('Trimmed background ID:', trimmedFormData.backgroundId);
+        console.log('Trimmed background ID length:', trimmedFormData.backgroundId.length);
+        console.log('Sending PUT request to:', `/admin/academic/student-academic-backgrounds/${trimmedFormData.backgroundId}`);
+        
+        // Log the actual request being sent
+        console.log('Request payload:', trimmedFormData);
+        
+        const response = await axiosInstance.put(`/admin/academic/student-academic-backgrounds/${trimmedFormData.backgroundId}`, trimmedFormData);
+        console.log('Update response:', response);
       } else {
         // Create new record
-        await axiosInstance.post('/academic/student-academic-backgrounds', formData);
+        await axiosInstance.post('/admin/academic/student-academic-backgrounds', formData);
       }
       
       // Reset form and refresh data
@@ -69,20 +90,21 @@ const AdminStudentAcademicBackgroundManager = () => {
       fetchStudentAcademicBackgrounds();
     } catch (error) {
       console.error('Failed to save student academic background:', error);
-      setError('Failed to save student academic background');
+      console.error('Request data:', formData);
+      setError('Failed to save student academic background: ' + (error.response?.data?.message || error.message));
     }
   };
 
   const handleEdit = (background) => {
     setFormData({
-      backgroundId: background.backgroundId,
-      studentId: background.studentId || '',
-      highestQualification: background.highestQualification,
-      institutionName: background.institutionName,
-      englishQualification: background.englishQualification || '',
+      backgroundId: background.backgroundId?.trim(),
+      studentId: background.studentId?.trim() || '',
+      highestQualification: background.highestQualification?.trim(),
+      institutionName: background.institutionName?.trim(),
+      englishQualification: background.englishQualification?.trim() || '',
       englishScore: background.englishScore || '',
       requiredForPlacementTest: background.requiredForPlacementTest,
-      documentUrl: background.documentUrl || ''
+      documentUrl: background.documentUrl?.trim() || ''
     });
     setEditingBackground(background);
     setShowForm(true);
@@ -93,11 +115,11 @@ const AdminStudentAcademicBackgroundManager = () => {
       const confirmDelete = window.confirm('Are you sure you want to delete this student academic background?');
       if (!confirmDelete) return;
 
-      await axiosInstance.delete(`/academic/student-academic-backgrounds/${backgroundId}`);
+      await axiosInstance.delete(`/admin/academic/student-academic-backgrounds/${backgroundId}`);
       fetchStudentAcademicBackgrounds();
     } catch (error) {
       console.error('Failed to delete student academic background:', error);
-      setError('Failed to delete student academic background');
+      setError('Failed to delete student academic background: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -162,7 +184,7 @@ const AdminStudentAcademicBackgroundManager = () => {
                   onChange={handleInputChange}
                   className="w-full p-2 border rounded"
                   required
-                  disabled={editingBackground}
+                  disabled={!!editingBackground}
                 />
               </div>
               

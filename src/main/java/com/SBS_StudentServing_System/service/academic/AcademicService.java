@@ -1,6 +1,8 @@
-package com.SBS_StudentServing_System.service.academic;
+package
+        com.SBS_StudentServing_System.service.academic;
 
 import com.SBS_StudentServing_System.dto.academic.*;
+import com.SBS_StudentServing_System.mapping.StudyPlanMapper;
 import com.SBS_StudentServing_System.model.academic.*;
 import com.SBS_StudentServing_System.repository.academic.*;
 import lombok.AllArgsConstructor;
@@ -68,14 +70,48 @@ public class AcademicService {
     public List<StudyPlan> getAllStudyPlans() {
         return studyPlanRepo.findAll();
     }
+    
+    public List<StudyPlanDto> getAllStudyPlansWithDto() {
+        List<StudyPlan> studyPlans = studyPlanRepo.findAll();
+        return studyPlans.stream().map(StudyPlanMapper::toDto).toList();
+    }
+    
+    public StudyPlanDto getStudyPlanById(String id) {
+        Optional<StudyPlan> studyPlan = studyPlanRepo.findById(id);
+        return studyPlan.map(StudyPlanMapper::toDto).orElse(null);
+    }
+    
+    public StudyPlanDto createStudyPlan(StudyPlanDto studyPlanDto) {
+        StudyPlan studyPlan = StudyPlanMapper.toEntity(studyPlanDto);
+        StudyPlan savedStudyPlan = studyPlanRepo.save(studyPlan);
+        return StudyPlanMapper.toDto(savedStudyPlan);
+    }
+    
+    public StudyPlanDto updateStudyPlan(String id, StudyPlanDto studyPlanDto) {
+        Optional<StudyPlan> existingStudyPlan = studyPlanRepo.findById(id);
+        if (existingStudyPlan.isPresent()) {
+            StudyPlan studyPlan = StudyPlanMapper.toEntity(studyPlanDto);
+            studyPlan.setStudyPlanId(id); // Ensure the ID remains the same for updates
+            StudyPlan updatedStudyPlan = studyPlanRepo.save(studyPlan);
+            return StudyPlanMapper.toDto(updatedStudyPlan);
+        }
+        return null;
+    }
+    
     public Optional<StudyPlan> getStudyPlan(String id) {
         return studyPlanRepo.findById(id);
     }
+    
     public StudyPlan saveStudyPlan(StudyPlan entity) {
         return studyPlanRepo.save(entity);
     }
-    public void deleteStudyPlan(String id) {
-        studyPlanRepo.deleteById(id);
+    
+    public boolean deleteStudyPlan(String id) {
+        if (studyPlanRepo.existsById(id)) {
+            studyPlanRepo.deleteById(id);
+            return true;
+        }
+        return false;
     }
 
     // --- StudyPlanCourse ---
