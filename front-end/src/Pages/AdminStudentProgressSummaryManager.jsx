@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
-import axios from "../api/axios";
+import axiosInstance from "../utils/axiosInstance";
 
 const AdminStudentProgressSummaryManager = () => {
   const [studentProgressSummaries, setStudentProgressSummaries] = useState([]);
   const [students, setStudents] = useState([]);
-  const [studyPlans, setStudyPlans] = useState([]);
   const [formData, setFormData] = useState({
     id: null,
     studentId: "",
@@ -15,6 +14,7 @@ const AdminStudentProgressSummaryManager = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -23,23 +23,22 @@ const AdminStudentProgressSummaryManager = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      setError(null);
       
       // Fetch all data in parallel
       const [
         studentProgressSummariesRes,
-        studentsRes,
-        studyPlansRes
+        studentsRes
       ] = await Promise.all([
-        axios.get("/admin/academic/student-progress-summaries"),
-        axios.get("/admin/students"),
-        axios.get("/admin/academic/study-plans")
+        axiosInstance.get("/admin/academic/student-progress-summaries"),
+        axiosInstance.get("/admin/students")
       ]);
 
       setStudentProgressSummaries(studentProgressSummariesRes.data);
       setStudents(studentsRes.data);
-      setStudyPlans(studyPlansRes.data);
     } catch (error) {
       console.error("Error fetching data:", error);
+      setError("Failed to fetch data: " + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -56,15 +55,27 @@ const AdminStudentProgressSummaryManager = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Validate that selected values exist
+      if (!formData.studentId) {
+        setError("Please select a student");
+        return;
+      }
+      
+      if (!formData.studyPlanId) {
+        setError("Please enter a study plan ID");
+        return;
+      }
+      
       if (isEditing) {
-        await axios.put(`/admin/academic/student-progress-summaries/${formData.id}`, formData);
+        await axiosInstance.put(`/admin/academic/student-progress-summaries/${formData.id}`, formData);
       } else {
-        await axios.post("/admin/academic/student-progress-summaries", formData);
+        await axiosInstance.post("/admin/academic/student-progress-summaries", formData);
       }
       resetForm();
       fetchData();
     } catch (error) {
       console.error("Error saving student progress summary:", error);
+      setError("Failed to save student progress summary: " + (error.response?.data?.message || error.message));
     }
   };
 
@@ -75,10 +86,11 @@ const AdminStudentProgressSummaryManager = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/admin/academic/student-progress-summaries/${id}`);
+      await axiosInstance.delete(`/admin/academic/student-progress-summaries/${id}`);
       fetchData();
     } catch (error) {
       console.error("Error deleting student progress summary:", error);
+      setError("Failed to delete student progress summary: " + (error.response?.data?.message || error.message));
     }
   };
 
@@ -107,6 +119,13 @@ const AdminStudentProgressSummaryManager = () => {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Student Progress Summary Management</h1>
       
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <strong className="font-bold">Error: </strong>
+          <span className="block sm:inline">{error}</span>
+        </div>
+      )}
+      
       {/* Form for creating/editing student progress summaries */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-semibold mb-4">
@@ -127,7 +146,7 @@ const AdminStudentProgressSummaryManager = () => {
               <option value="">Select Student</option>
               {students.map((student) => (
                 <option key={student.studentId} value={student.studentId}>
-                  {student.name} ({student.studentId})
+                  {student.firstName} {student.lastName} ({student.studentId})
                 </option>
               ))}
             </select>
@@ -135,22 +154,16 @@ const AdminStudentProgressSummaryManager = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Study Plan
+              Study Plan ID
             </label>
-            <select
+            <input
+              type="text"
               name="studyPlanId"
               value={formData.studyPlanId}
               onChange={handleInputChange}
               className="w-full p-2 border border-gray-300 rounded-md"
               required
-            >
-              <option value="">Select Study Plan</option>
-              {studyPlans.map((studyPlan) => (
-                <option key={studyPlan.studyPlanId} value={studyPlan.studyPlanId}>
-                  {studyPlan.studyPlanId}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           <div>
@@ -232,7 +245,7 @@ const AdminStudentProgressSummaryManager = () => {
                   Student
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Study Plan
+                  Study Plan ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Total Enrolled

@@ -186,6 +186,13 @@ name: "Course Results",
           link: "/admin/academic/lecturer-course-mapping",
           isCurrent: false,
         },
+        {
+          id: 14,
+          name: "Student Progress Summaries",
+          icon: faClipboardList,
+          link: "/admin/academic/student-progress-summaries",
+          isCurrent: false,
+        },
      ],
     },
  ]);

@@ -18,13 +18,12 @@ public class StudentProgressSummary {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "student_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "student_id", nullable = false, columnDefinition = "varchar(50)")
     private Student student;
 
-    @ManyToOne
-    @JoinColumn(name = "study_plan_id", nullable = false)
-    private StudyPlan studyPlan;
+    @Column(name = "study_plan_id", nullable = false, columnDefinition = "varchar(15)")
+    private String studyPlanId;
 
     @Column(name = "total_enrolled_course", nullable = false)
     private Integer totalEnrolledCourse = 0;

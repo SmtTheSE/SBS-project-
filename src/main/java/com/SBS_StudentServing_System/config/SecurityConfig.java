@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/academic/attendance-summaries/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/academic/daily-attendances/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/academic/course-results/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/academic/student-progress-summaries/**").hasRole("ADMIN")
                         .requestMatchers("/api/academic/grades/**").permitAll()
                         .requestMatchers("/api/visa-passports/student/**").hasRole("STUDENT")
                         .requestMatchers("/api/visa-passports/**").hasRole("ADMIN")
