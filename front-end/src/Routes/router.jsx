@@ -34,6 +34,7 @@ import AdminLecturerCourseManager from "../Pages/AdminLecturerCourseManager";
 import AdminTransferProgramManager from "../Pages/AdminTransferProgramManager";
 import AdminPartnerInstitutionManager from "../Pages/AdminPartnerInstitutionManager";
 import AdminStudentProgressSummaryManager from "../Pages/AdminStudentProgressSummaryManager";
+import AdminStudyPlanCourseManager from "../Pages/AdminStudyPlanCourseManager";
 
 const router = createBrowserRouter([
   {
@@ -168,6 +169,10 @@ const router = createBrowserRouter([
       {
         path: "academic/student-progress-summaries",
         element: <AdminStudentProgressSummaryManager />,
+      },
+      {
+        path: "academic/study-plan-courses",
+        element: <AdminStudyPlanCourseManager />,
       },
     ],
   },

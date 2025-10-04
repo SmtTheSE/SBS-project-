@@ -193,6 +193,13 @@ name: "Course Results",
           link: "/admin/academic/student-progress-summaries",
           isCurrent: false,
         },
+        {
+          id: 15,
+          name: "Study Plan Courses",
+          icon: faClipboardList,
+          link: "/admin/academic/study-plan-courses",
+          isCurrent: false,
+        },
      ],
     },
  ]);

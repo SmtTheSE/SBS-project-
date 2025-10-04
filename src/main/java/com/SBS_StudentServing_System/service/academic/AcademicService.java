@@ -161,10 +161,16 @@ public class AcademicService {
         return courses.stream().map(spc -> {
             StudyPlanCourseDto dto = new StudyPlanCourseDto();
             dto.setStudyPlanCourseId(spc.getStudyPlanCourseId());
-            dto.setStudyPlanId(spc.getStudyPlan().getStudyPlanId());
-            dto.setCourseId(spc.getCourse().getCourseId());
-            dto.setCourseName(spc.getCourse().getCourseName());
-            dto.setSemesterId(spc.getSemester().getSemesterId());
+            
+            // Fetch related entities by their IDs
+            StudyPlan studyPlan = studyPlanRepo.findById(spc.getStudyPlanId()).orElse(null);
+            Course course = courseRepo.findById(spc.getCourseId()).orElse(null);
+            Semester semester = semesterRepo.findById(spc.getSemesterId()).orElse(null);
+            
+            dto.setStudyPlanId(studyPlan != null ? studyPlan.getStudyPlanId() : spc.getStudyPlanId());
+            dto.setCourseId(course != null ? course.getCourseId() : spc.getCourseId());
+            dto.setCourseName(course != null ? course.getCourseName() : null);
+            dto.setSemesterId(semester != null ? semester.getSemesterId() : spc.getSemesterId());
             dto.setAssignmentDeadline(spc.getAssignmentDeadline());
             return dto;
         }).toList();
@@ -384,8 +390,15 @@ public class AcademicService {
             DailyAttendanceDto dto = new DailyAttendanceDto();
             dto.setStudentId(attendance.getStudent().getStudentId());
             dto.setClassScheduleId(attendance.getClassSchedule().getClassScheduleId());
-            dto.setCourseId(attendance.getClassSchedule().getStudyPlanCourse().getCourse().getCourseId());
-            dto.setCourseName(attendance.getClassSchedule().getStudyPlanCourse().getCourse().getCourseName());
+            
+            // Get the StudyPlanCourse from the ClassSchedule
+            StudyPlanCourse studyPlanCourse = attendance.getClassSchedule().getStudyPlanCourse();
+            
+            // Fetch the actual Course entity by courseId
+            Course course = courseRepo.findById(studyPlanCourse.getCourseId()).orElse(null);
+            
+            dto.setCourseId(course != null ? course.getCourseId() : studyPlanCourse.getCourseId());
+            dto.setCourseName(course != null ? course.getCourseName() : null);
             dto.setAttendanceDate(attendance.getAttendanceDate());
             dto.setStatus(attendance.getStatus());
             dto.setCheckInTime(attendance.getCheckInTime());

@@ -20,20 +20,14 @@ public class StudyPlanCourse {
     @Column(name = "study_plan_course_id", length = 15)
     private String studyPlanCourseId;
 
-    @ManyToOne
-    @JoinColumn(name = "study_plan_id", nullable = false)
-    @JsonIgnore
-    private StudyPlan studyPlan;
+    @Column(name = "study_plan_id", nullable = false, length = 20)
+    private String studyPlanId;
 
-    @ManyToOne
-    @JoinColumn(name = "course_id", nullable = false)
-    @JsonIgnore
-    private Course course;
+    @Column(name = "course_id", nullable = false, length = 20)
+    private String courseId;
 
-    @ManyToOne
-    @JoinColumn(name = "semester_id", nullable = false)
-    @JsonIgnore
-    private Semester semester;
+    @Column(name = "semester_id", nullable = false, length = 10)
+    private String semesterId;
 
     @Column(name = "assignment_deadline")
     private LocalDate assignmentDeadline;

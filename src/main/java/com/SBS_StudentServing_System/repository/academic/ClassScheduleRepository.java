@@ -28,10 +28,10 @@ public interface ClassScheduleRepository extends JpaRepository<ClassSchedule, St
     )
     FROM ClassSchedule cs
     JOIN cs.studyPlanCourse spc
-    JOIN spc.course c
-    JOIN LecturerCourse lc ON lc.studyPlanCourse = spc AND lc.classSchedule = cs
+    JOIN com.SBS_StudentServing_System.model.academic.Course c ON c.courseId = spc.courseId
+    JOIN LecturerCourse lc ON lc.studyPlanCourse.studyPlanCourseId = spc.studyPlanCourseId AND lc.classSchedule.classScheduleId = cs.classScheduleId
     JOIN lc.lecturer l
-    JOIN StudentEnrollment se ON se.studyPlanCourse = spc
+    JOIN StudentEnrollment se ON se.studyPlanCourse.studyPlanCourseId = spc.studyPlanCourseId
     WHERE se.student.studentId = :studentId
 """)
 
