@@ -6,8 +6,10 @@ import com.SBS_StudentServing_System.mapping.CourseMapper;
 import com.SBS_StudentServing_System.mapping.StudyPlanMapper;
 import com.SBS_StudentServing_System.model.academic.*;
 import com.SBS_StudentServing_System.model.lecturer.Lecturer;
+import com.SBS_StudentServing_System.model.student.Student;
 import com.SBS_StudentServing_System.repository.academic.*;
 import com.SBS_StudentServing_System.repository.lecturer.LecturerRepository;
+import com.SBS_StudentServing_System.repository.student.StudentRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ public class AcademicService {
     @Autowired
     public StudentAcademicBackgroundRepository studentAcademicBackgroundRepo;
     @Autowired public StudentEnglishPlacementTestRepository studentEnglishPlacementTestRepo;
+    @Autowired public StudentRepository studentRepository;
     @Autowired public StudyPlanRepository studyPlanRepo;
     @Autowired public StudyPlanCourseRepository studyPlanCourseRepo;
     @Autowired public GradeRepository gradeRepo;
@@ -67,6 +70,36 @@ public class AcademicService {
     public Optional<StudentEnglishPlacementTest> getStudentEnglishPlacementTest(String id) {
         return studentEnglishPlacementTestRepo.findById(id);
     }
+    public StudentEnglishPlacementTest saveStudentEnglishPlacementTest(StudentEnglishPlacementTestDto dto) {
+        // Check if this is an update - try to find existing entity
+        Optional<StudentEnglishPlacementTest> existingEntity = studentEnglishPlacementTestRepo.findById(dto.getTestId());
+        StudentEnglishPlacementTest entity;
+        
+        if (existingEntity.isPresent()) {
+            // Update existing entity
+            entity = existingEntity.get();
+        } else {
+            // Create new entity
+            entity = new StudentEnglishPlacementTest();
+            entity.setTestId(dto.getTestId());
+        }
+        
+        // Set the student based on studentId from DTO
+        if (dto.getStudentId() != null && !dto.getStudentId().isEmpty()) {
+            Optional<Student> student = studentRepository.findById(dto.getStudentId());
+            if (student.isPresent()) {
+                entity.setStudent(student.get());
+            }
+        }
+        
+        // Set other properties
+        entity.setTestDate(dto.getTestDate());
+        entity.setResultLevel(dto.getResultLevel());
+        entity.setResultStatus(dto.getResultStatus());
+        
+        return studentEnglishPlacementTestRepo.save(entity);
+    }
+    
     public StudentEnglishPlacementTest saveStudentEnglishPlacementTest(StudentEnglishPlacementTest entity) {
         return studentEnglishPlacementTestRepo.save(entity);
     }

@@ -58,6 +58,14 @@ public class AcademicController {
     public StudentEnglishPlacementTest saveStudentEnglishPlacementTest(@RequestBody StudentEnglishPlacementTest entity) {
         return academicService.saveStudentEnglishPlacementTest(entity);
     }
+    
+    @PutMapping("/student-english-placement-tests/{id}")
+    public ResponseEntity<StudentEnglishPlacementTest> updateStudentEnglishPlacementTest(@PathVariable String id, @RequestBody StudentEnglishPlacementTestDto dto) {
+        dto.setTestId(id);
+        StudentEnglishPlacementTest updated = academicService.saveStudentEnglishPlacementTest(dto);
+        return ResponseEntity.ok(updated);
+    }
+    
     @DeleteMapping("/student-english-placement-tests/{id}")
     public ResponseEntity<Void> deleteStudentEnglishPlacementTest(@PathVariable String id) {
         academicService.deleteStudentEnglishPlacementTest(id);
