@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +27,8 @@ public class AnnouncementService {
 
     @Value("${app.base-url}")
     private String baseUrl;
+
+    private final String UPLOAD_DIR = "uploads/announcements/";
 
     public List<Announcement> getAllAnnouncements() {
         return announcementRepository.findAll();
@@ -53,7 +58,15 @@ public class AnnouncementService {
     }
 
     public void deleteAnnouncement(String announcementId) {
-        announcementRepository.deleteById(announcementId);
+        // First get the announcement to retrieve the image URL before deletion
+        Optional<Announcement> announcementOptional = announcementRepository.findById(announcementId);
+        if (announcementOptional.isPresent()) {
+            Announcement announcement = announcementOptional.get();
+            // Delete the image file if it exists
+            deleteImageFile(announcement.getImageUrl());
+            // Delete the announcement from database
+            announcementRepository.deleteById(announcementId);
+        }
     }
 
     // --- Core queries without URLs ---
@@ -146,8 +159,16 @@ public class AnnouncementService {
     public Announcement saveAnnouncement(Announcement announcement) {
         return announcementRepository.save(announcement);
     }
+
+    private void deleteImageFile(String imageUrl) {
+        try {
+            if (imageUrl != null && imageUrl.contains("/uploads/announcements/")) {
+                String filename = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
+                Path filePath = Paths.get(UPLOAD_DIR + filename);
+                Files.deleteIfExists(filePath);
+            }
+        } catch (Exception e) {
+            System.err.println("Could not delete image file: " + e.getMessage());
+        }
+    }
 }
-
-
-
-

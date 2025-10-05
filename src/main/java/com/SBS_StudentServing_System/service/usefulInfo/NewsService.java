@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +27,8 @@ public class NewsService {
 
     @Value("${app.base-url}")
     private String baseUrl;
+
+    private final String UPLOAD_DIR = "uploads/news/";
 
     public List<News> getAllNews() {
         return newsRepository.findAll();
@@ -57,7 +62,15 @@ public class NewsService {
     }
 
     public void deleteNews(String newsId) {
-        newsRepository.deleteById(newsId);
+        // First get the news to retrieve the image URL before deletion
+        Optional<News> newsOptional = newsRepository.findById(newsId);
+        if (newsOptional.isPresent()) {
+            News news = newsOptional.get();
+            // Delete the image file if it exists
+            deleteImageFile(news.getImageUrl());
+            // Delete the news from database
+            newsRepository.deleteById(newsId);
+        }
     }
 
     public List<News> getNewsByAdmin(String adminId) {
@@ -128,6 +141,18 @@ public class NewsService {
             Admin admin = adminRepository.findById(newsDTO.getAdminId())
                     .orElseThrow(() -> new RuntimeException("Admin not found with id: " + newsDTO.getAdminId()));
             // In a real implementation, you might want to set the admin relationship here
+        }
+    }
+
+    private void deleteImageFile(String imageUrl) {
+        try {
+            if (imageUrl != null && imageUrl.contains("/uploads/news/")) {
+                String filename = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
+                Path filePath = Paths.get(UPLOAD_DIR + filename);
+                Files.deleteIfExists(filePath);
+            }
+        } catch (Exception e) {
+            System.err.println("Could not delete image file: " + e.getMessage());
         }
     }
 }

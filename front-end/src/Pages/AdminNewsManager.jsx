@@ -17,6 +17,8 @@ const AdminNewsManager = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchNews();
@@ -40,6 +42,59 @@ const AdminNewsManager = () => {
     });
   };
 
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setImageFile(e.target.files[0]);
+    }
+  };
+
+  const handleImageUpload = async (newsId) => {
+    if (!imageFile) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(imageFile.type)) {
+      setError("Only JPG, PNG, GIF files allowed");
+      return;
+    }
+
+    if (imageFile.size > 5 * 1024 * 1024) {
+      setError("File must be less than 5MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', imageFile);
+      
+      const response = await axios.post(`/news/${newsId}/update-image`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      // Update the news list with the new image URL
+      setNewsList(newsList.map(news => 
+        news.newsId === newsId 
+          ? { ...news, imageUrl: response.data.imageUrl } 
+          : news
+      ));
+      
+      // Also update form data if we're editing this news
+      if (formData.newsId === newsId) {
+        setFormData({ ...formData, imageUrl: response.data.imageUrl });
+      }
+      
+      setImageFile(null);
+      setError("");
+    } catch (err) {
+      console.error("Failed to upload image:", err);
+      setError(`Failed to upload image: ${err.response?.data?.error || err.message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -55,11 +110,18 @@ const AdminNewsManager = () => {
         active: Boolean(formData.active)
       };
       
+      let response;
       if (isEditing) {
-        await axios.put(`/news/${formData.newsId}`, newsData);
+        response = await axios.put(`/news/${formData.newsId}`, newsData);
       } else {
-        await axios.post("/news", newsData);
+        response = await axios.post("/news", newsData);
       }
+      
+      // If we have an image file, upload it
+      if (imageFile && response.data && response.data.newsId) {
+        await handleImageUpload(response.data.newsId);
+      }
+      
       fetchNews();
       resetForm();
     } catch (err) {
@@ -71,6 +133,7 @@ const AdminNewsManager = () => {
   const handleEdit = (news) => {
     setFormData({ ...news });
     setIsEditing(true);
+    setImageFile(null);
   };
 
   const handleDelete = async (newsId) => {
@@ -95,6 +158,7 @@ const AdminNewsManager = () => {
       active: true,
     });
     setIsEditing(false);
+    setImageFile(null);
   };
 
   return (
@@ -201,6 +265,33 @@ const AdminNewsManager = () => {
                     <label htmlFor="active" className="ml-2 block text-sm text-gray-700">
                       Active
                     </label>
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Upload Image
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                    {imageFile && (
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-600">Selected file: {imageFile.name}</p>
+                        {isEditing && formData.newsId && (
+                          <button
+                            type="button"
+                            onClick={() => handleImageUpload(formData.newsId)}
+                            disabled={uploading}
+                            className="mt-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                          >
+                            {uploading ? "Uploading..." : "Upload Image"}
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
                 
