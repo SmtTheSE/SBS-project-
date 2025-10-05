@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../utils/axiosInstance';
+import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton } from '../Components/ModernForm';
 
 const AdminCourseManager = () => {
   const [courses, setCourses] = useState([]);
@@ -24,7 +25,7 @@ const AdminCourseManager = () => {
     try {
       const response = await axiosInstance.get('/academic/courses');
       // Ensure we're working with an array
-      if (Array.isArray(response.data)){
+      if (Array.isArray(response.data)) {
         setCourses(response.data);
       } else {
         console.error('Unexpected response format for courses:', response.data);
@@ -43,14 +44,14 @@ const AdminCourseManager = () => {
   const fetchLecturers = async () => {
     try {
       // Fixed the endpoint path from /lecturers to /admin/lecturers
-      const response =await axiosInstance.get('/admin/lecturers');
+      const response = await axiosInstance.get('/admin/lecturers');
       // Ensure we're working with an array
       if (Array.isArray(response.data)) {
         setLecturers(response.data);
       } else {
         console.error('Unexpected response format for lecturers:', response.data);
         setLecturers([]);
-        setError('Unexpecteddata format received for lecturers');
+        setError('Unexpected data format received for lecturers');
       }
     } catch (error) {
       console.error('Failed to fetch lecturers:', error);
@@ -59,7 +60,7 @@ const AdminCourseManager = () => {
     }
   };
 
-  const handleInputChange =(e) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -72,7 +73,7 @@ const AdminCourseManager = () => {
     try {
       if (editingCourse) {
         // Update existing course
-       await axiosInstance.put(`/academic/courses/${formData.courseId}`, formData);
+        await axiosInstance.put(`/academic/courses/${formData.courseId}`, formData);
       } else {
         // Create new course
         await axiosInstance.post('/academic/courses', formData);
@@ -82,7 +83,7 @@ const AdminCourseManager = () => {
       setFormData({
         courseId: '',
         courseName: '',
-        creditScore:'',
+        creditScore: '',
         lecturerId: ''
       });
       setEditingCourse(null);
@@ -92,7 +93,7 @@ const AdminCourseManager = () => {
       console.error('Failed to save course:', error);
       setError('Failed to save course: ' + (error.response?.data?.message || error.message));
     }
- };
+  };
 
   const handleEdit = (course) => {
     setFormData({
@@ -102,7 +103,7 @@ const AdminCourseManager = () => {
       // Fixed accessing lecturerId from the correct path
       lecturerId: course.lecturer?.lecturerId || ''
     });
-setEditingCourse(course);
+    setEditingCourse(course);
     setShowForm(true);
   };
 
@@ -121,7 +122,7 @@ setEditingCourse(course);
 
   const handleCancel = () => {
     setFormData({
-      courseId:'',
+      courseId: '',
       courseName: '',
       creditScore: '',
       lecturerId: ''
@@ -132,8 +133,8 @@ setEditingCourse(course);
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="bg-white rounded-lgshadow-lg p-6">
+      <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
+        <div className="bg-white rounded-lg shadow-lg p-6">
           <h1 className="text-3xl font-bold text-gray-800 mb-6">Course Management</h1>
           <p>Loading...</p>
         </div>
@@ -142,106 +143,106 @@ setEditingCourse(course);
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Course Management</h1>
-          <button
-onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          <FormButton
+            variant="primary"
+            onClick={() => setShowForm(!showForm)}
           >
             {showForm ? 'Cancel' : 'Add New'}
-          </button>
+          </FormButton>
         </div>
 
         {error && (
-         <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
             {error}
           </div>
         )}
 
         {showForm && (
-          <form onSubmit={handleSubmit} className="mb-8 p-4 border rounded-lg bg-gray-50">
-           <h2 className="text-xl font-bold mb-4">
+          <div className="mb-8 p-6 border-2 border-blue-200 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50">
+            <h2 className="text-xl font-bold text-blue-800 mb-4">
               {editingCourse ? 'Edit Course' : 'Add New Course'}
             </h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-gray-700 mb-2">Course ID</label>
-                <input
-                  type="text"
-                  name="courseId"
-                  value={formData.courseId}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
-                  required
-                  disabled={editingCourse}
-/>
-              </div>
+            <ModernForm onSubmit={handleSubmit}>
+              <FormRow>
+                <FormGroup>
+                  <FormLabel required>Course ID</FormLabel>
+                  <FormInput
+                    type="text"
+                    name="courseId"
+                    value={formData.courseId}
+                    onChange={handleInputChange}
+                    required
+                    disabled={editingCourse}
+                  />
+                </FormGroup>
+                
+                <FormGroup>
+                  <FormLabel required>Course Name</FormLabel>
+                  <FormInput
+                    type="text"
+                    name="courseName"
+                    value={formData.courseName}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </FormGroup>
+              </FormRow>
               
-              <div>
-                <label className="block text-gray-700 mb-2">Course Name</label>
-                <input
-                  type="text"
-                  name="courseName"
-                  value={formData.courseName}
-                  onChange={handleInputChange}
-                  className="w-fullp-2 border rounded"
-                  required
-                />
-              </div>
+              <FormRow>
+                <FormGroup>
+                  <FormLabel required>Credit Score</FormLabel>
+                  <FormInput
+                    type="number"
+                    name="creditScore"
+                    value={formData.creditScore}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </FormGroup>
+                
+                <FormGroup>
+                  <FormLabel required>Lecturer</FormLabel>
+                  <FormSelect
+                    name="lecturerId"
+                    value={formData.lecturerId}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="">Select a lecturer</option>
+                    {lecturers.map((lecturer) => (
+                      <option key={lecturer.lecturerId} value={lecturer.lecturerId}>
+                        {lecturer.name}
+                      </option>
+                    ))}
+                  </FormSelect>
+                </FormGroup>
+              </FormRow>
               
-              <div>
-                <label className="block text-gray-700 mb-2">Credit Score</label>
-                <input
-                  type="number"
-                  name="creditScore"
-                  value={formData.creditScore}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 mb-2">Lecturer</label>
-                <select
-                  name="lecturerId"
-                  value={formData.lecturerId}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
-                  required
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
+                <FormButton
+                  type="button"
+                  variant="secondary"
+                  onClick={handleCancel}
                 >
-                  <option value="">Select a lecturer</option>
-                  {lecturers.map((lecturer) => (
-                    <option key={lecturer.lecturerId} value={lecturer.lecturerId}>
-                      {lecturer.name}
-                    </option>
-                  ))}
-                </select>
+                  Cancel
+                </FormButton>
+                <FormButton
+                  type="submit"
+                  variant="success"
+                >
+                  {editingCourse ? 'Update' : 'Create'}
+                </FormButton>
               </div>
-            </div>
-            
-            <div className="flex justify-end space-x-2">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-4py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-             >
-                {editingCourse ? 'Update' : 'Create'}
-              </button>
-            </div>
-          </form>
+            </ModernForm>
+          </div>
         )}
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-lg shadow">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -258,36 +259,43 @@ onClick={() => setShowForm(!showForm)}
                   Lecturer
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-Actions</th>
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {Array.isArray(courses) && courses.map((course) => (
-               <tr key={course.courseId}>
-<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <tr key={course.courseId} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {course.courseId}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {course.courseName}
-                 </td>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {course.creditScore}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {course.lecturer? course.lecturer.name : 'N/A'}
+                    {course.lecturer ? course.lecturer.name : 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
                       onClick={() => handleEdit(course)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-3"
+                      className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
+                      title="Edit"
                     >
-                      Edit
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
                     </button>
                     <button
                       onClick={() => handleDelete(course.courseId)}
-                      className="text-red-600 hover:text-red-900"
+                      className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                      title="Delete"
                     >
-                      Delete
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
                     </button>
                   </td>
                 </tr>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../utils/axiosInstance';
+import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormButton } from '../Components/ModernForm';
 
 const AdminDepartmentManager = () => {
   const [departments, setDepartments] = useState([]);
@@ -46,7 +47,7 @@ const AdminDepartmentManager = () => {
     });
   };
 
-  const handleSubmit = async (e)=> {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (editingDepartment) {
@@ -57,7 +58,7 @@ const AdminDepartmentManager = () => {
         await axiosInstance.post('/academic/departments', formData);
       }
       
-// Reset form and refresh data
+      // Reset form and refresh data
       setFormData({
         departmentId: '',
         departmentName: '',
@@ -95,9 +96,9 @@ const AdminDepartmentManager = () => {
       console.error('Failed to delete department:', error);
       setError('Failed to delete department: ' + (error.response?.data?.message || error.message));
     }
- };
+  };
 
-  const handleCancel= () => {
+  const handleCancel = () => {
     setFormData({
       departmentId: '',
       departmentName: '',
@@ -110,7 +111,7 @@ const AdminDepartmentManager = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h1 className="text-3xl font-bold text-gray-800 mb-6">Department Management</h1>
           <p>Loading...</p>
@@ -119,18 +120,18 @@ const AdminDepartmentManager = () => {
     );
   }
 
-return (
-    <div className="max-w-7xl mx-auto p-6">
+  return (
+    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Department Management</h1>
-          <button
+          <FormButton
+            variant="primary"
             onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             {showForm ? 'Cancel' : 'Add New'}
-          </button>
-</div>
+          </FormButton>
+        </div>
 
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
@@ -139,79 +140,79 @@ return (
         )}
 
         {showForm && (
-          <form onSubmit={handleSubmit} className="mb-8 p-4border rounded-lg bg-gray-50">
-            <h2 className="text-xl font-bold mb-4">
+          <div className="mb-8 p-6 border-2 border-blue-200 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50">
+            <h2 className="text-xl font-bold text-blue-800 mb-4">
               {editingDepartment ? 'Edit Department' : 'Add New Department'}
             </h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-gray-700 mb-2">Department ID</label>
-                <input
-                  type="text"
-                  name="departmentId"
-                  value={formData.departmentId}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
-                  required
-                  disabled={editingDepartment}
-                />
-              </div>
+            <ModernForm onSubmit={handleSubmit}>
+              <FormRow>
+                <FormGroup>
+                  <FormLabel required>Department ID</FormLabel>
+                  <FormInput
+                    type="text"
+                    name="departmentId"
+                    value={formData.departmentId}
+                    onChange={handleInputChange}
+                    required
+                    disabled={editingDepartment}
+                  />
+                </FormGroup>
+                
+                <FormGroup>
+                  <FormLabel required>Department Name</FormLabel>
+                  <FormInput
+                    type="text"
+                    name="departmentName"
+                    value={formData.departmentName}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </FormGroup>
+              </FormRow>
               
-              <div>
-                <label className="block text-gray-700 mb-2">Department Name</label>
-                <input
-                  type="text"
-                  name="departmentName"
-                  value={formData.departmentName}
-                 onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
+              <FormRow>
+                <FormGroup>
+                  <FormLabel>Head of Department</FormLabel>
+                  <FormInput
+                    type="text"
+                    name="headOfDepartment"
+                    value={formData.headOfDepartment}
+                    onChange={handleInputChange}
+                  />
+                </FormGroup>
+                
+                <FormGroup>
+                  <FormLabel>Email</FormLabel>
+                  <FormInput
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                  />
+                </FormGroup>
+              </FormRow>
               
-              <div>
-                <label className="block text-gray-700 mb-2">Head of Department</label>
-                <input
-                  type="text"
-                  name="headOfDepartment"
-                  value={formData.headOfDepartment}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
-                />
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
+                <FormButton
+                  type="button"
+                  variant="secondary"
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </FormButton>
+                <FormButton
+                  type="submit"
+                  variant="success"
+                >
+                  {editingDepartment ? 'Update' : 'Create'}
+                </FormButton>
               </div>
-              
-              <div>
-                <label className="block text-gray-700 mb-2">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-            </div>
-            
-            <div className="flex justify-end space-x-2">
-              <button
-                type="button"
-               onClick={handleCancel}
-                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                {editingDepartment ? 'Update' : 'Create'}
-              </button>
-            </div>
-          </form>
+            </ModernForm>
+          </div>
         )}
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-lg shadow">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -228,36 +229,43 @@ return (
                   Email
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-Actions</th>
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {Array.isArray(departments) && departments.map((department) => (
-               <tr key={department.departmentId}>
-<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <tr key={department.departmentId} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {department.departmentId}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {department.departmentName}
-                 </td>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {department.headOfDepartment || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                   {department.email|| 'N/A'}
+                    {department.email || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
                       onClick={() => handleEdit(department)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-3"
+                      className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
+                      title="Edit"
                     >
-Edit
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
                     </button>
                     <button
                       onClick={() => handleDelete(department.departmentId)}
-                      className="text-red-600 hover:text-red-900"
+                      className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                      title="Delete"
                     >
-                      Delete
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
                     </button>
                   </td>
                 </tr>
@@ -270,7 +278,7 @@ Edit
               <p className="text-gray-500 text-lg">No departments found</p>
             </div>
           )}
-</div>
+        </div>
       </div>
     </div>
   );
