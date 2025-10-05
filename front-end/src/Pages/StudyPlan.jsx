@@ -25,14 +25,12 @@ const FilterByDropDown = ({ filter, setFilter }) => (
     <option value="none" className="text-font-light">Filter By</option>
     <option value="courseName" className="text-font-light">Course Name</option>
   </select>
+
 );
 
 const StudyPlan = () => {
   const [academicInfos, setAcademicInfo] = useState([
-    { detail: "Last GPA", content: "-", icon: gpa },
     { detail: "Credits", content: 0, icon: credit },
-    { detail: "Semester", content: "-", icon: semester },
-    { detail: "Status", content: 1, icon: status },
   ]);
   const [subjPlans, setSubjPlans] = useState([]);
   const [filteredPlans, setFilteredPlans] = useState([]);
@@ -66,28 +64,8 @@ const StudyPlan = () => {
       );
       const totalCredits = creditsRes.data || 0;
 
-      const studyPlanCoursesRes = await axios.get(
-        `http://localhost:8080/api/academic/study-plan-courses/student/${studentId}`,
-        { headers }
-      );
-      const courses = Array.isArray(studyPlanCoursesRes.data)
-        ? studyPlanCoursesRes.data
-        : [];
-
-      let lastSemester = "-";
-      if (courses.length) {
-        const semesters = courses.map((c) => c.semesterId);
-        lastSemester = semesters.sort().pop() || "-";
-      }
-
-      const statusVal = totalCredits > 0 ? 1 : 0;
-      let lastGPA = "-";
-
       setAcademicInfo([
-        { detail: "Last GPA", content: lastGPA, icon: gpa },
         { detail: "Credits", content: totalCredits, icon: credit },
-        { detail: "Semester", content: lastSemester, icon: semester },
-        { detail: "Status", content: statusVal, icon: status },
       ]);
     } catch {
       // fallback silently
@@ -240,17 +218,10 @@ const StudyPlan = () => {
               <div>
                 <h5 className="font-light text-font-light">{info.detail}</h5>
                 <h1
-                  className={`text-2xl font-bold ${
-                    info.detail === "Status" &&
-                    (info.content === 1 ? "text-green-700" : "text-red-700")
-                  }`}
+                  className={`text-2xl font-bold`}
                 >
                   {info.detail === "Credits"
                     ? info.content + " / 100"
-                    : info.detail === "Status"
-                    ? info.content === 1
-                      ? "Active"
-                      : "Fail"
                     : info.content}
                 </h1>
               </div>

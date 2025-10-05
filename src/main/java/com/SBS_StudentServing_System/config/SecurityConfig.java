@@ -31,6 +31,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/profile/**").authenticated()
                         .requestMatchers("/api/accounts/*/change-password").authenticated()
                         .requestMatchers("/api/admin/accounts/*/change-password").authenticated()
                         .requestMatchers("/api/announcements/**").permitAll()
@@ -53,8 +54,7 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .userDetailsService(userDetailsService);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

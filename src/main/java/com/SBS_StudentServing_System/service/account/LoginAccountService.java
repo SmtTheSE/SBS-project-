@@ -94,6 +94,28 @@ public class LoginAccountService {
         return false;
     }
     
+    // Removed profile image functionality
+    // @Transactional
+    // public boolean updateProfileImage(String studentId, String imageUrl) {
+    //     Optional<Student> studentOpt = studentRepository.findById(studentId);
+    //     if (studentOpt.isPresent()) {
+    //         LoginAccount account = studentOpt.get().getLoginAccount();
+    //         account.setProfileImageUrl(imageUrl);
+    //         account.setUpdatedAt(LocalDateTime.now());
+    //         accountRepository.save(account);
+    //         return true;
+    //     }
+    //     return false;
+    // }
+    
+    // public String getProfileImage(String studentId) {
+    //     Optional<Student> studentOpt = studentRepository.findById(studentId);
+    //     if (studentOpt.isPresent()) {
+    //         return studentOpt.get().getLoginAccount().getProfileImageUrl();
+    //     }
+    //     return null;
+    // }
+    
     private LoginAccountDto toDto(LoginAccount acc){
         LoginAccountDto dto = new LoginAccountDto();
         dto.setAccountId(acc.getAccountId());
@@ -102,6 +124,8 @@ public class LoginAccountService {
         dto.setCreatedAt(acc.getCreatedAt());
         dto.setUpdatedAt(acc.getUpdatedAt());
         dto.setLastLoginAt(acc.getLastLoginAt());
+        // Removed profile image URL
+        // dto.setProfileImageUrl(acc.getProfileImageUrl());
         return dto;
     }
 }

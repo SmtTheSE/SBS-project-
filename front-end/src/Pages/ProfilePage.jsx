@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import defaultCoverPic from "../assets/cover-photos/cover-pic.jpg";
 import defaultProfile from "../assets/profiles/profile.jpeg";
 import Container from "../Components/Container";
@@ -9,6 +9,7 @@ import donePayment from "../assets/icons/done-payment.png";
 import failPayment from "../assets/icons/fail-payment.png";
 import payment from "../assets/icons/payment.png";
 import credit from "../assets/icons/score.png";
+import axiosInstance from "../utils/axiosInstance";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -17,6 +18,9 @@ const ProfilePage = () => {
   const [generalInfo, setGeneralInfo] = useState({ paymentStatus: null, totalCredits: null });
   const [classTimeline, setClassTimeline] = useState([]);
   const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
+  const [profileImage, setProfileImage] = useState(defaultProfile);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,17 +30,71 @@ const ProfilePage = () => {
       return;
     }
 
-    axios.get("http://localhost:8080/api/profile", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    axiosInstance.get("/profile")
       .then((res) => {
         setProfile(res.data);
         fetchGeneralInfo(res.data.studentId);
         fetchClassTimeline(res.data.studentId);
         fetchAssignmentDeadlines(res.data.studentId);
+        fetchProfileImage(res.data.studentId);
       })
       .catch(() => navigate("/login"));
   }, []);
+
+  const fetchProfileImage = (studentId) => {
+    axiosInstance.get(`/account/profile/${studentId}/image`)
+      .then((res) => {
+        if (res.data.imageUrl) {
+          // Add timestamp to prevent browser caching
+          setProfileImage(`${res.data.imageUrl}?t=${new Date().getTime()}`);
+        } else {
+          setProfileImage(defaultProfile);
+        }
+      })
+      .catch(() => {
+        setProfileImage(defaultProfile);
+      });
+  };
+
+  const handleProfileImageClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (!file || !profile) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("studentId", profile.studentId);
+
+    setIsUploading(true);
+    axios.post("http://localhost:8080/api/account/profile/upload-image", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        // Update profile image with new one (add timestamp to prevent caching)
+        setProfileImage(`${res.data.imageUrl}?t=${new Date().getTime()}`);
+      })
+      .catch((error) => {
+        console.error("Error uploading profile image:", error);
+        alert("Failed to upload profile image");
+      })
+      .finally(() => {
+        setIsUploading(false);
+        // Reset file input
+        event.target.value = "";
+      });
+  };
 
   const getWeekRange = (date) => {
     const currentDate = new Date(date);
@@ -68,29 +126,23 @@ const ProfilePage = () => {
   };
 
   const fetchGeneralInfo = (studentId) => {
-    const token = localStorage.getItem("token");
-    const headers = { Authorization: `Bearer ${token}` };
-
-    axios.get(`http://localhost:8080/api/tuition-payments/student/${studentId}`, { headers })
+    axiosInstance.get(`/tuition-payments/student/${studentId}`)
       .then((res) => {
         const paymentStatus = res.data.some(p => p.paymentStatus === 1) ? 1 : 0;
         setGeneralInfo(prev => ({ ...prev, paymentStatus }));
       })
       .catch(() => setGeneralInfo(prev => ({ ...prev, paymentStatus: 0 })));
 
-    axios.get(`http://localhost:8080/api/academic/course-results/total-credits/${studentId}`, { headers })
+    axiosInstance.get(`/academic/course-results/total-credits/${studentId}`)
       .then((res) => setGeneralInfo(prev => ({ ...prev, totalCredits: res.data })))
       .catch(() => setGeneralInfo(prev => ({ ...prev, totalCredits: 0 })));
   };
 
   const fetchClassTimeline = (studentId) => {
-    const token = localStorage.getItem("token");
-    const headers = { Authorization: `Bearer ${token}` };
-
     // Get current week range (Monday to Saturday)
     const { startDate, endDate } = getWeekRange(new Date());
 
-    axios.get(`http://localhost:8080/api/academic/class-timelines/${studentId}`, { headers })
+    axiosInstance.get(`/academic/class-timelines/${studentId}`)
       .then((res) => {
         // Filter classes within the current week
         const classesInWeek = res.data.filter(classItem => {
@@ -139,10 +191,7 @@ const ProfilePage = () => {
   };
 
   const fetchAssignmentDeadlines = (studentId) => {
-    const token = localStorage.getItem("token");
-    const headers = { Authorization: `Bearer ${token}` };
-
-    axios.get(`http://localhost:8080/api/academic/study-plan-courses/student/${studentId}`, { headers })
+    axiosInstance.get(`/academic/study-plan-courses/student/${studentId}`)
       .then((res) => {
         const deadlines = res.data.map((item, idx) => ({
           id: idx,
@@ -172,8 +221,26 @@ const ProfilePage = () => {
         </div>
         <SubContainer>
           <div className="flex justify-start items-center gap-5 my-10">
-            <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden shadow-md">
-              <img src={defaultProfile} alt="Profile Picture" className="w-full h-full object-cover" />
+            <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden shadow-md relative group">
+              <img 
+                src={profileImage} 
+                alt="Profile Picture" 
+                className="w-full h-full object-cover"
+              />
+              <div 
+                className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                onClick={handleProfileImageClick}
+              >
+                <span className="text-white text-sm font-bold">Change Photo</span>
+              </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileChange}
+                disabled={isUploading}
+              />
             </div>
             <div className="flex flex-col items-center justify-center">
               {profile && (

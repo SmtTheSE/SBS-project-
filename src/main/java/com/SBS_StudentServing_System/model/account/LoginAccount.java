@@ -38,4 +38,6 @@ public class LoginAccount {
 
     @Column(name = "password", length = 255, nullable = false)
     private String password; // This should be a hash
+    
+
 }
