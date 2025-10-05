@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../api/axios';
+import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton } from '../Components/ModernForm';
 
 const AdminClassScheduleManager = () => {
   const [classSchedules, setClassSchedules] = useState([]);
@@ -135,7 +136,7 @@ const AdminClassScheduleManager = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h1 className="text-3xl font-bold text-gray-800 mb-6">Class Schedule Management</h1>
           <p className="text-gray-600 mb-6">
@@ -150,73 +151,110 @@ const AdminClassScheduleManager = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Class Schedule Management</h1>
-        <p className="text-gray-600 mb-6">
-          Manage class schedule definitions
-        </p>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Class Schedule Management</h1>
+            <p className="text-gray-600">
+              Manage class schedule definitions • Total: {classSchedules.length}
+            </p>
+          </div>
+          <FormButton
+            variant="primary"
+            onClick={openAddModal}
+          >
+            Add New Class Schedule
+          </FormButton>
+        </div>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
             {error}
           </div>
         )}
 
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={openAddModal}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Add New Class Schedule
-          </button>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="py-2 px-4 border-b text-left">Schedule ID</th>
-                <th className="py-2 px-4 border-b text-left">Study Plan Course</th>
-                <th className="py-2 px-4 border-b text-left">Day of Week</th>
-                <th className="py-2 px-4 border-b text-left">Start Time</th>
-                <th className="py-2 px-4 border-b text-left">End Time</th>
-                <th className="py-2 px-4 border-b text-left">Duration (min)</th>
-                <th className="py-2 px-4 border-b text-left">Room</th>
-                <th className="py-2 px-4 border-b text-left">Actions</th>
+        <div className="overflow-x-auto rounded-lg shadow">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Schedule ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Study Plan Course
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Day of Week
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Start Time
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  End Time
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Duration (min)
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Room
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white divide-y divide-gray-200">
               {Array.isArray(classSchedules) && classSchedules.length > 0 ? (
                 classSchedules.map((classSchedule) => (
-                  <tr key={classSchedule.classScheduleId}>
-                    <td className="py-2 px-4 border-b">{classSchedule.classScheduleId}</td>
-                    <td className="py-2 px-4 border-b">{classSchedule.studyPlanCourseId}</td>
-                    <td className="py-2 px-4 border-b">{classSchedule.dayOfWeek}</td>
-                    <td className="py-2 px-4 border-b">{classSchedule.startTime}</td>
-                    <td className="py-2 px-4 border-b">{classSchedule.endTime}</td>
-                    <td className="py-2 px-4 border-b">{classSchedule.durationMinutes}</td>
-                    <td className="py-2 px-4 border-b">{classSchedule.room}</td>
-                    <td className="py-2 px-4 border-b">
+                  <tr key={classSchedule.classScheduleId} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {classSchedule.classScheduleId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {classSchedule.studyPlanCourseId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {classSchedule.dayOfWeek}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {classSchedule.startTime}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {classSchedule.endTime}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {classSchedule.durationMinutes}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {classSchedule.room}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => openEditModal(classSchedule)}
-                        className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mr-2"
+                        className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
+                        title="Edit"
                       >
-                        Edit
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
                       </button>
                       <button
                         onClick={() => handleDelete(classSchedule.classScheduleId)}
-                        className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                        className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                        title="Delete"
                       >
-                        Delete
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="text-center py-4">
-                    No class schedules found
+                  <td colSpan="8" className="text-center py-12 bg-gray-50">
+                    <p className="text-gray-500 text-lg">No class schedules found</p>
                   </td>
                 </tr>
               )}
@@ -226,148 +264,144 @@ const AdminClassScheduleManager = () => {
 
         {/* Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg w-1/3">
-              <h2 className="text-xl font-bold mb-4">
-                {isEditing ? 'Edit Class Schedule' : 'Add New Class Schedule'}
-              </h2>
-              <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="classScheduleId">
-                    Schedule ID
-                  </label>
-                  <input
-                    type="text"
-                    id="classScheduleId"
-                    name="classScheduleId"
-                    value={currentClassSchedule.classScheduleId}
-                    onChange={handleInputChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    required
-                    disabled={isEditing}
-                  />
-                </div>
-                
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="studyPlanCourseId">
-                    Study Plan Course
-                  </label>
-                  <select
-                    id="studyPlanCourseId"
-                    name="studyPlanCourseId"
-                    value={currentClassSchedule.studyPlanCourseId}
-                    onChange={handleInputChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    required
-                  >
-                    <option value="">Select a Study Plan Course</option>
-                    {studyPlanCourses.map(course => (
-                      <option key={course.studyPlanCourseId} value={course.studyPlanCourseId}>
-                        {course.studyPlanCourseId}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="dayOfWeek">
-                    Day of Week
-                  </label>
-                  <select
-                    id="dayOfWeek"
-                    name="dayOfWeek"
-                    value={currentClassSchedule.dayOfWeek}
-                    onChange={handleInputChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    required
-                  >
-                    <option value="">Select a Day</option>
-                    <option value="Mon">Monday</option>
-                    <option value="Tue">Tuesday</option>
-                    <option value="Wed">Wednesday</option>
-                    <option value="Thu">Thursday</option>
-                    <option value="Fri">Friday</option>
-                    <option value="Sat">Saturday</option>
-                    <option value="Sun">Sunday</option>
-                  </select>
-                </div>
-                
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="startTime">
-                    Start Time
-                  </label>
-                  <input
-                    type="time"
-                    id="startTime"
-                    name="startTime"
-                    value={currentClassSchedule.startTime}
-                    onChange={handleInputChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    required
-                  />
-                </div>
-                
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="endTime">
-                    End Time
-                  </label>
-                  <input
-                    type="time"
-                    id="endTime"
-                    name="endTime"
-                    value={currentClassSchedule.endTime}
-                    onChange={handleInputChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    required
-                  />
-                </div>
-                
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="durationMinutes">
-                    Duration (Minutes)
-                  </label>
-                  <input
-                    type="number"
-                    id="durationMinutes"
-                    name="durationMinutes"
-                    value={currentClassSchedule.durationMinutes}
-                    onChange={handleInputChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    required
-                  />
-                </div>
-                
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="room">
-                    Room
-                  </label>
-                  <input
-                    type="text"
-                    id="room"
-                    name="room"
-                    value={currentClassSchedule.room}
-                    onChange={handleInputChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    required
-                  />
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    type="button"
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {isEditing ? 'Edit Class Schedule' : 'Add New Class Schedule'}
+                  </h2>
+                  <button 
                     onClick={closeModal}
-                    className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2"
+                    className="text-gray-500 hover:text-gray-700"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                  >
-                    {isEditing ? 'Update' : 'Create'}
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                   </button>
                 </div>
-              </form>
+                
+                <ModernForm onSubmit={handleSubmit}>
+                  <FormGroup>
+                    <FormLabel required>Schedule ID</FormLabel>
+                    <FormInput
+                      type="text"
+                      id="classScheduleId"
+                      name="classScheduleId"
+                      value={currentClassSchedule.classScheduleId}
+                      onChange={handleInputChange}
+                      required
+                      disabled={isEditing}
+                    />
+                  </FormGroup>
+                  
+                  <FormGroup>
+                    <FormLabel required>Study Plan Course</FormLabel>
+                    <FormSelect
+                      id="studyPlanCourseId"
+                      name="studyPlanCourseId"
+                      value={currentClassSchedule.studyPlanCourseId}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Select a Study Plan Course</option>
+                      {studyPlanCourses.map(course => (
+                        <option key={course.studyPlanCourseId} value={course.studyPlanCourseId}>
+                          {course.studyPlanCourseId}
+                        </option>
+                      ))}
+                    </FormSelect>
+                  </FormGroup>
+                  
+                  <FormGroup>
+                    <FormLabel required>Day of Week</FormLabel>
+                    <FormSelect
+                      id="dayOfWeek"
+                      name="dayOfWeek"
+                      value={currentClassSchedule.dayOfWeek}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Select a Day</option>
+                      <option value="Mon">Monday</option>
+                      <option value="Tue">Tuesday</option>
+                      <option value="Wed">Wednesday</option>
+                      <option value="Thu">Thursday</option>
+                      <option value="Fri">Friday</option>
+                      <option value="Sat">Saturday</option>
+                      <option value="Sun">Sunday</option>
+                    </FormSelect>
+                  </FormGroup>
+                  
+                  <FormRow>
+                    <FormGroup>
+                      <FormLabel required>Start Time</FormLabel>
+                      <FormInput
+                        type="time"
+                        id="startTime"
+                        name="startTime"
+                        value={currentClassSchedule.startTime}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </FormGroup>
+                    
+                    <FormGroup>
+                      <FormLabel required>End Time</FormLabel>
+                      <FormInput
+                        type="time"
+                        id="endTime"
+                        name="endTime"
+                        value={currentClassSchedule.endTime}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </FormGroup>
+                  </FormRow>
+                  
+                  <FormRow>
+                    <FormGroup>
+                      <FormLabel required>Duration (Minutes)</FormLabel>
+                      <FormInput
+                        type="number"
+                        id="durationMinutes"
+                        name="durationMinutes"
+                        value={currentClassSchedule.durationMinutes}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </FormGroup>
+                    
+                    <FormGroup>
+                      <FormLabel required>Room</FormLabel>
+                      <FormInput
+                        type="text"
+                        id="room"
+                        name="room"
+                        value={currentClassSchedule.room}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </FormGroup>
+                  </FormRow>
+
+                  <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
+                    <FormButton
+                      type="button"
+                      variant="secondary"
+                      onClick={closeModal}
+                    >
+                      Cancel
+                    </FormButton>
+                    <FormButton
+                      type="submit"
+                      variant="success"
+                    >
+                      {isEditing ? 'Update' : 'Create'}
+                    </FormButton>
+                  </div>
+                </ModernForm>
+              </div>
             </div>
           </div>
         )}

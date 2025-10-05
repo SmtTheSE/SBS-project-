@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../utils/axiosInstance';
+import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormButton } from '../Components/ModernForm';
 
 const AdminStudentAcademicBackgroundManager = () => {
   const [backgrounds, setBackgrounds] = useState([]);
@@ -140,7 +141,7 @@ const AdminStudentAcademicBackgroundManager = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h1 className="text-3xl font-bold text-gray-800 mb-6">Student Academic Background Management</h1>
           <p>Loading...</p>
@@ -150,16 +151,21 @@ const AdminStudentAcademicBackgroundManager = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Student Academic Background Management</h1>
-          <button
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Student Academic Background Management</h1>
+            <p className="text-gray-600">
+              Manage student academic backgrounds • Total: {backgrounds.length}
+            </p>
+          </div>
+          <FormButton
+            variant="primary"
             onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             {showForm ? 'Cancel' : 'Add New'}
-          </button>
+          </FormButton>
         </div>
 
         {error && (
@@ -169,166 +175,199 @@ const AdminStudentAcademicBackgroundManager = () => {
         )}
 
         {showForm && (
-          <form onSubmit={handleSubmit} className="mb-8 p-4 border rounded-lg bg-gray-50">
-            <h2 className="text-xl font-bold mb-4">
+          <div className="mb-8 p-6 border-2 border-blue-200 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50">
+            <h2 className="text-xl font-bold text-blue-800 mb-4">
               {editingBackground ? 'Edit Student Academic Background' : 'Add New Student Academic Background'}
             </h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-gray-700 mb-2">Background ID</label>
-                <input
-                  type="text"
-                  name="backgroundId"
-                  value={formData.backgroundId}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
-                  required
-                  disabled={!!editingBackground}
-                />
-              </div>
+            <ModernForm onSubmit={handleSubmit}>
+              <FormRow>
+                <FormGroup>
+                  <FormLabel required>Background ID</FormLabel>
+                  <FormInput
+                    type="text"
+                    name="backgroundId"
+                    value={formData.backgroundId}
+                    onChange={handleInputChange}
+                    required
+                    disabled={!!editingBackground}
+                  />
+                </FormGroup>
+                
+                <FormGroup>
+                  <FormLabel required>Student ID</FormLabel>
+                  <FormInput
+                    type="text"
+                    name="studentId"
+                    value={formData.studentId}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </FormGroup>
+              </FormRow>
               
-              <div>
-                <label className="block text-gray-700 mb-2">Student ID</label>
-                <input
-                  type="text"
-                  name="studentId"
-                  value={formData.studentId}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
+              <FormRow>
+                <FormGroup>
+                  <FormLabel required>Highest Qualification</FormLabel>
+                  <FormInput
+                    type="text"
+                    name="highestQualification"
+                    value={formData.highestQualification}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </FormGroup>
+                
+                <FormGroup>
+                  <FormLabel required>Institution Name</FormLabel>
+                  <FormInput
+                    type="text"
+                    name="institutionName"
+                    value={formData.institutionName}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </FormGroup>
+              </FormRow>
               
-              <div>
-                <label className="block text-gray-700 mb-2">Highest Qualification</label>
-                <input
-                  type="text"
-                  name="highestQualification"
-                  value={formData.highestQualification}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
+              <FormRow>
+                <FormGroup>
+                  <FormLabel>English Qualification</FormLabel>
+                  <FormInput
+                    type="text"
+                    name="englishQualification"
+                    value={formData.englishQualification}
+                    onChange={handleInputChange}
+                  />
+                </FormGroup>
+                
+                <FormGroup>
+                  <FormLabel>English Score</FormLabel>
+                  <FormInput
+                    type="number"
+                    step="0.01"
+                    name="englishScore"
+                    value={formData.englishScore}
+                    onChange={handleInputChange}
+                  />
+                </FormGroup>
+              </FormRow>
               
-              <div>
-                <label className="block text-gray-700 mb-2">Institution Name</label>
-                <input
-                  type="text"
-                  name="institutionName"
-                  value={formData.institutionName}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 mb-2">English Qualification</label>
-                <input
-                  type="text"
-                  name="englishQualification"
-                  value={formData.englishQualification}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 mb-2">English Score</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="englishScore"
-                  value={formData.englishScore}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 mb-2">Document URL</label>
-                <input
+              <FormGroup>
+                <FormLabel>Document URL</FormLabel>
+                <FormInput
                   type="text"
                   name="documentUrl"
                   value={formData.documentUrl}
                   onChange={handleInputChange}
-                  className="w-full p-2 border rounded"
                 />
-              </div>
+              </FormGroup>
               
-              <div className="flex items-center">
+              <div className="flex items-center mb-4">
                 <input
                   type="checkbox"
                   name="requiredForPlacementTest"
                   checked={formData.requiredForPlacementTest}
                   onChange={handleInputChange}
-                  className="mr-2"
+                  className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                 />
-                <label className="text-gray-700">Required for Placement Test</label>
+                <label className="ml-2 block text-sm text-gray-700">
+                  Required for Placement Test
+                </label>
               </div>
-            </div>
-            
-            <div className="flex justify-end space-x-2">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                {editingBackground ? 'Update' : 'Create'}
-              </button>
-            </div>
-          </form>
+              
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
+                <FormButton
+                  type="button"
+                  variant="secondary"
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </FormButton>
+                <FormButton
+                  type="submit"
+                  variant="success"
+                >
+                  {editingBackground ? 'Update' : 'Create'}
+                </FormButton>
+              </div>
+            </ModernForm>
+          </div>
         )}
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="py-3 px-4 border-b text-left">Background ID</th>
-                <th className="py-3 px-4 border-b text-left">Student ID</th>
-                <th className="py-3 px-4 border-b text-left">Highest Qualification</th>
-                <th className="py-3 px-4 border-b text-left">Institution Name</th>
-                <th className="py-3 px-4 border-b text-left">English Qualification</th>
-                <th className="py-3 px-4 border-b text-left">English Score</th>
-                <th className="py-3 px-4 border-b text-left">Required for Placement Test</th>
-                <th className="py-3 px-4 border-b text-left">Actions</th>
+        <div className="overflow-x-auto rounded-lg shadow">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Background ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Student ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Highest Qualification
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Institution Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  English Qualification
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  English Score
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Required for Placement Test
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white divide-y divide-gray-200">
               {backgrounds.map((background) => (
                 <tr key={background.backgroundId} className="hover:bg-gray-50">
-                  <td className="py-3 px-4 border-b">{background.backgroundId}</td>
-                  <td className="py-3 px-4 border-b">{background.studentId}</td>
-                  <td className="py-3 px-4 border-b">{background.highestQualification}</td>
-                  <td className="py-3 px-4 border-b">{background.institutionName}</td>
-                  <td className="py-3 px-4 border-b">{background.englishQualification || 'N/A'}</td>
-                  <td className="py-3 px-4 border-b">{background.englishScore || 'N/A'}</td>
-                  <td className="py-3 px-4 border-b">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {background.backgroundId}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {background.studentId}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {background.highestQualification}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {background.institutionName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {background.englishQualification || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {background.englishScore || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {background.requiredForPlacementTest ? 'Yes' : 'No'}
                   </td>
-                  <td className="py-3 px-4 border-b">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEdit(background)}
-                        className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(background.backgroundId)}
-                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => handleEdit(background)}
+                      className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
+                      title="Edit"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(background.backgroundId)}
+                      className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                      title="Delete"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   </td>
                 </tr>
               ))}
