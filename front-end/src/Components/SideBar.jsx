@@ -1,4 +1,4 @@
-import { faUser } from "@fortawesome/free-regular-svg-icons";
+import{ faUser } from "@fortawesome/free-regular-svg-icons";
 import {
   faAngleDown,
   faGraduationCap,
@@ -42,7 +42,7 @@ const SideBar = () => {
           icon: faListOl,
           link: "transcripts",
           isCurrent: true,
-        },
+       },
         {
           id: 3,
           name: "Attendances",
@@ -60,14 +60,22 @@ const SideBar = () => {
       ],
     },
     {
-      id: 3,
-      name: "Dashboard",
+      id: 4,
+      name: "Profile",
       icon: faUser,
       link: "/profile",
       isCurrent: false,
-      children: null,
+      children: [
+        {
+          id: 1,
+          name: "Change Password",
+          icon: faUser,
+          link: "/change-password",
+          isCurrent: false,
+        },
+],
     },
-  ]);
+ ]);
 
   // Handle top-level menu clicks
   const handleMenus = (id) => {
@@ -76,7 +84,7 @@ const SideBar = () => {
         menu.id === id
           ? { ...menu, isCurrent: true }
           : { ...menu, isCurrent: false }
-      )
+)
     );
   };
 
@@ -87,7 +95,7 @@ const SideBar = () => {
         menu.id === 2 // Academic menu
           ? {
               ...menu,
-              children: menu.children.map((child) =>
+children: menu.children.map((child) =>
                 child.id === id
                   ? { ...child, isCurrent: true }
                   : { ...child, isCurrent: false }

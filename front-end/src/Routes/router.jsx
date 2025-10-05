@@ -15,7 +15,6 @@ import AdminVisaPassportManager from "../Pages/AdminVisaPassportManager";
 import AdminScholarshipManager from "../Pages/AdminScholarshipManager";
 import AdminTuitionPaymentManager from "../Pages/AdminTuitionPaymentManager";
 import AdminVisaExtensionRequestManager from "../Pages/AdminVisaExtensionRequestManager";
-import VisaPassport from "../Pages/VisaPassport";
 
 // Academic admin pages
 import AdminStudyPlanManager from "../Pages/AdminStudyPlanManager";
@@ -35,6 +34,8 @@ import AdminTransferProgramManager from "../Pages/AdminTransferProgramManager";
 import AdminPartnerInstitutionManager from "../Pages/AdminPartnerInstitutionManager";
 import AdminStudentProgressSummaryManager from "../Pages/AdminStudentProgressSummaryManager";
 import AdminStudyPlanCourseManager from "../Pages/AdminStudyPlanCourseManager";
+import ChangePassword from "../Pages/ChangePassword";
+import AdminChangePassword from "../Pages/AdminChangePassword";
 
 const router = createBrowserRouter([
   {
@@ -51,6 +52,10 @@ const router = createBrowserRouter([
         element: <ProfilePage />,
       },
       {
+        path: "change-password",
+        element: <ChangePassword />,
+      },
+      {
         path: "transcripts",
         element: <Transcripts />
       },
@@ -61,10 +66,6 @@ const router = createBrowserRouter([
       {
         path: "attendence",
         element: <Attendance />
-      },
-      {
-        path: "visa-passport",
-        element: <VisaPassport />
       }
     ],
   },
@@ -112,6 +113,10 @@ const router = createBrowserRouter([
       {
         path: "partner-institutions",
         element: <AdminPartnerInstitutionManager />,
+      },
+      {
+        path: "change-password",
+        element: <AdminChangePassword />,
       },
       // Academic Routes
       {

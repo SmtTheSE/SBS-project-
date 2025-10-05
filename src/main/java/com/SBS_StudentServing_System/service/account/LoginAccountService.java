@@ -2,11 +2,13 @@ package com.SBS_StudentServing_System.service.account;
 
 import com.SBS_StudentServing_System.dto.account.LoginAccountCreateDto;
 import com.SBS_StudentServing_System.dto.account.LoginAccountDto;
+import com.SBS_StudentServing_System.dto.account.ChangePasswordDto;
 import com.SBS_StudentServing_System.model.account.LoginAccount;
 import com.SBS_StudentServing_System.model.student.Student;
 import com.SBS_StudentServing_System.repository.account.LoginAccountRepository;
 import com.SBS_StudentServing_System.repository.student.StudentRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,10 +18,14 @@ import java.util.Optional;
 public class LoginAccountService {
     private final StudentRepository studentRepository;
     private final LoginAccountRepository accountRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
 
-    public LoginAccountService(StudentRepository studentRepository, LoginAccountRepository accountRepository){
+    public LoginAccountService(StudentRepository studentRepository, 
+                              LoginAccountRepository accountRepository,
+                              BCryptPasswordEncoder passwordEncoder) {
         this.studentRepository = studentRepository;
         this.accountRepository = accountRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public LoginAccountDto getAccount(String accountId){
@@ -36,7 +42,7 @@ public class LoginAccountService {
         account.setRole(dto.getRole());
         account.setAccountStatus(dto.getAccountStatus());
         account.setCreatedAt(LocalDateTime.now());
-        account.setPassword("defaultPassword"); // In a real application, this should be properly hashed
+        account.setPassword(passwordEncoder.encode("defaultPassword")); // In a real application, this should be properly hashed
         accountRepository.save(account);
         return toDto(account);
     }
@@ -66,6 +72,26 @@ public class LoginAccountService {
             return toDto(acc);
         }
         return null;
+    }
+    
+    @Transactional
+    public boolean changePassword(ChangePasswordDto changePasswordDto) {
+        Optional<LoginAccount> accountOpt = accountRepository.findById(changePasswordDto.getAccountId());
+        if (accountOpt.isPresent()) {
+            LoginAccount account = accountOpt.get();
+            
+            // Check if current password is correct
+            if (!passwordEncoder.matches(changePasswordDto.getCurrentPassword(), account.getPassword())) {
+                return false;
+            }
+            
+            // Update with new password
+            account.setPassword(passwordEncoder.encode(changePasswordDto.getNewPassword()));
+            account.setUpdatedAt(LocalDateTime.now());
+            accountRepository.save(account);
+            return true;
+        }
+        return false;
     }
     
     private LoginAccountDto toDto(LoginAccount acc){

@@ -17,7 +17,7 @@ import { Link } from "react-router-dom";
 const AdminSideBar = () => {
   const [sideBarMenus, setSideBarMenus] = useState([
    {
-      id: 1,
+id: 1,
       name: "Management",
       icon: faUser,
       link: "/admin",
@@ -41,7 +41,7 @@ isCurrent: false,
           id: 3,
           name: "Lecturers",
           icon: faUser,
-          link: "/admin/lecturers",
+         link: "/admin/lecturers",
           isCurrent: false,
         },
         {
@@ -110,7 +110,7 @@ isCurrent: false,
           isCurrent: false,
         },
         {
-          id: 3,
+id: 3,
           name: "Semesters",
 icon: faCalendarAlt,
           link: "/admin/academic/semesters",
@@ -132,7 +132,7 @@ icon: faCalendarAlt,
         },
         {
           id: 6,
-          name: "Student Enrollments",
+          name: "StudentEnrollments",
           icon: faUser,
          link: "/admin/academic/enrollments",
           isCurrent: false,
@@ -166,7 +166,7 @@ name: "Course Results",
           isCurrent: false,
         },
         {
-          id: 11,
+id: 11,
           name:"Placement Tests",
           icon: faClipboardList,
           link: "/admin/academic/student-placement-tests",
@@ -202,9 +202,25 @@ name: "Course Results",
         },
      ],
     },
+   {
+      id: 3,
+      name: "Profile",
+      icon: faUser,
+      link: "/admin/profile",
+      isCurrent: false,
+      children: [
+        {
+          id: 1,
+          name: "Change Password",
+          icon: faUser,
+          link: "/admin/change-password",
+          isCurrent: false,
+},
+      ],
+    },
  ]);
 
-  // Handle Management menu clicks
+// Handle Management menu clicks
   const handleMenus = (id) => {
     setSideBarMenus((prevMenus) =>
       prevMenus.map((menu) =>
@@ -212,7 +228,7 @@ name: "Course Results",
           ? { ...menu, isCurrent: true }
           : { ...menu, isCurrent: false }
      )
-    );
+);
   };
 
   // Handle Management child menu clicks
@@ -243,7 +259,7 @@ setSideBarMenus((prevMenus) =>
               children: menu.children.map((child) =>
                 child.id === id
                   ? { ...child, isCurrent: true }
-                  : {...child, isCurrent: false }
+                  : {...child,isCurrent: false }
               ),
             }
           : menu
@@ -254,7 +270,7 @@ setSideBarMenus((prevMenus) =>
   return(
     <nav className="fixed bg-iconic w-80 h-screen flex flex-col justify-start items-start gap-3 p-5 overflow-y-auto">
       {sideBarMenus.map((menu) =>
-        menu.children == null ? (
+       menu.children == null ? (
           <Link
             key={menu.id}
             to={menu.link}
@@ -269,7 +285,7 @@ setSideBarMenus((prevMenus) =>
         ) : (
           <div
             key={menu.id}
-            className={`text-2xl p-5 w-full rounded-md flex flex-col cursor-pointer transition-all duration-200 ${
+            className={`text-2xl p-5 w-full rounded-md flexflex-col cursor-pointer transition-all duration-200 ${
               menu.isCurrent
                 ? "bg-white text-iconic"
                 : "text-white hover:bg-white/10"

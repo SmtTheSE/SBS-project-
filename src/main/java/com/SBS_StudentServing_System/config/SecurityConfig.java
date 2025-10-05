@@ -31,6 +31,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/accounts/*/change-password").authenticated()
+                        .requestMatchers("/api/admin/accounts/*/change-password").authenticated()
                         .requestMatchers("/api/announcements/**").permitAll()
                         .requestMatchers("/api/admin/students/**").permitAll()
                         .requestMatchers("/api/admin/lecturers/**").permitAll()
