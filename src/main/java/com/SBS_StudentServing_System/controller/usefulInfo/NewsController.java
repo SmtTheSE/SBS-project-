@@ -1,8 +1,8 @@
 package com.SBS_StudentServing_System.controller.usefulInfo;
 
-import com.SBS_StudentServing_System.dto.usefulInfo.AnnouncementDTO;
-import com.SBS_StudentServing_System.model.usefulinfo.Announcement;
-import com.SBS_StudentServing_System.service.usefulInfo.AnnouncementService;
+import com.SBS_StudentServing_System.dto.usefulInfo.NewsDTO;
+import com.SBS_StudentServing_System.model.usefulinfo.News;
+import com.SBS_StudentServing_System.service.usefulInfo.NewsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -21,16 +21,16 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/announcements")
-public class AnnouncementController {
+@RequestMapping("/api/news")
+@CrossOrigin(origins = "http://localhost:5173")
+public class NewsController {
     @Autowired
-    private AnnouncementService announcementService;
+    private NewsService newsService;
 
     @Value("${app.base-url}")
     private String baseUrl;
 
-    private final String UPLOAD_DIR = "uploads/announcements/";
-
+    private final String UPLOAD_DIR = "uploads/news/";
 
     @PostMapping("/upload-image")
     public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) {
@@ -61,7 +61,7 @@ public class AnnouncementController {
 
             Map<String, String> response = new HashMap<>();
             response.put("filename", filename);
-            response.put("imageUrl", baseUrl + "/uploads/announcements/" + filename);
+            response.put("imageUrl", baseUrl + "/uploads/news/" + filename);
 
             return ResponseEntity.ok(response);
 
@@ -72,7 +72,7 @@ public class AnnouncementController {
     }
 
     @PostMapping("/{id}/update-image")
-    public ResponseEntity<Map<String, String>> updateAnnouncementImage(
+    public ResponseEntity<Map<String, String>> updateNewsImage(
             @PathVariable String id,
             @RequestParam("file") MultipartFile file) {
         try {
@@ -83,13 +83,13 @@ public class AnnouncementController {
 
             String newImageUrl = uploadResponse.getBody().get("imageUrl");
 
-            Optional<Announcement> existingAnnouncement = announcementService.getAnnouncementById(id);
-            if (existingAnnouncement.isPresent()) {
-                Announcement announcement = existingAnnouncement.get();
-                deleteOldImageFile(announcement.getImageUrl());
-                announcement.setImageUrl(newImageUrl);
-                announcement.setUpdatedAt(LocalDate.now());
-                announcementService.saveAnnouncement(announcement);
+            Optional<News> existingNews = newsService.getNewsById(id);
+            if (existingNews.isPresent()) {
+                News news = existingNews.get();
+                deleteOldImageFile(news.getImageUrl());
+                news.setImageUrl(newImageUrl);
+                news.setUpdatedAt(LocalDate.now());
+                newsService.updateNews(id, convertToDTO(news));
 
                 return ResponseEntity.ok(Map.of("message", "Image updated successfully", "imageUrl", newImageUrl));
             } else {
@@ -113,7 +113,7 @@ public class AnnouncementController {
 
     private void deleteOldImageFile(String oldImageUrl) {
         try {
-            if (oldImageUrl != null && oldImageUrl.contains("/uploads/announcements/")) {
+            if (oldImageUrl != null && oldImageUrl.contains("/uploads/news/")) {
                 String filename = oldImageUrl.substring(oldImageUrl.lastIndexOf("/") + 1);
                 Path oldFilePath = Paths.get(UPLOAD_DIR + filename);
                 Files.deleteIfExists(oldFilePath);
@@ -123,92 +123,80 @@ public class AnnouncementController {
         }
     }
 
+    private NewsDTO convertToDTO(News news) {
+        NewsDTO dto = new NewsDTO();
+        dto.setNewsId(news.getNewsId());
+        dto.setAdminId(news.getAdminId());
+        dto.setTitle(news.getTitle());
+        dto.setDescription(news.getDescription());
+        dto.setImageUrl(news.getImageUrl());
+        dto.setNewsType(news.getNewsType());
+        dto.setPublishDate(news.getPublishDate());
+        dto.setActive(news.getActive());
+        dto.setCreatedAt(news.getCreatedAt());
+        dto.setUpdatedAt(news.getUpdatedAt());
+        return dto;
+    }
+
     @GetMapping
-    public ResponseEntity<List<Announcement>> getAllAnnouncements() {
-        List<Announcement> announcements = announcementService.getAllAnnouncementsWithFullImageUrls();
-        return new ResponseEntity<>(announcements, HttpStatus.OK);
+    public ResponseEntity<List<News>> getAllNews() {
+        List<News> news = newsService.getActiveNewsWithFullImageUrls();
+        return new ResponseEntity<>(news, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Announcement> getAnnouncementById(@PathVariable("id") String id) {
-        Optional<Announcement> announcement = announcementService.getAnnouncementById(id);
-        return announcement.map(value -> new ResponseEntity<>(announcementService.addFullImageUrl(value, baseUrl), HttpStatus.OK))
+    public ResponseEntity<News> getNewsById(@PathVariable("id") String id) {
+        Optional<News> news = newsService.getNewsById(id);
+        return news.map(value -> new ResponseEntity<>(newsService.addFullImageUrl(value), HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @PostMapping
-    public ResponseEntity<?> createAnnouncement(@RequestBody AnnouncementDTO announcementDTO) {
+    public ResponseEntity<?> createNews(@RequestBody NewsDTO newsDTO) {
         try {
-            Announcement announcement = announcementService.createAnnouncement(announcementDTO);
-            return new ResponseEntity<>(announcementService.addFullImageUrl(announcement, baseUrl), HttpStatus.CREATED);
+            News news = newsService.createNews(newsDTO);
+            return new ResponseEntity<>(newsService.addFullImageUrl(news), HttpStatus.CREATED);
         } catch (Exception e) {
-            e.printStackTrace(); // Log the error to console
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Announcement> updateAnnouncement(@PathVariable("id") String id, @RequestBody AnnouncementDTO announcementDTO) {
+    public ResponseEntity<News> updateNews(@PathVariable("id") String id, @RequestBody NewsDTO newsDTO) {
         try {
-            Announcement updatedAnnouncement = announcementService.updateAnnouncement(id, announcementDTO);
-            return new ResponseEntity<>(announcementService.addFullImageUrl(updatedAnnouncement, baseUrl), HttpStatus.OK);
+            News updatedNews = newsService.updateNews(id, newsDTO);
+            return new ResponseEntity<>(newsService.addFullImageUrl(updatedNews), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<HttpStatus> deleteAnnouncement(@PathVariable("id") String id) {
+    public ResponseEntity<HttpStatus> deleteNews(@PathVariable("id") String id) {
         try {
-            announcementService.deleteAnnouncement(id);
+            newsService.deleteNews(id);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
-    @GetMapping("/active")
-    public ResponseEntity<List<Announcement>> getActiveAnnouncements() {
-        try {
-            List<Announcement> announcements = announcementService.getActiveAnnouncementsWithFullImageUrls();
-            if (announcements.isEmpty()) {
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-            }
-            return new ResponseEntity<>(announcements, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
-    // News endpoint that returns the same data as active announcements
-    @GetMapping("/news")
-    public ResponseEntity<List<Announcement>> getNews() {
-        try {
-            List<Announcement> announcements = announcementService.getActiveAnnouncementsWithFullImageUrls();
-            if (announcements.isEmpty()) {
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-            }
-            return new ResponseEntity<>(announcements, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
     @GetMapping("/admin/{adminId}")
-    public ResponseEntity<List<Announcement>> getAnnouncementsByAdmin(@PathVariable("adminId") String adminId) {
-        List<Announcement> announcements = announcementService.getAnnouncementsByAdminWithFullImageUrls(adminId);
-        return new ResponseEntity<>(announcements, HttpStatus.OK);
+    public ResponseEntity<List<News>> getNewsByAdmin(@PathVariable("adminId") String adminId) {
+        List<News> news = newsService.getNewsByAdminWithFullImageUrls(adminId);
+        return new ResponseEntity<>(news, HttpStatus.OK);
     }
 
     @GetMapping("/type/{type}")
-    public ResponseEntity<List<Announcement>> getAnnouncementsByType(@PathVariable("type") String type) {
-        List<Announcement> announcements = announcementService.getAnnouncementByTypeWithFullImageUrls(type);
-        return new ResponseEntity<>(announcements, HttpStatus.OK);
+    public ResponseEntity<List<News>> getNewsByType(@PathVariable("type") String type) {
+        List<News> news = newsService.getNewsByTypeWithFullImageUrls(type);
+        return new ResponseEntity<>(news, HttpStatus.OK);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<Announcement>> searchAnnouncementsByTitle(@RequestParam("title") String title) {
-        List<Announcement> announcements = announcementService.searchAnnouncementsByTitleWithFullImageUrls(title);
-        return new ResponseEntity<>(announcements, HttpStatus.OK);
+    public ResponseEntity<List<News>> searchNewsByTitle(@RequestParam("title") String title) {
+        List<News> news = newsService.searchNewsByTitleWithFullImageUrls(title);
+        return new ResponseEntity<>(news, HttpStatus.OK);
     }
 }

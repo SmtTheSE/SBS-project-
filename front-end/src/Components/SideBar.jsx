@@ -60,7 +60,7 @@ const SideBar = () => {
       ],
     },
     {
-      id: 4,
+      id: 3,
       name: "Profile",
       icon: faUser,
       link: "/profile",
@@ -68,6 +68,13 @@ const SideBar = () => {
       children: [
         {
           id: 1,
+          name: "Dashboard",
+          icon: faHome,
+          link: "/profile",
+          isCurrent: false,
+        },
+        {
+          id: 2,
           name: "Change Password",
           icon: faUser,
           link: "/change-password",
@@ -93,6 +100,24 @@ const SideBar = () => {
     setSideBarMenus((prevMenus) =>
       prevMenus.map((menu) =>
         menu.id === 2 // Academic menu
+          ? {
+              ...menu,
+children: menu.children.map((child) =>
+                child.id === id
+                  ? { ...child, isCurrent: true }
+                  : { ...child, isCurrent: false }
+              ),
+            }
+          : menu
+      )
+    );
+  };
+  
+  // Handle Profile child menu clicks without affecting top-level menus
+  const profileMenuHandler = (id) => {
+    setSideBarMenus((prevMenus) =>
+      prevMenus.map((menu) =>
+        menu.id === 3 // Profile menu
           ? {
               ...menu,
 children: menu.children.map((child) =>
@@ -160,6 +185,8 @@ children: menu.children.map((child) =>
                       e.stopPropagation(); // prevent parent click
                       if (menu.id === 2) {
                         academicMenuHandler(child.id);
+                      } else if (menu.id === 3) {
+                        profileMenuHandler(child.id);
                       }
                     }}
                   >

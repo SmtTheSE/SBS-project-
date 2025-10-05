@@ -7,9 +7,6 @@ const HomePage = () => {
   const [news, setNews] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
 
-  // CDN / backend base path for images (used when DB stores only filenames)
-  const IMAGE_BASE_URL = "https://cdn.sbs.edu.vn/announcements/";
-
   // Fallback sample news (used when backend has none)
   const sampleNews = [
     {
@@ -36,7 +33,6 @@ const HomePage = () => {
 
   useEffect(() => {
     fetchAnnouncements();
-    fetchNews();
   }, []);
 
   const fetchAnnouncements = async () => {
@@ -46,42 +42,53 @@ const HomePage = () => {
       );
       const data = Array.isArray(response.data) ? response.data : [];
 
-      const mapped = data.map((a) => {
-        let imageUrl = a.imageUrl || "";
-        // if it's not a full URL, prepend base path
-        if (imageUrl && !/^https?:\/\//i.test(imageUrl)) {
-          imageUrl = `${IMAGE_BASE_URL}${imageUrl}`;
-        }
+      // Filter announcements for news section (System or Emergency type)
+      const systemOrEmergencyAnnouncements = data.filter(a => 
+        a.announcementType === "System" || a.announcementType === "Emergency"
+      );
 
+      // Filter announcements for announcements section (NOT System or Emergency type)
+      const otherAnnouncements = data.filter(a => 
+        a.announcementType !== "System" && a.announcementType !== "Emergency"
+      );
+
+      // Map announcements for news section
+      const mappedNews = systemOrEmergencyAnnouncements.map((a) => {
         return {
           id: a.announcementId,
           title: a.title,
-          image: imageUrl || "https://via.placeholder.com/300x200?text=No+Image",
+          image: a.imageUrl || "https://via.placeholder.com/300x200?text=No+Image",
           detail: a.announcementType,
           duration: `${a.startDate} to ${a.endDate}`,
           description: a.description || "",
         };
       });
 
-      setAnnouncements(mapped);
-    } catch (err) {
-      console.error("Failed to fetch announcements:", err);
-      setAnnouncements([]);
-    }
-  };
+      // Map announcements for announcements section
+      const mappedAnnouncements = otherAnnouncements.map((a) => {
+        return {
+          id: a.announcementId,
+          title: a.title,
+          image: a.imageUrl || "https://via.placeholder.com/300x200?text=No+Image",
+          detail: a.announcementType,
+          duration: `${a.startDate} to ${a.endDate}`,
+          description: a.description || "",
+        };
+      });
 
-  const fetchNews = async () => {
-    try {
-      const response = await axios.get("http://localhost:8080/api/news"); // optional backend
-      const data = Array.isArray(response.data) ? response.data : [];
-      if (data.length === 0) {
+      // Set news - use mapped system or emergency announcements or fallback to sample
+      if (mappedNews.length === 0) {
         setNews(sampleNews);
       } else {
-        setNews(data);
+        setNews(mappedNews);
       }
+
+      // Set other announcements
+      setAnnouncements(mappedAnnouncements);
     } catch (err) {
-      console.warn("News API not available, falling back to sample.");
+      console.error("Failed to fetch announcements:", err);
       setNews(sampleNews);
+      setAnnouncements([]);
     }
   };
 

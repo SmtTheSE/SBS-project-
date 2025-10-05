@@ -36,6 +36,8 @@ import AdminStudentProgressSummaryManager from "../Pages/AdminStudentProgressSum
 import AdminStudyPlanCourseManager from "../Pages/AdminStudyPlanCourseManager";
 import ChangePassword from "../Pages/ChangePassword";
 import AdminChangePassword from "../Pages/AdminChangePassword";
+import AdminNewsManager from "../Pages/AdminNewsManager";
+import VisaPassport from "../Pages/VisaPassport";
 
 const router = createBrowserRouter([
   {
@@ -66,6 +68,10 @@ const router = createBrowserRouter([
       {
         path: "attendence",
         element: <Attendance />
+      },
+      {
+        path: "visa-passport",
+        element: <VisaPassport />
       }
     ],
   },
@@ -81,6 +87,10 @@ const router = createBrowserRouter([
       {
         path: "announcements",
         element: <AdminAnnouncementManager />,
+      },
+      {
+        path: "news",
+        element: <AdminNewsManager />,
       },
       {
         path: "students",

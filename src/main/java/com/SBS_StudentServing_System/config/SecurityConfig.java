@@ -34,6 +34,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/accounts/*/change-password").authenticated()
                         .requestMatchers("/api/admin/accounts/*/change-password").authenticated()
                         .requestMatchers("/api/announcements/**").permitAll()
+                        .requestMatchers("/api/news/**").permitAll()
                         .requestMatchers("/api/admin/students/**").permitAll()
                         .requestMatchers("/api/admin/lecturers/**").permitAll()
                         .requestMatchers("/api/admin/visa-passports/**").hasRole("ADMIN")

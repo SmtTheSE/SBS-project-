@@ -17,7 +17,7 @@ import { Link } from "react-router-dom";
 const AdminSideBar = () => {
   const [sideBarMenus, setSideBarMenus] = useState([
    {
-id: 1,
+      id: 1,
       name: "Management",
       icon: faUser,
       link: "/admin",
@@ -32,55 +32,62 @@ isCurrent: false,
         },
         {
           id: 2,
+          name: "News Adding",
+          icon: faUser,
+          link: "/admin/news",
+          isCurrent: false,
+        },
+        {
+          id: 3,
           name: "Students",
           icon: faUser,
           link: "/admin/students",
           isCurrent: false,
         },
         {
-          id: 3,
+          id: 4,
           name: "Lecturers",
           icon: faUser,
-         link: "/admin/lecturers",
+          link: "/admin/lecturers",
           isCurrent: false,
         },
         {
-          id: 4,
+          id: 5,
           name: "Visa/Passport",
           icon: faPassport,
           link: "/admin/visa-passports",
           isCurrent: false,
         },
         {
-          id: 5,
+          id: 6,
           name: "Scholarships",
           icon: faGraduationCap,
           link: "/admin/scholarships",
           isCurrent: false,
         },
         {
-          id: 6,
+          id: 7,
           name: "Tuition Payments",
           icon: faMoneyCheck,
           link: "/admin/tuition-payments",
           isCurrent: false,
         },
         {
-          id: 7,
+          id: 8,
           name: "Visa Extensions",
           icon: faPassport,
           link: "/admin/visa-extensions",
           isCurrent: false,
         },
         {
-          id: 8,
+          id: 9,
           name: "Transfer Programs",
           icon: faGraduationCap,
           link: "/admin/transfer-programs",
           isCurrent: false,
         },
         {
-          id: 9,
+          id: 10,
           name: "Partner Institutions",
           icon: faUser,
           link: "/admin/partner-institutions",
@@ -110,7 +117,7 @@ isCurrent: false,
           isCurrent: false,
         },
         {
-id: 3,
+          id: 3,
           name: "Semesters",
 icon: faCalendarAlt,
           link: "/admin/academic/semesters",
@@ -132,7 +139,7 @@ icon: faCalendarAlt,
         },
         {
           id: 6,
-          name: "StudentEnrollments",
+          name: "Student Enrollments",
           icon: faUser,
          link: "/admin/academic/enrollments",
           isCurrent: false,
@@ -166,7 +173,7 @@ name: "Course Results",
           isCurrent: false,
         },
         {
-id: 11,
+          id: 11,
           name:"Placement Tests",
           icon: faClipboardList,
           link: "/admin/academic/student-placement-tests",
@@ -202,7 +209,7 @@ id: 11,
         },
      ],
     },
-   {
+    {
       id: 3,
       name: "Profile",
       icon: faUser,
@@ -215,12 +222,12 @@ id: 11,
           icon: faUser,
           link: "/admin/change-password",
           isCurrent: false,
-},
+        },
       ],
     },
  ]);
 
-// Handle Management menu clicks
+  // Handle Management menu clicks
   const handleMenus = (id) => {
     setSideBarMenus((prevMenus) =>
       prevMenus.map((menu) =>
@@ -228,7 +235,7 @@ id: 11,
           ? { ...menu, isCurrent: true }
           : { ...menu, isCurrent: false }
      )
-);
+    );
   };
 
   // Handle Management child menu clicks
@@ -259,7 +266,7 @@ setSideBarMenus((prevMenus) =>
               children: menu.children.map((child) =>
                 child.id === id
                   ? { ...child, isCurrent: true }
-                  : {...child,isCurrent: false }
+                  : {...child, isCurrent: false }
               ),
             }
           : menu
@@ -270,7 +277,7 @@ setSideBarMenus((prevMenus) =>
   return(
     <nav className="fixed bg-iconic w-80 h-screen flex flex-col justify-start items-start gap-3 p-5 overflow-y-auto">
       {sideBarMenus.map((menu) =>
-       menu.children == null ? (
+        menu.children == null ? (
           <Link
             key={menu.id}
             to={menu.link}
@@ -285,7 +292,7 @@ setSideBarMenus((prevMenus) =>
         ) : (
           <div
             key={menu.id}
-            className={`text-2xl p-5 w-full rounded-md flexflex-col cursor-pointer transition-all duration-200 ${
+            className={`text-2xl p-5 w-full rounded-md flex flex-col cursor-pointer transition-all duration-200 ${
               menu.isCurrent
                 ? "bg-white text-iconic"
                 : "text-white hover:bg-white/10"
