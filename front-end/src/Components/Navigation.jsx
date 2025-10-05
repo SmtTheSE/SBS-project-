@@ -7,12 +7,14 @@ import { useNavigate, useLocation } from "react-router-dom";
 
 import defaultProfile from "../assets/profiles/profile.jpeg";
 import axiosInstance from "../utils/axiosInstance";
+import { useProfileImage } from "../utils/profileImageContext";
 
 const Navigation = () => {
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { profileImage } = useProfileImage();
 
   useEffect(() => {
     const fetchPendingRequests = async () => {
@@ -92,7 +94,7 @@ const Navigation = () => {
             >
               <div className="w-12 h-12 overflow-hidden rounded-full">
                 <img
-                 src={defaultProfile}
+                 src={profileImage}
                   alt="Profile pic"
                   className="w-full h-full object-cover"
                 />

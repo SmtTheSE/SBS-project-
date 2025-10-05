@@ -31,13 +31,6 @@ const AdminSideBar = () => {
 isCurrent: false,
         },
         {
-          id: 2,
-          name: "News Adding",
-          icon: faUser,
-          link: "/admin/news",
-          isCurrent: false,
-        },
-        {
           id: 3,
           name: "Students",
           icon: faUser,

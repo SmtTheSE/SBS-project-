@@ -15,5 +15,6 @@ public interface CourseResultRepository extends JpaRepository<CourseResult, Long
 
     @Query("SELECT cr FROM CourseResult cr WHERE cr.student.studentId = :studentId")
     List<CourseResult> findAllByStudentId(@Param("studentId") String studentId);
-
+    
+    List<CourseResult> findByStudentStudentId(String studentId);
 }

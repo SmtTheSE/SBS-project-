@@ -4,5 +4,9 @@ import com.SBS_StudentServing_System.model.academic.StudentEnrollment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
-public interface StudentEnrollmentRepository extends JpaRepository<StudentEnrollment, Long> {}
+public interface StudentEnrollmentRepository extends JpaRepository<StudentEnrollment, Long> {
+    List<StudentEnrollment> findByStudentStudentId(String studentId);
+}

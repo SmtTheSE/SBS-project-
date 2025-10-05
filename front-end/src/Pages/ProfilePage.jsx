@@ -12,16 +12,17 @@ import credit from "../assets/icons/score.png";
 import axiosInstance from "../utils/axiosInstance";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useProfileImage } from "../utils/profileImageContext";
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [generalInfo, setGeneralInfo] = useState({ paymentStatus: null, totalCredits: null });
   const [classTimeline, setClassTimeline] = useState([]);
   const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
-  const [profileImage, setProfileImage] = useState(defaultProfile);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+  const { profileImage, updateProfileImage } = useProfileImage();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -46,13 +47,11 @@ const ProfilePage = () => {
       .then((res) => {
         if (res.data.imageUrl) {
           // Add timestamp to prevent browser caching
-          setProfileImage(`${res.data.imageUrl}?t=${new Date().getTime()}`);
-        } else {
-          setProfileImage(defaultProfile);
+          updateProfileImage(res.data.imageUrl);
         }
       })
       .catch(() => {
-        setProfileImage(defaultProfile);
+        // Error handling - use default profile image
       });
   };
 
@@ -83,7 +82,7 @@ const ProfilePage = () => {
     })
       .then((res) => {
         // Update profile image with new one (add timestamp to prevent caching)
-        setProfileImage(`${res.data.imageUrl}?t=${new Date().getTime()}`);
+        updateProfileImage(res.data.imageUrl);
       })
       .catch((error) => {
         console.error("Error uploading profile image:", error);
