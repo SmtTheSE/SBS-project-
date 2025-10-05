@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../api/axios';
+import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton } from '../Components/ModernForm';
 
 const AdminAttendanceManager = () => {
   const [activeTab, setActiveTab] = useState('summary'); // 'summary' or 'daily'
@@ -203,7 +204,7 @@ const AdminAttendanceManager = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h1 className="text-3xl font-bold text-gray-800 mb-6">Attendance Management</h1>
           <p className="text-gray-600 mb-6">
@@ -218,15 +219,25 @@ const AdminAttendanceManager = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Attendance Management</h1>
-        <p className="text-gray-600 mb-6">
-          Manage student attendance records
-        </p>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Attendance Management</h1>
+            <p className="text-gray-600">
+              Manage student attendance records
+            </p>
+          </div>
+          <FormButton
+            variant="primary"
+            onClick={openAddModal}
+          >
+            Add New Record
+          </FormButton>
+        </div>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
             {error}
           </div>
         )}
@@ -247,64 +258,95 @@ const AdminAttendanceManager = () => {
           </button>
         </div>
 
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={openAddModal}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Add New Record
-          </button>
-        </div>
-
         {/* Attendance Summary Table */}
         {activeTab === 'summary' && (
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-200">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="py-2 px-4 border-b text-left">ID</th>
-                  <th className="py-2 px-4 border-b text-left">Student</th>
-                  <th className="py-2 px-4 border-b text-left">Study Plan Course</th>
-                  <th className="py-2 px-4 border-b text-left">Present Days</th>
-                  <th className="py-2 px-4 border-b text-left">Total Days</th>
-                  <th className="py-2 px-4 border-b text-left">Absent Days</th>
-                  <th className="py-2 px-4 border-b text-left">Attendance %</th>
-                  <th className="py-2 px-4 border-b text-left">Flag Level</th>
-                  <th className="py-2 px-4 border-b text-left">Actions</th>
+          <div className="overflow-x-auto rounded-lg shadow">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Student
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Study Plan Course
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Present Days
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Days
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Absent Days
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Attendance %
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Flag Level
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-white divide-y divide-gray-200">
                 {Array.isArray(attendanceSummaries) && attendanceSummaries.length > 0 ? (
                   attendanceSummaries.map((summary) => (
-                    <tr key={summary.id}>
-                      <td className="py-2 px-4 border-b">{summary.id}</td>
-                      <td className="py-2 px-4 border-b">{summary.studentId}</td>
-                      <td className="py-2 px-4 border-b">{summary.studyPlanCourseId}</td>
-                      <td className="py-2 px-4 border-b">{summary.presentDays}</td>
-                      <td className="py-2 px-4 border-b">{summary.totalDays}</td>
-                      <td className="py-2 px-4 border-b">{summary.absentDays}</td>
-                      <td className="py-2 px-4 border-b">{summary.totalAttendancePercentage}%</td>
-                      <td className="py-2 px-4 border-b">{summary.flagLevel}</td>
-                      <td className="py-2 px-4 border-b">
+                    <tr key={summary.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {summary.id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {summary.studentId}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {summary.studyPlanCourseId}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {summary.presentDays}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {summary.totalDays}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {summary.absentDays}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {summary.totalAttendancePercentage}%
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {summary.flagLevel}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
                           onClick={() => openEditModal(summary)}
-                          className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mr-2"
+                          className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
+                          title="Edit"
                         >
-                          Edit
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
                         </button>
                         <button
                           onClick={() => handleDelete(summary)}
-                          className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                          className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                          title="Delete"
                         >
-                          Delete
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
                         </button>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="9" className="text-center py-4">
-                      No attendance summaries found
+                    <td colSpan="9" className="text-center py-12 bg-gray-50">
+                      <p className="text-gray-500 text-lg">No attendance summaries found</p>
                     </td>
                   </tr>
                 )}
@@ -315,51 +357,87 @@ const AdminAttendanceManager = () => {
 
         {/* Daily Attendance Table */}
         {activeTab === 'daily' && (
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-200">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="py-2 px-4 border-b text-left">Student</th>
-                  <th className="py-2 px-4 border-b text-left">Class Schedule</th>
-                  <th className="py-2 px-4 border-b text-left">Attendance Date</th>
-                  <th className="py-2 px-4 border-b text-left">Status</th>
-                  <th className="py-2 px-4 border-b text-left">Check In</th>
-                  <th className="py-2 px-4 border-b text-left">Check Out</th>
-                  <th className="py-2 px-4 border-b text-left">Note</th>
-                  <th className="py-2 px-4 border-b text-left">Actions</th>
+          <div className="overflow-x-auto rounded-lg shadow">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Student
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Class Schedule
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Attendance Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Check In
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Check Out
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Note
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-white divide-y divide-gray-200">
                 {Array.isArray(dailyAttendances) && dailyAttendances.length > 0 ? (
                   dailyAttendances.map((attendance, index) => (
-                    <tr key={`${attendance.studentId}-${attendance.classScheduleId}-${index}`}>
-                      <td className="py-2 px-4 border-b">{attendance.studentId}</td>
-                      <td className="py-2 px-4 border-b">{attendance.classScheduleId}</td>
-                      <td className="py-2 px-4 border-b">{attendance.attendanceDate}</td>
-                      <td className="py-2 px-4 border-b">{attendance.status}</td>
-                      <td className="py-2 px-4 border-b">{attendance.checkInTime || '-'}</td>
-                      <td className="py-2 px-4 border-b">{attendance.checkOutTime || '-'}</td>
-                      <td className="py-2 px-4 border-b">{attendance.note || '-'}</td>
-                      <td className="py-2 px-4 border-b">
+                    <tr key={`${attendance.studentId}-${attendance.classScheduleId}-${index}`} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {attendance.studentId}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {attendance.classScheduleId}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {attendance.attendanceDate}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {attendance.status}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {attendance.checkInTime || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {attendance.checkOutTime || '-'}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {attendance.note || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
                           onClick={() => openEditModal(attendance)}
-                          className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mr-2"
+                          className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
+                          title="Edit"
                         >
-                          Edit
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
                         </button>
                         <button
                           onClick={() => handleDelete(attendance)}
-                          className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                          className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                          title="Delete"
                         >
-                          Delete
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
                         </button>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="8" className="text-center py-4">
-                      No daily attendance records found
+                    <td colSpan="8" className="text-center py-12 bg-gray-50">
+                      <p className="text-gray-500 text-lg">No daily attendance records found</p>
                     </td>
                   </tr>
                 )}
@@ -370,294 +448,269 @@ const AdminAttendanceManager = () => {
 
         {/* Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg w-1/3 max-h-screen overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">
-                {isEditing ? 'Edit Record' : 'Add New Record'}
-              </h2>
-              <form onSubmit={handleSubmit}>
-                {activeTab === 'summary' ? (
-                  // Attendance Summary Form
-                  <>
-                    {!isEditing && (
-                      <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="id">
-                          ID
-                        </label>
-                        <input
-                          type="text"
-                          id="id"
-                          name="id"
-                          value={currentRecord.id || ''}
-                          onChange={handleInputChange}
-                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          disabled
-                        />
-                      </div>
-                    )}
-                    
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="studentId">
-                        Student
-                      </label>
-                      <select
-                        id="studentId"
-                        name="studentId"
-                        value={currentRecord.studentId}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        required
-                      >
-                        <option value="">Select a Student</option>
-                        {students.map(student => (
-                          <option key={student.studentId} value={student.studentId}>
-                            {student.studentId} - {student.firstName} {student.lastName}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="studyPlanCourseId">
-                        Study Plan Course
-                      </label>
-                      <select
-                        id="studyPlanCourseId"
-                        name="studyPlanCourseId"
-                        value={currentRecord.studyPlanCourseId}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        required
-                      >
-                        <option value="">Select a Study Plan Course</option>
-                        {studyPlanCourses.map(course => (
-                          <option key={course.studyPlanCourseId} value={course.studyPlanCourseId}>
-                            {course.studyPlanCourseId}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="presentDays">
-                        Present Days
-                      </label>
-                      <input
-                        type="number"
-                        id="presentDays"
-                        name="presentDays"
-                        value={currentRecord.presentDays}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="totalDays">
-                        Total Days
-                      </label>
-                      <input
-                        type="number"
-                        id="totalDays"
-                        name="totalDays"
-                        value={currentRecord.totalDays}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="absentDays">
-                        Absent Days
-                      </label>
-                      <input
-                        type="number"
-                        id="absentDays"
-                        name="absentDays"
-                        value={currentRecord.absentDays}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="totalAttendancePercentage">
-                        Attendance Percentage (0-100)
-                      </label>
-                      <input
-                        type="number"
-                        id="totalAttendancePercentage"
-                        name="totalAttendancePercentage"
-                        value={currentRecord.totalAttendancePercentage}
-                        onChange={handleInputChange}
-                        min="0"
-                        max="100"
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="flagLevel">
-                        Flag Level
-                      </label>
-                      <select
-                        id="flagLevel"
-                        name="flagLevel"
-                        value={currentRecord.flagLevel}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        required
-                      >
-                        <option value="Low">Low</option>
-                        <option value="Warning">Warning</option>
-                        <option value="Good">Good</option>
-                        <option value="Excellent">Excellent</option>
-                      </select>
-                    </div>
-                  </>
-                ) : (
-                  // Daily Attendance Form
-                  <>
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="studentId">
-                        Student
-                      </label>
-                      <select
-                        id="studentId"
-                        name="studentId"
-                        value={currentRecord.studentId}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        required
-                      >
-                        <option value="">Select a Student</option>
-                        {students.map(student => (
-                          <option key={student.studentId} value={student.studentId}>
-                            {student.studentId} - {student.firstName} {student.lastName}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="classScheduleId">
-                        Class Schedule
-                      </label>
-                      <select
-                        id="classScheduleId"
-                        name="classScheduleId"
-                        value={currentRecord.classScheduleId}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        required
-                      >
-                        <option value="">Select a Class Schedule</option>
-                        {classSchedules.map(schedule => (
-                          <option key={schedule.classScheduleId} value={schedule.classScheduleId}>
-                            {schedule.classScheduleId}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="attendanceDate">
-                        Attendance Date
-                      </label>
-                      <input
-                        type="date"
-                        id="attendanceDate"
-                        name="attendanceDate"
-                        value={currentRecord.attendanceDate}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="status">
-                        Status
-                      </label>
-                      <select
-                        id="status"
-                        name="status"
-                        value={currentRecord.status}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        required
-                      >
-                        <option value="Present">Present</option>
-                        <option value="Absent">Absent</option>
-                        <option value="Absent with permission">Absent with permission</option>
-                        <option value="Late">Late</option>
-                      </select>
-                    </div>
-                    
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="checkInTime">
-                        Check In Time
-                      </label>
-                      <input
-                        type="time"
-                        id="checkInTime"
-                        name="checkInTime"
-                        value={currentRecord.checkInTime}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      />
-                    </div>
-                    
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="checkOutTime">
-                        Check Out Time
-                      </label>
-                      <input
-                        type="time"
-                        id="checkOutTime"
-                        name="checkOutTime"
-                        value={currentRecord.checkOutTime}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      />
-                    </div>
-                    
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="note">
-                        Note
-                      </label>
-                      <textarea
-                        id="note"
-                        name="note"
-                        value={currentRecord.note}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        rows="3"
-                      />
-                    </div>
-                  </>
-                )}
-
-                <div className="flex justify-end">
-                  <button
-                    type="button"
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {isEditing ? 'Edit Record' : 'Add New Record'}
+                  </h2>
+                  <button 
                     onClick={closeModal}
-                    className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2"
+                    className="text-gray-500 hover:text-gray-700"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                  >
-                    {isEditing ? 'Update' : 'Create'}
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                   </button>
                 </div>
-              </form>
+                
+                <ModernForm onSubmit={handleSubmit}>
+                  {activeTab === 'summary' ? (
+                    // Attendance Summary Form
+                    <>
+                      {!isEditing && (
+                        <FormGroup>
+                          <FormLabel>ID</FormLabel>
+                          <FormInput
+                            type="text"
+                            id="id"
+                            name="id"
+                            value={currentRecord.id || ''}
+                            onChange={handleInputChange}
+                            disabled
+                          />
+                        </FormGroup>
+                      )}
+                      
+                      <FormGroup>
+                        <FormLabel required>Student</FormLabel>
+                        <FormSelect
+                          id="studentId"
+                          name="studentId"
+                          value={currentRecord.studentId}
+                          onChange={handleInputChange}
+                          required
+                        >
+                          <option value="">Select a Student</option>
+                          {students.map(student => (
+                            <option key={student.studentId} value={student.studentId}>
+                              {student.studentId} - {student.firstName} {student.lastName}
+                            </option>
+                          ))}
+                        </FormSelect>
+                      </FormGroup>
+                      
+                      <FormGroup>
+                        <FormLabel required>Study Plan Course</FormLabel>
+                        <FormSelect
+                          id="studyPlanCourseId"
+                          name="studyPlanCourseId"
+                          value={currentRecord.studyPlanCourseId}
+                          onChange={handleInputChange}
+                          required
+                        >
+                          <option value="">Select a Study Plan Course</option>
+                          {studyPlanCourses.map(course => (
+                            <option key={course.studyPlanCourseId} value={course.studyPlanCourseId}>
+                              {course.studyPlanCourseId}
+                            </option>
+                          ))}
+                        </FormSelect>
+                      </FormGroup>
+                      
+                      <FormRow>
+                        <FormGroup>
+                          <FormLabel required>Present Days</FormLabel>
+                          <FormInput
+                            type="number"
+                            id="presentDays"
+                            name="presentDays"
+                            value={currentRecord.presentDays}
+                            onChange={handleInputChange}
+                            required
+                          />
+                        </FormGroup>
+                        
+                        <FormGroup>
+                          <FormLabel required>Total Days</FormLabel>
+                          <FormInput
+                            type="number"
+                            id="totalDays"
+                            name="totalDays"
+                            value={currentRecord.totalDays}
+                            onChange={handleInputChange}
+                            required
+                          />
+                        </FormGroup>
+                      </FormRow>
+                      
+                      <FormRow>
+                        <FormGroup>
+                          <FormLabel required>Absent Days</FormLabel>
+                          <FormInput
+                            type="number"
+                            id="absentDays"
+                            name="absentDays"
+                            value={currentRecord.absentDays}
+                            onChange={handleInputChange}
+                            required
+                          />
+                        </FormGroup>
+                        
+                        <FormGroup>
+                          <FormLabel required>Attendance Percentage (0-100)</FormLabel>
+                          <FormInput
+                            type="number"
+                            id="totalAttendancePercentage"
+                            name="totalAttendancePercentage"
+                            value={currentRecord.totalAttendancePercentage}
+                            onChange={handleInputChange}
+                            min="0"
+                            max="100"
+                            required
+                          />
+                        </FormGroup>
+                      </FormRow>
+                      
+                      <FormGroup>
+                        <FormLabel required>Flag Level</FormLabel>
+                        <FormSelect
+                          id="flagLevel"
+                          name="flagLevel"
+                          value={currentRecord.flagLevel}
+                          onChange={handleInputChange}
+                          required
+                        >
+                          <option value="Low">Low</option>
+                          <option value="Warning">Warning</option>
+                          <option value="Good">Good</option>
+                          <option value="Excellent">Excellent</option>
+                        </FormSelect>
+                      </FormGroup>
+                    </>
+                  ) : (
+                    // Daily Attendance Form
+                    <>
+                      <FormGroup>
+                        <FormLabel required>Student</FormLabel>
+                        <FormSelect
+                          id="studentId"
+                          name="studentId"
+                          value={currentRecord.studentId}
+                          onChange={handleInputChange}
+                          required
+                        >
+                          <option value="">Select a Student</option>
+                          {students.map(student => (
+                            <option key={student.studentId} value={student.studentId}>
+                              {student.studentId} - {student.firstName} {student.lastName}
+                            </option>
+                          ))}
+                        </FormSelect>
+                      </FormGroup>
+                      
+                      <FormGroup>
+                        <FormLabel required>Class Schedule</FormLabel>
+                        <FormSelect
+                          id="classScheduleId"
+                          name="classScheduleId"
+                          value={currentRecord.classScheduleId}
+                          onChange={handleInputChange}
+                          required
+                        >
+                          <option value="">Select a Class Schedule</option>
+                          {classSchedules.map(schedule => (
+                            <option key={schedule.classScheduleId} value={schedule.classScheduleId}>
+                              {schedule.classScheduleId}
+                            </option>
+                          ))}
+                        </FormSelect>
+                      </FormGroup>
+                      
+                      <FormGroup>
+                        <FormLabel required>Attendance Date</FormLabel>
+                        <FormInput
+                          type="date"
+                          id="attendanceDate"
+                          name="attendanceDate"
+                          value={currentRecord.attendanceDate}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </FormGroup>
+                      
+                      <FormGroup>
+                        <FormLabel required>Status</FormLabel>
+                        <FormSelect
+                          id="status"
+                          name="status"
+                          value={currentRecord.status}
+                          onChange={handleInputChange}
+                          required
+                        >
+                          <option value="Present">Present</option>
+                          <option value="Absent">Absent</option>
+                          <option value="Absent with permission">Absent with permission</option>
+                          <option value="Late">Late</option>
+                        </FormSelect>
+                      </FormGroup>
+                      
+                      <FormRow>
+                        <FormGroup>
+                          <FormLabel>Check In Time</FormLabel>
+                          <FormInput
+                            type="time"
+                            id="checkInTime"
+                            name="checkInTime"
+                            value={currentRecord.checkInTime}
+                            onChange={handleInputChange}
+                          />
+                        </FormGroup>
+                        
+                        <FormGroup>
+                          <FormLabel>Check Out Time</FormLabel>
+                          <FormInput
+                            type="time"
+                            id="checkOutTime"
+                            name="checkOutTime"
+                            value={currentRecord.checkOutTime}
+                            onChange={handleInputChange}
+                          />
+                        </FormGroup>
+                      </FormRow>
+                      
+                      <FormGroup>
+                        <FormLabel>Note</FormLabel>
+                        <textarea
+                          id="note"
+                          name="note"
+                          value={currentRecord.note}
+                          onChange={handleInputChange}
+                          className="mt-1 block w-full rounded-lg border border-gray-300 py-2 px-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          rows="3"
+                        />
+                      </FormGroup>
+                    </>
+                  )}
+
+                  <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
+                    <FormButton
+                      type="button"
+                      variant="secondary"
+                      onClick={closeModal}
+                    >
+                      Cancel
+                    </FormButton>
+                    <FormButton
+                      type="submit"
+                      variant="success"
+                    >
+                      {isEditing ? 'Update' : 'Create'}
+                    </FormButton>
+                  </div>
+                </ModernForm>
+              </div>
             </div>
           </div>
         )}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { ModernForm, FormButton } from '../Components/ModernForm';
 
 const AdminTranscriptRequestManager = () => {
   const [requests, setRequests] = useState([]);
@@ -58,7 +59,7 @@ const AdminTranscriptRequestManager = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h1 className="text-3xl font-bold text-gray-800 mb-6">Transcript Request Management</h1>
           <div className="text-center py-12">
@@ -71,17 +72,18 @@ const AdminTranscriptRequestManager = () => {
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h1 className="text-3xl font-bold text-gray-800 mb-6">Transcript Request Management</h1>
           <div className="text-center py-12">
             <p className="text-red-500 text-lg">Error: {error}</p>
-            <button 
+            <FormButton 
+              variant="primary"
               onClick={fetchTranscriptRequests}
-              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              className="mt-4"
             >
               Retry
-            </button>
+            </FormButton>
           </div>
         </div>
       </div>
@@ -89,49 +91,73 @@ const AdminTranscriptRequestManager = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Transcript Request Management</h1>
-        <p className="text-gray-600 mb-6">
-          Manage student transcript requests
-        </p>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Transcript Request Management</h1>
+            <p className="text-gray-600">
+              Manage student transcript requests • Total: {requests.length}
+            </p>
+          </div>
+        </div>
         
         {requests.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-lg">
             <p className="text-gray-500 text-lg">No transcript requests found</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-200">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="py-2 px-4 border-b text-left">Request ID</th>
-                  <th className="py-2 px-4 border-b text-left">Student ID</th>
-                  <th className="py-2 px-4 border-b text-left">Student Name</th>
-                  <th className="py-2 px-4 border-b text-left">Type</th>
-                  <th className="py-2 px-4 border-b text-left">Date</th>
-                  <th className="py-2 px-4 border-b text-left">Status</th>
-                  <th className="py-2 px-4 border-b text-left">Message</th>
-                  <th className="py-2 px-4 border-b text-left">Actions</th>
+          <div className="overflow-x-auto rounded-lg shadow">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Request ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Student ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Student Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Message
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-white divide-y divide-gray-200">
                 {requests.map((request) => (
                   <tr key={request.id} className="hover:bg-gray-50">
-                    <td className="py-2 px-4 border-b">{request.request?.requestId || 'N/A'}</td>
-                    <td className="py-2 px-4 border-b">{request.student?.studentId || 'N/A'}</td>
-                    <td className="py-2 px-4 border-b">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {request.request?.requestId || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {request.student?.studentId || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {request.student?.firstName || ''} {request.student?.lastName || ''}
                     </td>
-                    <td className="py-2 px-4 border-b">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {request.request?.transcriptType === 0 ? 'Unofficial' : 
                        request.request?.transcriptType === 1 ? 'Official' : 'Unknown'}
                     </td>
-                    <td className="py-2 px-4 border-b">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {request.request?.requestDate ? new Date(request.request.requestDate).toLocaleDateString() : 'N/A'}
                     </td>
-                    <td className="py-2 px-4 border-b">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         request.requestStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
                         request.requestStatus === 'Approved' ? 'bg-blue-100 text-blue-800' :
                         request.requestStatus === 'Rejected' ? 'bg-red-100 text-red-800' :
@@ -141,31 +167,34 @@ const AdminTranscriptRequestManager = () => {
                         {request.requestStatus}
                       </span>
                     </td>
-                    <td className="py-2 px-4 border-b">{request.optionalMessage || 'N/A'}</td>
-                    <td className="py-2 px-4 border-b">
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {request.optionalMessage || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       {request.requestStatus === 'Pending' && (
                         <div className="flex space-x-2">
-                          <button
+                          <FormButton
+                            variant="success"
                             onClick={() => updateRequestStatus(request.id, 'Approved')}
-                            className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
+                            className="mr-2"
                           >
                             Approve
-                          </button>
-                          <button
+                          </FormButton>
+                          <FormButton
+                            variant="danger"
                             onClick={() => updateRequestStatus(request.id, 'Rejected')}
-                            className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
                           >
                             Reject
-                          </button>
+                          </FormButton>
                         </div>
                       )}
                       {request.requestStatus === 'Approved' && (
-                        <button
+                        <FormButton
+                          variant="primary"
                           onClick={() => updateRequestStatus(request.id, 'Issued')}
-                          className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
                         >
                           Mark as Issued
-                        </button>
+                        </FormButton>
                       )}
                     </td>
                   </tr>
