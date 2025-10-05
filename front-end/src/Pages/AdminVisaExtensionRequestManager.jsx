@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../utils/axiosInstance';
+import { ModernForm, FormButton } from '../Components/ModernForm';
 
 const AdminVisaExtensionRequestManager = () => {
   const [extensionRequests, setExtensionRequests] = useState([]);
@@ -84,7 +85,7 @@ const AdminVisaExtensionRequestManager = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h1 className="text-3xl font-bold text-gray-800 mb-6">Visa Extension Requests</h1>
           <p>Loading...</p>
@@ -94,71 +95,106 @@ const AdminVisaExtensionRequestManager = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Visa Extension Requests</h1>
-        <p className="text-gray-600 mb-6">
-          Manage student visa extension requests • Total: {extensionRequests.length}
-        </p>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Visa Extension Requests</h1>
+            <p className="text-gray-600">
+              Manage student visa extension requests • Total: {extensionRequests.length}
+            </p>
+          </div>
+        </div>
 
         {extensionRequests.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-lg">
             <p className="text-gray-500 text-lg">No visa extension requests found</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-200">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="py-3 px-4 border-b text-left">Request ID</th>
-                  <th className="py-3 px-4 border-b text-left">Student ID</th>
-                  <th className="py-3 px-4 border-b text-left">Visa Passport ID</th>
-                  <th className="py-3 px-4 border-b text-left">Request Date</th>
-                  <th className="py-3 px-4 border-b text-left">Requested Extension Until</th>
-                  <th className="py-3 px-4 border-b text-left">Status</th>
-                  <th className="py-3 px-4 border-b text-left">Notes</th>
-                  <th className="py-3 px-4 border-b text-left">Actions</th>
+          <div className="overflow-x-auto rounded-lg shadow">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Request ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Student ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Visa Passport ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Request Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Requested Extension Until
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Notes
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-white divide-y divide-gray-200">
                 {extensionRequests.map((request) => (
                   <tr key={request.extensionRequestId} className="hover:bg-gray-50">
-                    <td className="py-3 px-4 border-b">{request.extensionRequestId}</td>
-                    <td className="py-3 px-4 border-b">{request.studentId}</td>
-                    <td className="py-3 px-4 border-b">{request.visaPassportId}</td>
-                    <td className="py-3 px-4 border-b">{request.requestDate}</td>
-                    <td className="py-3 px-4 border-b">{request.requestedExtensionUntil}</td>
-                    <td className="py-3 px-4 border-b">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {request.extensionRequestId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {request.studentId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {request.visaPassportId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {request.requestDate}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {request.requestedExtensionUntil}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(request.status)}`}>
                         {getStatusText(request.status)}
                       </span>
                     </td>
-                    <td className="py-3 px-4 border-b">{request.notes || 'N/A'}</td>
-                    <td className="py-3 px-4 border-b">
-                      <div className="flex space-x-2">
-                        {request.status === 0 && ( // Only show approve/reject for pending requests
-                          <>
-                            <button
-                              onClick={() => updateRequestStatus(request.extensionRequestId, 1)}
-                              className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => updateRequestStatus(request.extensionRequestId, 2)}
-                              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                            >
-                              Reject
-                            </button>
-                          </>
-                        )}
-                        <button
-                          onClick={() => deleteRequest(request.extensionRequestId)}
-                          className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"
-                        >
-                          Delete
-                        </button>
-                      </div>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {request.notes || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      {request.status === 0 && ( // Only show approve/reject for pending requests
+                        <>
+                          <FormButton
+                            type="button"
+                            variant="success"
+                            onClick={() => updateRequestStatus(request.extensionRequestId, 1)}
+                            className="mr-2"
+                          >
+                            Approve
+                          </FormButton>
+                          <FormButton
+                            type="button"
+                            variant="danger"
+                            onClick={() => updateRequestStatus(request.extensionRequestId, 2)}
+                            className="mr-2"
+                          >
+                            Reject
+                          </FormButton>
+                        </>
+                      )}
+                      <FormButton
+                        type="button"
+                        variant="secondary"
+                        onClick={() => deleteRequest(request.extensionRequestId)}
+                      >
+                        Delete
+                      </FormButton>
                     </td>
                   </tr>
                 ))}
