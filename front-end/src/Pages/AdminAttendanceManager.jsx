@@ -15,7 +15,7 @@ const AdminAttendanceManager = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentRecord, setCurrentRecord] = useState({});
 
-  // 获取所有考勤汇总记录
+
   const fetchAttendanceSummaries = async () => {
     try {
       setLoading(true);
@@ -31,7 +31,7 @@ const AdminAttendanceManager = () => {
     }
   };
 
-  // 获取所有每日考勤记录
+
   const fetchDailyAttendances = async () => {
     try {
       setLoading(true);
@@ -47,7 +47,7 @@ const AdminAttendanceManager = () => {
     }
   };
 
-  // 获取所有学生（用于下拉列表）
+
   const fetchStudents = async () => {
     try {
       const response = await axios.get('/admin/students');
@@ -57,7 +57,7 @@ const AdminAttendanceManager = () => {
     }
   };
 
-  // 获取所有学习计划课程（用于下拉列表）
+
   const fetchStudyPlanCourses = async () => {
     try {
       const response = await axios.get('/academic/study-plan-courses');
@@ -67,7 +67,7 @@ const AdminAttendanceManager = () => {
     }
   };
 
-  // 获取所有课程时间表（用于下拉列表）
+
   const fetchClassSchedules = async () => {
     try {
       const response = await axios.get('/admin/academic/class-schedules');
@@ -88,7 +88,7 @@ const AdminAttendanceManager = () => {
     fetchClassSchedules();
   }, [activeTab]);
 
-  // 处理输入变化
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setCurrentRecord(prev => ({
@@ -97,7 +97,7 @@ const AdminAttendanceManager = () => {
     }));
   };
 
-  // 打开添加模态框
+
   const openAddModal = () => {
     setIsEditing(false);
     if (activeTab === 'summary') {
@@ -125,19 +125,19 @@ const AdminAttendanceManager = () => {
     setShowModal(true);
   };
 
-  // 打开编辑模态框
+
   const openEditModal = (record) => {
     setIsEditing(true);
     setCurrentRecord({ ...record });
     setShowModal(true);
   };
 
-  // 关闭模态框
+
   const closeModal = () => {
     setShowModal(false);
   };
 
-  // 提交表单
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -145,28 +145,28 @@ const AdminAttendanceManager = () => {
         const summaryData = { ...currentRecord };
         
         if (isEditing) {
-          // 更新考勤汇总记录
+
           await axios.put(`/admin/academic/attendance-summaries/${currentRecord.id}`, summaryData);
         } else {
-          // 创建新的考勤汇总记录
+
           await axios.post('/admin/academic/attendance-summaries', summaryData);
         }
       } else {
         const attendanceData = { ...currentRecord };
         
         if (isEditing) {
-          // 更新每日考勤记录
+
           await axios.put(`/admin/academic/daily-attendances/${currentRecord.studentId}/${currentRecord.classScheduleId}`, attendanceData);
         } else {
-          // 创建新的每日考勤记录
+
           await axios.post('/admin/academic/daily-attendances', attendanceData);
         }
       }
       closeModal();
       if (activeTab === 'summary') {
-        fetchAttendanceSummaries(); // 重新获取数据
+        fetchAttendanceSummaries();
       } else {
-        fetchDailyAttendances(); // 重新获取数据
+        fetchDailyAttendances();
       }
       setError('');
     } catch (err) {
@@ -175,13 +175,13 @@ const AdminAttendanceManager = () => {
     }
   };
 
-  // 删除记录
+
   const handleDelete = async (record) => {
     if (activeTab === 'summary') {
       if (window.confirm('Are you sure you want to delete this attendance summary?')) {
         try {
           await axios.delete(`/admin/academic/attendance-summaries/${record.id}`);
-          fetchAttendanceSummaries(); // 重新获取数据
+          fetchAttendanceSummaries();
           setError('');
         } catch (err) {
           console.error('Delete failed:', err);
@@ -192,7 +192,7 @@ const AdminAttendanceManager = () => {
       if (window.confirm('Are you sure you want to delete this daily attendance record?')) {
         try {
           await axios.delete(`/admin/academic/daily-attendances/${record.studentId}/${record.classScheduleId}`);
-          fetchDailyAttendances(); // 重新获取数据
+          fetchDailyAttendances();
           setError('');
         } catch (err) {
           console.error('Delete failed:', err);

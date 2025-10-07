@@ -55,4 +55,15 @@ public class AdminVisaExtensionRequestController {
             return ResponseEntity.badRequest().body("Error updating request: " + e.getMessage());
         }
     }
+    
+    // New endpoint to get requests by student ID
+    @GetMapping("/student/{studentId}")
+    public ResponseEntity<?> getByStudentId(@PathVariable String studentId) {
+        try {
+            List<VisaExtensionRequestDto> requests = visaExtensionRequestService.getByStudentId(studentId);
+            return ResponseEntity.ok(requests);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error fetching requests for student: " + e.getMessage());
+        }
+    }
 }

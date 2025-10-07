@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import defaultProfile from '../assets/profiles/profile.jpeg';
 
 const ProfileImageContext = createContext();
@@ -13,10 +13,43 @@ export const useProfileImage = () => {
 
 export const ProfileImageProvider = ({ children }) => {
   const [profileImage, setProfileImage] = useState(defaultProfile);
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  // Load user-specific profile image on mount and when user changes
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const accountId = localStorage.getItem("accountId");
+    
+    // Reset to default when no user logged in
+    if (!token || !accountId) {
+      setProfileImage(defaultProfile);
+      setCurrentUserId(null);
+      return;
+    }
+    
+    // Only update if user has changed
+    if (accountId !== currentUserId) {
+      setCurrentUserId(accountId);
+      // Try to load user's profile image
+      const savedProfileImage = localStorage.getItem(`profileImage_${accountId}`);
+      if (savedProfileImage) {
+        setProfileImage(savedProfileImage);
+      } else {
+        setProfileImage(defaultProfile);
+      }
+    }
+  }, [currentUserId]);
 
   const updateProfileImage = (imageUrl) => {
-    // Add timestamp to prevent browser caching
-    setProfileImage(`${imageUrl}?t=${new Date().getTime()}`);
+    const accountId = localStorage.getItem("accountId");
+    if (accountId) {
+      // Add timestamp to prevent browser caching
+      const imageUrlWithTimestamp = `${imageUrl}?t=${new Date().getTime()}`;
+      setProfileImage(imageUrlWithTimestamp);
+      // Save to localStorage for this specific user
+      localStorage.setItem(`profileImage_${accountId}`, imageUrlWithTimestamp);
+      setCurrentUserId(accountId);
+    }
   };
 
   const value = {

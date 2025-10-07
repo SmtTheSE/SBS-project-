@@ -19,7 +19,7 @@ const AdminCourseResultManager = () => {
     creditsEarned: 0
   });
 
-  // 获取所有课程成绩记录
+
   const fetchCourseResults = async () => {
     try {
       setLoading(true);
@@ -35,7 +35,7 @@ const AdminCourseResultManager = () => {
     }
   };
 
-  // 获取所有学生（用于下拉列表）
+
   const fetchStudents = async () => {
     try {
       const response = await axios.get('/admin/students');
@@ -45,7 +45,7 @@ const AdminCourseResultManager = () => {
     }
   };
 
-  // 获取所有学习计划课程（用于下拉列表）
+
   const fetchStudyPlanCourses = async () => {
     try {
       const response = await axios.get('/academic/study-plan-courses');
@@ -55,7 +55,7 @@ const AdminCourseResultManager = () => {
     }
   };
 
-  // 获取所有成绩等级（用于下拉列表）
+
   const fetchGrades = async () => {
     try {
       const response = await axios.get('/academic/grades');
@@ -81,7 +81,7 @@ const AdminCourseResultManager = () => {
     }));
   };
 
-  // 打开添加模态框
+
   const openAddModal = () => {
     setIsEditing(false);
     setCurrentCourseResult({
@@ -107,7 +107,7 @@ const AdminCourseResultManager = () => {
     setShowModal(true);
   };
 
-  // 关闭模态框
+
   const closeModal = () => {
     setShowModal(false);
   };

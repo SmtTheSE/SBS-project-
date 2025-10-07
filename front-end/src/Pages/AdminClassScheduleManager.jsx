@@ -19,7 +19,7 @@ const AdminClassScheduleManager = () => {
     room: ''
   });
 
-  // 获取所有课程时间表
+
   const fetchClassSchedules = async () => {
     try {
       setLoading(true);
@@ -35,7 +35,7 @@ const AdminClassScheduleManager = () => {
     }
   };
 
-  // 获取所有学习计划课程（用于下拉列表）
+
   const fetchStudyPlanCourses = async () => {
     try {
       const response = await axios.get('/academic/study-plan-courses');
@@ -50,7 +50,7 @@ const AdminClassScheduleManager = () => {
     fetchStudyPlanCourses();
   }, []);
 
-  // 处理输入变化
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setCurrentClassSchedule(prev => ({
@@ -59,7 +59,7 @@ const AdminClassScheduleManager = () => {
     }));
   };
 
-  // 打开添加模态框
+
   const openAddModal = () => {
     setIsEditing(false);
     setCurrentClassSchedule({
@@ -74,7 +74,7 @@ const AdminClassScheduleManager = () => {
     setShowModal(true);
   };
 
-  // 打开编辑模态框
+
   const openEditModal = (classSchedule) => {
     setIsEditing(true);
     setCurrentClassSchedule({
@@ -89,30 +89,30 @@ const AdminClassScheduleManager = () => {
     setShowModal(true);
   };
 
-  // 关闭模态框
+
   const closeModal = () => {
     setShowModal(false);
   };
 
-  // 提交表单
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // 确保durationMinutes是整数
+
       const classScheduleData = {
         ...currentClassSchedule,
         durationMinutes: parseInt(currentClassSchedule.durationMinutes) || 0
       };
 
       if (isEditing) {
-        // 更新课程时间表
+
         await axios.put(`/admin/academic/class-schedules/${currentClassSchedule.classScheduleId}`, classScheduleData);
       } else {
-        // 创建新的课程时间表
+
         await axios.post('/admin/academic/class-schedules', classScheduleData);
       }
       closeModal();
-      fetchClassSchedules(); // 重新获取数据
+      fetchClassSchedules();
       setError('');
     } catch (err) {
       console.error('Operation failed:', err);
@@ -120,12 +120,12 @@ const AdminClassScheduleManager = () => {
     }
   };
 
-  // 删除课程时间表
+
   const handleDelete = async (classScheduleId) => {
     if (window.confirm('Are you sure you want to delete this class schedule?')) {
       try {
         await axios.delete(`/admin/academic/class-schedules/${classScheduleId}`);
-        fetchClassSchedules(); // 重新获取数据
+        fetchClassSchedules();
         setError('');
       } catch (err) {
         console.error('Delete failed:', err);

@@ -162,13 +162,13 @@ const AdminLecturerManager = () => {
     <div className="max-w-7xl mx-autop-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg p-6">
         {/* Header */}
-        <div className="flexjustify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">
-              Admin Panel-Lecturer Management
+              Admin Panel - Lecturer Management
             </h1>
             <p className="text-gray-600">
-              Manage lecturer accounts and personalinformation • Total:{lecturers.length}
+              Manage lecturer accounts and personal information • Total: {lecturers.length}
             </p>
           </div>
 
@@ -261,16 +261,7 @@ const AdminLecturerManager = () => {
                 </FormRow>
               </FormSection>
               
-              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
-                <FormButton
-                  type="button"
-                  variant="success"
-                  onClick={createNewLecturer}
-                >
-                  <Save size={20} />
-                  Create Lecturer
-                </FormButton>
-                
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
                 <FormButton
                   type="button"
                   variant="secondary"
@@ -288,6 +279,15 @@ const AdminLecturerManager = () => {
                 >
                   <X size={20} />
                   Cancel
+                </FormButton>
+                
+                <FormButton
+                  type="button"
+                  variant="success"
+                  onClick={createNewLecturer}
+                >
+                  <Save size={20} />
+                  Create Lecturer
                 </FormButton>
               </div>
             </ModernForm>
