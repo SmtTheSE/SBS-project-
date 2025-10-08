@@ -43,12 +43,21 @@ export const ProfileImageProvider = ({ children }) => {
   const updateProfileImage = (imageUrl) => {
     const accountId = localStorage.getItem("accountId");
     if (accountId) {
-      // Add timestamp to prevent browser caching
-      const imageUrlWithTimestamp = `${imageUrl}?t=${new Date().getTime()}`;
-      setProfileImage(imageUrlWithTimestamp);
-      // Save to localStorage for this specific user
-      localStorage.setItem(`profileImage_${accountId}`, imageUrlWithTimestamp);
+      if (imageUrl) {
+        // Add timestamp to prevent browser caching
+        const imageUrlWithTimestamp = `${imageUrl}?t=${new Date().getTime()}`;
+        setProfileImage(imageUrlWithTimestamp);
+        // Save to localStorage for this specific user
+        localStorage.setItem(`profileImage_${accountId}`, imageUrlWithTimestamp);
+      } else {
+        // Use default profile image
+        setProfileImage(defaultProfile);
+        // Remove from localStorage
+        localStorage.removeItem(`profileImage_${accountId}`);
+      }
       setCurrentUserId(accountId);
+    } else {
+      setProfileImage(defaultProfile);
     }
   };
 

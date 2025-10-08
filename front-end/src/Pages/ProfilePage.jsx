@@ -21,7 +21,7 @@ const ProfilePage = () => {
   const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
-  const navigate = useNavigate();
+ const navigate = useNavigate();
   const { profileImage, updateProfileImage, clearProfileImageCache } = useProfileImage();
 
   useEffect(() => {
@@ -37,21 +37,26 @@ const ProfilePage = () => {
         fetchGeneralInfo(res.data.studentId);
         fetchClassTimeline(res.data.studentId);
         fetchAssignmentDeadlines(res.data.studentId);
+        // Fetch profile image when profile data is loaded
         fetchProfileImage(res.data.studentId);
       })
       .catch(() => navigate("/login"));
   }, []);
 
-  const fetchProfileImage = (studentId) => {
-    axiosInstance.get(`/account/profile/${studentId}/image`)
+const fetchProfileImage = (studentId) => {
+  axiosInstance.get(`/account/profile/${studentId}/image`)
       .then((res) => {
         if (res.data.imageUrl) {
           // Add timestamp to prevent browser caching
           updateProfileImage(res.data.imageUrl);
+        } else {
+          // If no image found on server, use default
+          updateProfileImage(null); // This will trigger default image in context
         }
       })
       .catch(() => {
         // Error handling - use default profile image
+        updateProfileImage(null); // This will trigger default image in context
       });
   };
 
@@ -61,7 +66,7 @@ const ProfilePage = () => {
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
-    if (!file || !profile) return;
+    if (!file || !profile)return;
 
     const token = localStorage.getItem("token");
     if (!token) {
@@ -82,10 +87,7 @@ const ProfilePage = () => {
     })
       .then((res) => {
         // Update profile image with new one (add timestamp to prevent caching)
-        updateProfileImage(res.data.imageUrl);
-        
-        // Also clear the cache for this user to ensure consistency
-        clearProfileImageCache(profile.studentId);
+       updateProfileImage(res.data.imageUrl);
       })
       .catch((error) => {
         console.error("Error uploading profile image:", error);
@@ -96,20 +98,20 @@ const ProfilePage = () => {
         // Reset file input
         event.target.value = "";
       });
-  };
+};
 
-  const getWeekRange = (date) => {
+const getWeekRange = (date) => {
     const currentDate = new Date(date);
     const dayOfWeek = currentDate.getDay(); // 0 (Sunday) to 6 (Saturday)
-    const startDate = new Date(currentDate);
+   const startDate = new Date(currentDate);
 
     // Calculate Monday as the first day of the week
-    // Adjust for Sunday (0) to be considered as end of previous week
+    // Adjustfor Sunday (0) tobe considered as end of previous week
     const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    startDate.setDate(currentDate.getDate() + diffToMonday);
+    startDate.setDate(currentDate.getDate()+ diffToMonday);
 
     const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 6); // Saturday
+    endDate.setDate(startDate.getDate() + 6); //Saturday
 
     return { startDate, endDate };
   };
@@ -117,66 +119,66 @@ const ProfilePage = () => {
   const formatDate = (date) => {
     return date.toLocaleDateString("en-GB", {
       day: "2-digit",
-      month: "short",
+      month:"short",
       year: "numeric"
     });
   };
 
   const getDayOfWeek = (date) => {
-    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+   const days = ["Sunday","Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     return days[date.getDay()];
   };
 
   const fetchGeneralInfo = (studentId) => {
     axiosInstance.get(`/tuition-payments/student/${studentId}`)
-      .then((res) => {
+      .then((res) =>{
         const paymentStatus = res.data.some(p => p.paymentStatus === 1) ? 1 : 0;
         setGeneralInfo(prev => ({ ...prev, paymentStatus }));
       })
-      .catch(() => setGeneralInfo(prev => ({ ...prev, paymentStatus: 0 })));
+.catch(() => setGeneralInfo(prev => ({ ...prev, paymentStatus: 0 })));
 
     axiosInstance.get(`/academic/course-results/total-credits/${studentId}`)
       .then((res) => setGeneralInfo(prev => ({ ...prev, totalCredits: res.data })))
-      .catch(() => setGeneralInfo(prev => ({ ...prev, totalCredits: 0 })));
+      .catch(() =>setGeneralInfo(prev => ({ ...prev, totalCredits: 0 })));
   };
 
   const fetchClassTimeline = (studentId) => {
-    // Get current week range (Monday to Saturday)
+    // Get currentweek range (Monday to Saturday)
     const { startDate, endDate } = getWeekRange(new Date());
 
     axiosInstance.get(`/academic/class-timelines/${studentId}`)
       .then((res) => {
         // Filter classes within the current week
-        const classesInWeek = res.data.filter(classItem => {
-          const classDate = new Date(classItem.classDate);
+        const classesInWeek =res.data.filter(classItem => {
+const classDate = new Date(classItem.classDate);
           return classDate >= startDate && classDate <= endDate;
         });
 
-        // Group by day of week
+        // Group by dayof week
         const grouped = classesInWeek.reduce((acc, curr) => {
           const classDate = new Date(curr.classDate);
-          const dayOfWeek = getDayOfWeek(classDate);
+          const dayOfWeek =getDayOfWeek(classDate);
 
           if (!acc[dayOfWeek]) acc[dayOfWeek] = [];
           acc[dayOfWeek].push(curr);
-          return acc;
+         return acc;
         }, {});
 
         // Create timeline for the current week (Monday to Saturday)
-        const weekdaysOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const weekdaysOrder = ["Monday","Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
         const formatted = weekdaysOrder.map((day, index) => {
-          const subjects = grouped[day] || [];
+          const subjects = grouped[day] ||[];
           const sortedSubjects = subjects.sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-          // Find the actual date for this day in the current week
-          const dayDate = new Date(startDate);
+          // Find the actual datefor this day in the current week
+const dayDate = new Date(startDate);
           dayDate.setDate(startDate.getDate() + index);
 
           return {
             id: index,
             day,
-            date: dayDate,
+date: dayDate,
             subjects: sortedSubjects.map((s, i) => ({
               id: i,
               subject: s.courseName,
@@ -195,42 +197,41 @@ const ProfilePage = () => {
   const fetchAssignmentDeadlines = (studentId) => {
     axiosInstance.get(`/academic/study-plan-courses/student/${studentId}`)
       .then((res) => {
-        const deadlines = res.data.map((item, idx) => ({
+        const deadlines = res.data.map((item,idx) => ({
           id: idx,
           name: item.courseName || item.course?.courseName || item.courseId,
-          deadline: new Date(item.assignmentDeadline).toLocaleDateString("en-GB"),
+          deadline:new Date(item.assignmentDeadline).toLocaleDateString("en-GB"),
         }));
         setUpcomingDeadlines(deadlines);
       })
       .catch(() => setUpcomingDeadlines([]));
-  };
+};
 
   const otherInfos = [
-    { id: 1, name: "Payment", icon: payment, data: generalInfo.paymentStatus },
+    { id: 1, name: "Payment", icon: payment, data: generalInfo.paymentStatus},
     { id: 2, name: "Total Credits", icon: credit, data: generalInfo.totalCredits },
   ];
 
   const today = new Date();
-  const todayFormatted = formatDate(today);
+ const todayFormatted = formatDate(today);
   const { startDate, endDate } = getWeekRange(today);
-  const weekRangeText = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+  const weekRangeText = `${formatDate(startDate)}- ${formatDate(endDate)}`;
 
-  return (
+ return (
     <section>
       <Container>
         <div className="h-60 w-full overflow-hidden relative">
-          <img src={defaultCoverPic} alt="Cover Photo" className="object-cover w-full h-full" />
+<img src={defaultCoverPic} alt="Cover Photo" className="object-cover w-full h-full" />
         </div>
         <SubContainer>
-          <div className="flex justify-start items-center gap-5 my-10">
+<div className="flex justify-start items-center gap-5 my-10">
             <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden shadow-md relative group">
-              <img 
-                src={profileImage} 
-                alt="Profile Picture" 
+              <img
+                src={profileImage}
+                alt="Profile Picture"
                 className="w-full h-full object-cover"
               />
-              <div 
-                className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                 onClick={handleProfileImageClick}
               >
                 <span className="text-white text-sm font-bold">Change Photo</span>
@@ -238,14 +239,14 @@ const ProfilePage = () => {
               <input
                 type="file"
                 ref={fileInputRef}
-                className="hidden"
+               className="hidden"
                 accept="image/*"
                 onChange={handleFileChange}
                 disabled={isUploading}
               />
             </div>
             <div className="flex flex-col items-center justify-center">
-              {profile && (
+              {profile&& (
                 <div key={profile.studentId} className="bg-white px-8 py-6 rounded-md shadow flex flex-wrap justify-center items-center gap-6 text-center">
                   <div className="px-6 border-r border-gray-300">
                     <h1 className="font-bold text-2xl">{profile.name}</h1>
@@ -258,7 +259,7 @@ const ProfilePage = () => {
                   <div className="px-6 border-r border-gray-300">
                     <h1 className="font-bold text-2xl">{profile.email}</h1>
                     <h3 className="text-gray-500">Email</h3>
-                  </div>
+</div>
                   <div className="px-6">
                     <h1 className="font-bold text-2xl">{profile.pathway}</h1>
                     <h3 className="text-gray-500">Pathway</h3>
@@ -270,7 +271,7 @@ const ProfilePage = () => {
 
           <div className="grid gap-6 sm:grid-cols-2 mb-5">
             {otherInfos.map((otherInfo, index) => (
-              <div key={index} className="bg-white p-5 rounded-xl shadow-sm flex items-center gap-5">
+              <div key={index}className="bg-white p-5 rounded-xl shadow-sm flex items-center gap-5">
                 <div className="bg-background rounded-full w-20 h-20 overflow-hidden flex items-center justify-center mb-4">
                   <img src={otherInfo.icon} alt={otherInfo.name} className="w-12 h-12 object-contain" />
                 </div>
@@ -280,20 +281,20 @@ const ProfilePage = () => {
                     otherInfo.data === 0 ? "text-red-500" :
                     otherInfo.data === 1 ? "text-green-500" :
                     "text-font text-2xl"
-                  }>
+                 }>
                     {otherInfo.data === 0 ? "Not yet" :
                     otherInfo.data === 1 ? "Completed" :
                     otherInfo.data}
                   </p>
                 </div>
               </div>
-            ))}
+))}
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white p-5 col-span-2 row-span-2 rounded-md">
-              <div className="flex justify-between items-center uppercase text-gray-500 text-xl border-b border-font-light pb-5">
-                <h1>Class Timeline</h1>
+           <div className="bg-white p-5 col-span-2 row-span-2 rounded-md">
+              <div className="flex justify-between items-center uppercase text-gray-500 text-xl border-b border-font-lightpb-5">
+<h1>Class Timeline</h1>
                 <p className="text-sm normal-case text-gray-500">{weekRangeText}</p>
               </div>
               <div>
@@ -309,7 +310,7 @@ const ProfilePage = () => {
                     </div>
                     <div className="col-span-3">
                       {!timeline.subjects?.length ? (
-                        <h1 className="text-2xl text-font">No classes - Enjoy your day off!</h1>
+                        <h1 className="text-2xl text-font">Noclasses - Enjoyyour day off!</h1>
                       ) : (
                         <div>
                           {timeline.subjects.map((sub) => (
@@ -322,7 +323,7 @@ const ProfilePage = () => {
                                 <div className="w-full p-5 border-l-5 border-border bg-background">
                                   <div className="flex justify-between items-center w-full">
                                     <h1 className="flex items-center gap-3">
-                                      <span className="block rounded-full bg-amber-600 w-2 h-2"></span>
+                                     <span className="block rounded-full bg-amber-600 w-2 h-2"></span>
                                       {sub.subject}
                                     </h1>
                                     <h1>{sub.lecturer}</h1>
@@ -332,7 +333,7 @@ const ProfilePage = () => {
                               <br />
                             </div>
                           ))}
-                        </div>
+</div>
                       )}
                     </div>
                   </div>
@@ -347,7 +348,7 @@ const ProfilePage = () => {
                   <div key={el.id} className="flex justify-between items-center border-b border-font-light py-3">
                     <h1 className="flex justify-start items-center gap-2">
                       <span className="block rounded-full bg-amber-600 w-2 h-2"></span>
-                      {el.name}
+                     {el.name}
                     </h1>
                     <p>{el.deadline}</p>
                   </div>
@@ -356,7 +357,7 @@ const ProfilePage = () => {
             </div>
           </div>
         </SubContainer>
-      </Container>
+</Container>
     </section>
   );
 };
