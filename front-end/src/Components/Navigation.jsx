@@ -26,7 +26,7 @@ const Navigation = () => {
   const [visaRequestStatus, setVisaRequestStatus] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { profileImage } = useProfileImage();
+  const { profileImage, clearAllProfileImageCaches } = useProfileImage();
 
   // Fetch pending requests for admin
   useEffect(() => {
@@ -123,6 +123,9 @@ const Navigation = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("accountId");
+    
+    // Clear all profile image caches on logout
+    clearAllProfileImageCaches();
     
     // Reset state
     setPendingVisaRequestsCount(0);

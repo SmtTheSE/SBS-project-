@@ -52,9 +52,27 @@ export const ProfileImageProvider = ({ children }) => {
     }
   };
 
+  // Clear profile image cache for a specific user
+  const clearProfileImageCache = (accountId) => {
+    if (accountId) {
+      localStorage.removeItem(`profileImage_${accountId}`);
+    }
+  };
+
+  // Clear all profile image caches
+  const clearAllProfileImageCaches = () => {
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('profileImage_')) {
+        localStorage.removeItem(key);
+      }
+    });
+  };
+
   const value = {
     profileImage,
-    updateProfileImage
+    updateProfileImage,
+    clearProfileImageCache,
+    clearAllProfileImageCaches
   };
 
   return (

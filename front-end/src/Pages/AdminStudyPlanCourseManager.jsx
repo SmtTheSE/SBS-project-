@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "../utils/axiosInstance";
+import { Edit, Trash2 } from 'lucide-react'; // Import icons
 
 const AdminStudyPlanCourseManager = () => {
   const [studyPlanCourses, setStudyPlanCourses] = useState([]);
@@ -354,17 +355,19 @@ const AdminStudyPlanCourseManager = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => handleEdit(studyPlanCourse)}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
+                        className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
+                        title="Edit"
                       >
-                        Edit
+                        <Edit size={16} />
                       </button>
                       <button
                         onClick={() =>
                           handleDelete(studyPlanCourse.studyPlanCourseId)
                         }
-                        className="text-red-600 hover:text-red-900"
+                        className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                        title="Delete"
                       >
-                        Delete
+                        <Trash2 size={16} />
                       </button>
                     </td>
                   </tr>

@@ -22,7 +22,7 @@ const ProfilePage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
-  const { profileImage, updateProfileImage } = useProfileImage();
+  const { profileImage, updateProfileImage, clearProfileImageCache } = useProfileImage();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -83,6 +83,9 @@ const ProfilePage = () => {
       .then((res) => {
         // Update profile image with new one (add timestamp to prevent caching)
         updateProfileImage(res.data.imageUrl);
+        
+        // Also clear the cache for this user to ensure consistency
+        clearProfileImageCache(profile.studentId);
       })
       .catch((error) => {
         console.error("Error uploading profile image:", error);

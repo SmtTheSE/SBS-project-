@@ -5,6 +5,7 @@ import sbsLogo from "../assets/images/sbs-logo.svg";
 import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-regular-svg-icons";
+import { useProfileImage } from "../utils/profileImageContext"; // Import the profile image context
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,6 +13,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { clearAllProfileImageCaches } = useProfileImage(); // Use the context to clear caches
 
   const togglePassword = () => {
     setShowPassword((prev) => !prev);
@@ -28,6 +30,9 @@ const Login = () => {
       });
 
       const { token, role, accountId } = response.data;
+
+      // Clear all profile image caches when logging in to ensure fresh data
+      clearAllProfileImageCaches();
 
       // Store token info
       localStorage.setItem("token", token);
