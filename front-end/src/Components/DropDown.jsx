@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 
-export default function DropDowns() {
+export default function DropDowns({ onFilterChange }) {
   const [selectedOption, setSelectedOption] = useState('Filter By');
 
   const handleSelect = (option) => {
     setSelectedOption(option);
+    if (onFilterChange) {
+      onFilterChange(option);
+    }
   };
 
   return (
@@ -21,36 +24,60 @@ export default function DropDowns() {
           <MenuItem>
             {({ active }) => (
               <button
-                onClick={() => handleSelect('Semester')}
+                onClick={() => handleSelect('All')}
                 className={`${
                   active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
                 } block w-full text-left px-4 py-2 text-sm`}
               >
-                Semester
+                All
               </button>
             )}
           </MenuItem>
           <MenuItem>
             {({ active }) => (
               <button
-                onClick={() => handleSelect('Course Name')}
+                onClick={() => handleSelect('Academic')}
                 className={`${
                   active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
                 } block w-full text-left px-4 py-2 text-sm`}
               >
-                Course Name
+                Academic
               </button>
             )}
           </MenuItem>
           <MenuItem>
             {({ active }) => (
               <button
-                onClick={() => handleSelect('Grade')}
+                onClick={() => handleSelect('Events')}
                 className={`${
                   active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
                 } block w-full text-left px-4 py-2 text-sm`}
               >
-                Grade
+                Events
+              </button>
+            )}
+          </MenuItem>
+          <MenuItem>
+            {({ active }) => (
+              <button
+                onClick={() => handleSelect('System')}
+                className={`${
+                  active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                } block w-full text-left px-4 py-2 text-sm`}
+              >
+                System
+              </button>
+            )}
+          </MenuItem>
+          <MenuItem>
+            {({ active }) => (
+              <button
+                onClick={() => handleSelect('Emergency')}
+                className={`${
+                  active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                } block w-full text-left px-4 py-2 text-sm`}
+              >
+                Emergency
               </button>
             )}
           </MenuItem>

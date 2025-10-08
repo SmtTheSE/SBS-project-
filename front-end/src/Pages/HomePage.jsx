@@ -4,8 +4,9 @@ import Container from "../Components/Container";
 import axios from "axios";
 
 const HomePage = () => {
+  const [allAnnouncements, setAllAnnouncements] = useState([]);
+  const [filteredAnnouncements, setFilteredAnnouncements] = useState([]);
   const [news, setNews] = useState([]);
-  const [announcements, setAnnouncements] = useState([]);
 
   // Fallback sample news (used when backend has none)
   const sampleNews = [
@@ -52,8 +53,8 @@ const HomePage = () => {
         a.announcementType !== "System" && a.announcementType !== "Emergency"
       );
 
-      // Map announcements for news section
-      const mappedNews = systemOrEmergencyAnnouncements.map((a) => {
+      // Map all announcements
+      const mappedAllAnnouncements = otherAnnouncements.map((a) => {
         return {
           id: a.announcementId,
           title: a.title,
@@ -64,8 +65,8 @@ const HomePage = () => {
         };
       });
 
-      // Map announcements for announcements section
-      const mappedAnnouncements = otherAnnouncements.map((a) => {
+      // Map announcements for news section
+      const mappedNews = systemOrEmergencyAnnouncements.map((a) => {
         return {
           id: a.announcementId,
           title: a.title,
@@ -83,12 +84,25 @@ const HomePage = () => {
         setNews(mappedNews);
       }
 
-      // Set other announcements
-      setAnnouncements(mappedAnnouncements);
+      // Set all announcements (excluding System and Emergency)
+      setAllAnnouncements(mappedAllAnnouncements);
+      setFilteredAnnouncements(mappedAllAnnouncements);
     } catch (err) {
       console.error("Failed to fetch announcements:", err);
       setNews(sampleNews);
-      setAnnouncements([]);
+      setAllAnnouncements([]);
+      setFilteredAnnouncements([]);
+    }
+  };
+
+  const handleFilterChange = (filterType) => {
+    if (filterType === 'All') {
+      setFilteredAnnouncements(allAnnouncements);
+    } else {
+      const filtered = allAnnouncements.filter(announcement => 
+        announcement.detail === filterType
+      );
+      setFilteredAnnouncements(filtered);
     }
   };
 
@@ -98,7 +112,7 @@ const HomePage = () => {
         {/* News Section */}
         <div className="flex justify-between items-center">
           <h1 className="text-2xl text-font">News</h1>
-          <DropDowns />
+          <DropDowns onFilterChange={handleFilterChange} />
         </div>
         <div>
           {news.map((el, idx) => (
@@ -139,15 +153,17 @@ const HomePage = () => {
 
         {/* Announcements Section */}
         <div>
-          <h1 className="text-2xl text-font my-5">Announcements</h1>
-          {announcements.length === 0 ? (
+          <div className="flex justify-between items-center my-5">
+            <h1 className="text-2xl text-font">Announcements</h1>
+          </div>
+          {filteredAnnouncements.length === 0 ? (
             <p className="text-gray-500">No announcements available</p>
           ) : (
-            <div className="flex justify-between gap-5">
-              {announcements.map((announcement) => (
+            <div className="flex justify-between gap-5 flex-wrap">
+              {filteredAnnouncements.map((announcement) => (
                 <div
                   key={announcement.id}
-                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 p-4 w-100"
+                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 p-4 w-80 flex-shrink-0"
                 >
                   {/* Image */}
                   <div className="h-40 w-full overflow-hidden rounded-md">
