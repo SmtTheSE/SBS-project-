@@ -6,16 +6,15 @@ import axios from "axios";
 const HomePage = () => {
   const [allAnnouncements, setAllAnnouncements] = useState([]);
   const [filteredAnnouncements, setFilteredAnnouncements] = useState([]);
-  const [news, setNews] = useState([]);
-
-  // Fallback sample news (used when backend has none)
-  const sampleNews = [
+  const [allNews, setAllNews] = useState([]);
+  const [filteredNews, setFilteredNews] = useState([]);
+  const [sampleNews] = useState([
     {
       id: 1,
       title: "Student Portal Maintenance",
       image:
         "https://images.unsplash.com/photo-1605902711622-cfb43c4437b5?auto=format&fit=crop&w=800&q=80",
-      detail: "System / Tech",
+      detail: "System",
       duration: "July 7 to July 9, 2025",
       description:
         "Lorem ipsum dolor sit, amet consectetur adipisicing elit. Cupiditate repudiandae vel doloribus! Ab dignissimos iusto repudiandae, unde ut quod eos quia atque molestias deleniti non amet voluptatum explicabo assumenda eaque!",
@@ -25,12 +24,12 @@ const HomePage = () => {
       title: "Student Portal Maintenance",
       image:
         "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80",
-      detail: "System / Tech",
+      detail: "Emergency",
       duration: "July 7 to July 9, 2025",
       description:
         "Lorem ipsum dolor sit, amet consectetur adipisicing elit. Cupiditate repudiandae vel doloribus! Ab dignissimos iusto repudiandae, unde ut quod eos quia atque molestias deleniti non amet voluptatum explicabo assumenda eaque!",
     },
-  ];
+  ]);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -79,9 +78,11 @@ const HomePage = () => {
 
       // Set news - use mapped system or emergency announcements or fallback to sample
       if (mappedNews.length === 0) {
-        setNews(sampleNews);
+        setAllNews(sampleNews);
+        setFilteredNews(sampleNews);
       } else {
-        setNews(mappedNews);
+        setAllNews(mappedNews);
+        setFilteredNews(mappedNews);
       }
 
       // Set all announcements (excluding System and Emergency)
@@ -89,7 +90,8 @@ const HomePage = () => {
       setFilteredAnnouncements(mappedAllAnnouncements);
     } catch (err) {
       console.error("Failed to fetch announcements:", err);
-      setNews(sampleNews);
+      setAllNews(sampleNews);
+      setFilteredNews(sampleNews);
       setAllAnnouncements([]);
       setFilteredAnnouncements([]);
     }
@@ -98,11 +100,19 @@ const HomePage = () => {
   const handleFilterChange = (filterType) => {
     if (filterType === 'All') {
       setFilteredAnnouncements(allAnnouncements);
+      setFilteredNews(allNews);
     } else {
-      const filtered = allAnnouncements.filter(announcement => 
+      // Filter announcements section
+      const filteredAnnouncements = allAnnouncements.filter(announcement => 
         announcement.detail === filterType
       );
-      setFilteredAnnouncements(filtered);
+      setFilteredAnnouncements(filteredAnnouncements);
+      
+      // Filter news section
+      const filteredNews = allNews.filter(newsItem => 
+        newsItem.detail === filterType
+      );
+      setFilteredNews(filteredNews);
     }
   };
 
@@ -115,7 +125,7 @@ const HomePage = () => {
           <DropDowns onFilterChange={handleFilterChange} />
         </div>
         <div>
-          {news.map((el, idx) => (
+          {filteredNews.map((el, idx) => (
             <div
               key={el.id}
               className={`${

@@ -48,12 +48,24 @@ export default function DropDowns({ onFilterChange }) {
           <MenuItem>
             {({ active }) => (
               <button
-                onClick={() => handleSelect('Events')}
+                onClick={() => handleSelect('Event')}
                 className={`${
                   active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
                 } block w-full text-left px-4 py-2 text-sm`}
               >
-                Events
+                Event
+              </button>
+            )}
+          </MenuItem>
+          <MenuItem>
+            {({ active }) => (
+              <button
+                onClick={() => handleSelect('Finance')}
+                className={`${
+                  active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                } block w-full text-left px-4 py-2 text-sm`}
+              >
+                Finance
               </button>
             )}
           </MenuItem>

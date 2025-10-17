@@ -123,42 +123,47 @@ if (error) {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full bg-white border border-gray-200">
+              <table className="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <thead>
                   <tr className="bg-gray-100">
-                    <th className="py-3 px-4 border-b text-left">Visa Passport ID</th>
-                    <th className="py-3 px-4 border-b text-left">Visa ID</th>
-                    <th className="py-3 px-4 border-b text-left">Visa Dates</th>
-                    <th className="py-3 px-4 border-b text-left">Visa Type</th>
-                    <th className="py-3 px-4 border-b text-left">PassportNumber</th>
-                    <th className="py-3 px-4 border-b text-left">Passport Dates</th>
+                    <th className="py-3 px-4 border-b text-left font-semibold text-gray-700">Visa Passport ID</th>
+                    <th className="py-3 px-4 border-b text-left font-semibold text-gray-700">Visa ID</th>
+                    <th className="py-3 px-4 border-b text-left font-semibold text-gray-700">Visa Dates</th>
+                    <th className="py-3 px-4 border-b text-left font-semibold text-gray-700">Visa Type</th>
+                    <th className="py-3 px-4 border-b text-left font-semibold text-gray-700">Passport Number</th>
+                    <th className="py-3 px-4 border-b text-left font-semibold text-gray-700">Passport Dates</th>
+                    <th className="py-3 px-4 border-b text-left font-semibold text-gray-700">Actions</th>
                   </tr>
                 </thead>
-              <tbody>
+                <tbody className="divide-y divide-gray-200">
                   {visaPassports.map((record) => (
-                    <tr key={record.visaPassportId} className="hover:bg-gray-50">
-                      <td className="py-3 px-4 border-b">{record.visaPassportId}</td>
-                      <td className="py-3 px-4 border-b">{record.visaId}</td>
-                      <td className="py-3 px-4 border-b">
-                        Issued: {record.visaIssuedDate}<br/>
-                        Expired: {record.visaExpiredDate}
+                    <tr key={record.visaPassportId} className="hover:bg-gray-50 transition-colors">
+                      <td className="py-3 px-4">{record.visaPassportId}</td>
+                      <td className="py-3 px-4">{record.visaId}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex flex-col">
+                          <span>Issued: {record.visaIssuedDate}</span>
+                          <span>Expired: {record.visaExpiredDate}</span>
+                        </div>
                       </td>
-                      <td className="py-3px-4 border-b">{getVisaTypeText(record.visaType)}</td>
-                      <td className="py-3 px-4 border-b">{record.passportNumber}</td>
-                      <td className="py-3 px-4 border-b">
-                        Issued: {record.passportIssuedDate}<br/>
-                        Expired: {record.passportExpiredDate}
+                      <td className="py-3 px-4">{getVisaTypeText(record.visaType)}</td>
+                      <td className="py-3 px-4">{record.passportNumber}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex flex-col">
+                          <span>Issued: {record.passportIssuedDate}</span>
+                          <span>Expired: {record.passportExpiredDate}</span>
+                        </div>
                       </td>
-                      <td className="py-3 px-4 border-b">
-<button 
+                      <td className="py-3 px-4">
+                        <button 
                           onClick={() => handleRequestExtension(record.visaPassportId, studentId)}
-                          className="px-4 py-2 bg-blue-500text-white rounded hover:bg-blue-600"
+                          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-sm font-medium text-sm"
                         >
-                         Request Extension
+                          Request Extension
                         </button>
                       </td>
                     </tr>
-))}
+                  ))}
                 </tbody>
               </table>
             </div>
