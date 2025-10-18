@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import { Edit, Trash2 } from 'lucide-react';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormButton } from '../Components/ModernForm';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminStudyPlanManager = () => {
   const [studyPlans, setStudyPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [studyPlanToDelete, setStudyPlanToDelete] = useState(null);
   const [editingStudyPlan, setEditingStudyPlan] = useState(null);
   const [formData, setFormData] = useState({
     studyPlanId: '',
@@ -94,16 +97,26 @@ const AdminStudyPlanManager = () => {
   };
 
   const handleDelete = async (studyPlanId) => {
-    try {
-      const confirmDelete = window.confirm('Are you sure you want to delete this study plan?');
-      if (!confirmDelete) return;
+    setStudyPlanToDelete(studyPlanId);
+    setShowConfirmDialog(true);
+  };
 
-      await axiosInstance.delete(`/academic/study-plans/${studyPlanId}`);
+  const confirmDelete = async () => {
+    try {
+      await axiosInstance.delete(`/academic/study-plans/${studyPlanToDelete}`);
       fetchStudyPlans();
     } catch (error) {
       console.error('Failed to delete study plan:', error);
       setError('Failed to delete study plan');
+    } finally {
+      setShowConfirmDialog(false);
+      setStudyPlanToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setStudyPlanToDelete(null);
   };
 
   if (loading) {
@@ -294,6 +307,17 @@ const AdminStudyPlanManager = () => {
             </div>
           </div>
         )}
+
+        {/* Custom Confirm Dialog */}
+        <CustomConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={cancelDelete}
+          onConfirm={confirmDelete}
+          title="Delete Study Plan"
+          message="Are you sure you want to delete this study plan? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );

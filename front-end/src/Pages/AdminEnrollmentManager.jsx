@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../api/axios';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton } from '../Components/ModernForm';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminEnrollmentManager = () => {
   const [enrollments, setEnrollments] = useState([]);
@@ -18,6 +19,8 @@ const AdminEnrollmentManager = () => {
     completionStatus: 'In Progress',
     exemptionStatus: false
   });
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [enrollmentIdToDelete, setEnrollmentIdToDelete] = useState(null);
 
   // 获取所有学生选课记录
   const fetchEnrollments = async () => {
@@ -127,16 +130,27 @@ const AdminEnrollmentManager = () => {
 
   // 删除学生选课记录
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this student enrollment?')) {
-      try {
-        await axios.delete(`/admin/academic/student-enrollments/${id}`);
-        fetchEnrollments(); // 重新获取数据
-        setError('');
-      } catch (err) {
-        console.error('Delete failed:', err);
-        setError('Delete failed: ' + (err.response?.data?.message || err.message));
-      }
+    setEnrollmentIdToDelete(id);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`/admin/academic/student-enrollments/${enrollmentIdToDelete}`);
+      fetchEnrollments(); // 重新获取数据
+      setError('');
+    } catch (err) {
+      console.error('Delete failed:', err);
+      setError('Delete failed: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setShowConfirmDialog(false);
+      setEnrollmentIdToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setEnrollmentIdToDelete(null);
   };
 
   if (loading) {
@@ -158,6 +172,7 @@ const AdminEnrollmentManager = () => {
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg p-6">
+        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Student Enrollment Management</h1>
@@ -179,6 +194,7 @@ const AdminEnrollmentManager = () => {
           </div>
         )}
 
+        {/* Table */}
         <div className="overflow-x-auto rounded-lg shadow">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -395,6 +411,17 @@ const AdminEnrollmentManager = () => {
             </div>
           </div>
         )}
+
+        {/* Custom Confirm Dialog */}
+        <CustomConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={cancelDelete}
+          onConfirm={confirmDelete}
+          title="Delete Student Enrollment"
+          message="Are you sure you want to delete this student enrollment? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );

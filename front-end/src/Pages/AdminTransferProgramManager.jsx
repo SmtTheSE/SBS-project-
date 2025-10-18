@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "../api/axios";
 import { Edit, Trash2 } from 'lucide-react'; // Import icons
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminTransferProgramManager = () => {
   const [transferPrograms, setTransferPrograms] = useState([]);
@@ -15,6 +16,8 @@ const AdminTransferProgramManager = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [programIdToDelete, setProgramIdToDelete] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -83,16 +86,26 @@ const AdminTransferProgramManager = () => {
   };
 
   const handleDelete = async (id) => {
+    setProgramIdToDelete(id);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmDelete = async () => {
     try {
-      const confirmDelete = window.confirm("Are you sure you want to delete this transfer program?");
-      if (!confirmDelete) return;
-      
-      await axios.delete(`/admin/transfer-programs/${id}`);
+      await axios.delete(`/admin/transfer-programs/${programIdToDelete}`);
       fetchData();
     } catch (error) {
       console.error("Error deleting transfer program:", error);
       setError("Error deleting transfer program: " + error.message);
+    } finally {
+      setShowConfirmDialog(false);
+      setProgramIdToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setProgramIdToDelete(null);
   };
 
   const resetForm = () => {
@@ -280,6 +293,17 @@ const AdminTransferProgramManager = () => {
           </table>
         </div>
       </div>
+
+      {/* Custom Confirm Dialog */}
+      <CustomConfirmDialog
+        isOpen={showConfirmDialog}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        title="Delete Transfer Program"
+        message="Are you sure you want to delete this transfer program? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton } from '../Components/ModernForm';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminCourseManager = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState(null);
   const [editingCourse, setEditingCourse] = useState(null);
   const [lecturers, setLecturers] = useState([]);
   const [formData, setFormData] = useState({
@@ -108,16 +111,26 @@ const AdminCourseManager = () => {
   };
 
   const handleDelete = async (courseId) => {
-    try {
-      const confirmDelete = window.confirm('Are you sure you want to delete this course?');
-      if (!confirmDelete) return;
+    setCourseToDelete(courseId);
+    setShowConfirmDialog(true);
+  };
 
-      await axiosInstance.delete(`/academic/courses/${courseId}`);
+  const confirmDelete = async () => {
+    try {
+      await axiosInstance.delete(`/academic/courses/${courseToDelete}`);
       fetchCourses();
     } catch (error) {
       console.error('Failed to delete course:', error);
       setError('Failed to delete course: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setShowConfirmDialog(false);
+      setCourseToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setCourseToDelete(null);
   };
 
   const handleCancel = () => {
@@ -324,6 +337,17 @@ const AdminCourseManager = () => {
             </div>
           )}
         </div>
+
+        {/* Custom Confirm Dialog */}
+        <CustomConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={cancelDelete}
+          onConfirm={confirmDelete}
+          title="Delete Course"
+          message="Are you sure you want to delete this course? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Save, Edit, X, Trash2 } from 'lucide-react';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton, FormSection } from '../Components/ModernForm';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminLecturerManager = () => {
   const [lecturers, setLecturers] = useState([]);
@@ -20,6 +21,8 @@ const AdminLecturerManager = () => {
     academicTitle: '',
     departmentId: ''
   });
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [lecturerIdToDelete, setLecturerIdToDelete] = useState(null);
 
   useEffect(() => {
     fetchLecturers();
@@ -132,11 +135,14 @@ const AdminLecturerManager = () => {
   };
 
   const deleteLecturer = async (lecturerId) => {
-    if (!window.confirm('Are you sure you want todeletethis lecturer?')) return;
+    setLecturerIdToDelete(lecturerId);
+    setShowConfirmDialog(true);
+  };
 
+  const confirmDelete = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:8080/api/admin/lecturers/${lecturerId}`, {
+      const response = await fetch(`http://localhost:8080/api/admin/lecturers/${lecturerIdToDelete}`, {
         method: 'DELETE',
         headers: {
           'Authorization': token ? `Bearer ${token}`: ''
@@ -155,7 +161,15 @@ const AdminLecturerManager = () => {
     } catch (error) {
       console.error('Delete error:', error);
       alert('Network error occurred while deleting lecturer');
+    } finally {
+      setShowConfirmDialog(false);
+      setLecturerIdToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setLecturerIdToDelete(null);
   };
 
   return (

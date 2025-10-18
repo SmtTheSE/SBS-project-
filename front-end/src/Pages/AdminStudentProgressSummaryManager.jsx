@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { Edit, Trash2 } from 'lucide-react'; // Import icons
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminStudentProgressSummaryManager = () => {
   const [studentProgressSummaries, setStudentProgressSummaries] = useState([]);
   const [students, setStudents] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [summaryToDelete, setSummaryToDelete] = useState(null);
   const [formData, setFormData] = useState({
     id: null,
     studentId: "",
@@ -87,13 +90,26 @@ const AdminStudentProgressSummaryManager = () => {
   };
 
   const handleDelete = async (id) => {
+    setSummaryToDelete(id);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmDelete = async () => {
     try {
-      await axiosInstance.delete(`/admin/academic/student-progress-summaries/${id}`);
+      await axiosInstance.delete(`/admin/academic/student-progress-summaries/${summaryToDelete}`);
       fetchData();
     } catch (error) {
       console.error("Error deleting student progress summary:", error);
       setError("Failed to delete student progress summary: " + (error.response?.data?.message || error.message));
+    } finally {
+      setShowConfirmDialog(false);
+      setSummaryToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setSummaryToDelete(null);
   };
 
   const resetForm = () => {
@@ -339,6 +355,17 @@ const AdminStudentProgressSummaryManager = () => {
           </div>
         </div>
       )}
+
+      {/* Custom Confirm Dialog */}
+      <CustomConfirmDialog
+        isOpen={showConfirmDialog}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        title="Delete Student Progress Summary"
+        message="Are you sure you want to delete this student progress summary? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

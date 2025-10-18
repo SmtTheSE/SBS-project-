@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../api/axios';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton } from '../Components/ModernForm';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminCourseResultManager = () => {
   const [courseResults, setCourseResults] = useState([]);
@@ -18,6 +19,8 @@ const AdminCourseResultManager = () => {
     gradeName: '',
     creditsEarned: 0
   });
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [courseResultIdToDelete, setCourseResultIdToDelete] = useState(null);
 
 
   const fetchCourseResults = async () => {
@@ -136,16 +139,27 @@ const AdminCourseResultManager = () => {
 
   // 删除课程成绩记录
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this course result?')) {
-      try {
-        await axios.delete(`/admin/academic/course-results/${id}`);
-        fetchCourseResults(); // 重新获取数据
-        setError('');
-      } catch (err) {
-        console.error('Delete failed:', err);
-        setError('Delete failed: ' + (err.response?.data?.message || err.message));
-      }
+    setCourseResultIdToDelete(id);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`/admin/academic/course-results/${courseResultIdToDelete}`);
+      fetchCourseResults(); // 重新获取数据
+      setError('');
+    } catch (err) {
+      console.error('Delete failed:', err);
+      setError('Delete failed: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setShowConfirmDialog(false);
+      setCourseResultIdToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setCourseResultIdToDelete(null);
   };
 
   if (loading) {
@@ -167,6 +181,7 @@ const AdminCourseResultManager = () => {
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg p-6">
+        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Course Result Management</h1>
@@ -188,6 +203,7 @@ const AdminCourseResultManager = () => {
           </div>
         )}
 
+        {/* Table */}
         <div className="overflow-x-auto rounded-lg shadow">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -384,6 +400,17 @@ const AdminCourseResultManager = () => {
             </div>
           </div>
         )}
+
+        {/* Custom Confirm Dialog */}
+        <CustomConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={cancelDelete}
+          onConfirm={confirmDelete}
+          title="Delete Course Result"
+          message="Are you sure you want to delete this course result? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );

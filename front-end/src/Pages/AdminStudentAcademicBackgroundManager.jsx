@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormButton } from '../Components/ModernForm';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminStudentAcademicBackgroundManager = () => {
   const [backgrounds, setBackgrounds] = useState([]);
@@ -18,6 +19,8 @@ const AdminStudentAcademicBackgroundManager = () => {
     requiredForPlacementTest: false,
     documentUrl: ''
   });
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [backgroundIdToDelete, setBackgroundIdToDelete] = useState(null);
 
   useEffect(() => {
     fetchStudentAcademicBackgrounds();
@@ -112,16 +115,26 @@ const AdminStudentAcademicBackgroundManager = () => {
   };
 
   const handleDelete = async (backgroundId) => {
-    try {
-      const confirmDelete = window.confirm('Are you sure you want to delete this student academic background?');
-      if (!confirmDelete) return;
+    setBackgroundIdToDelete(backgroundId);
+    setShowConfirmDialog(true);
+  };
 
-      await axiosInstance.delete(`/admin/academic/student-academic-backgrounds/${backgroundId}`);
+  const confirmDelete = async () => {
+    try {
+      await axiosInstance.delete(`/admin/academic/student-academic-backgrounds/${backgroundIdToDelete}`);
       fetchStudentAcademicBackgrounds();
     } catch (error) {
       console.error('Failed to delete student academic background:', error);
       setError('Failed to delete student academic background: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setShowConfirmDialog(false);
+      setBackgroundIdToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setBackgroundIdToDelete(null);
   };
 
   const handleCancel = () => {
@@ -153,6 +166,7 @@ const AdminStudentAcademicBackgroundManager = () => {
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg p-6">
+        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Student Academic Background Management</h1>
@@ -310,6 +324,7 @@ const AdminStudentAcademicBackgroundManager = () => {
           </div>
         )}
 
+        {/* Table */}
         <div className="overflow-x-auto rounded-lg shadow">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -395,6 +410,17 @@ const AdminStudentAcademicBackgroundManager = () => {
             </div>
           )}
         </div>
+
+        {/* Custom Confirm Dialog */}
+        <CustomConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={cancelDelete}
+          onConfirm={confirmDelete}
+          title="Delete Student Academic Background"
+          message="Are you sure you want to delete this student academic background? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );

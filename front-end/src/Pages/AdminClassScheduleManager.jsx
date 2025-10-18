@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../api/axios';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton } from '../Components/ModernForm';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminClassScheduleManager = () => {
   const [classSchedules, setClassSchedules] = useState([]);
@@ -8,6 +9,8 @@ const AdminClassScheduleManager = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [scheduleToDelete, setScheduleToDelete] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [currentClassSchedule, setCurrentClassSchedule] = useState({
     classScheduleId: '',
@@ -122,16 +125,27 @@ const AdminClassScheduleManager = () => {
 
 
   const handleDelete = async (classScheduleId) => {
-    if (window.confirm('Are you sure you want to delete this class schedule?')) {
-      try {
-        await axios.delete(`/admin/academic/class-schedules/${classScheduleId}`);
-        fetchClassSchedules();
-        setError('');
-      } catch (err) {
-        console.error('Delete failed:', err);
-        setError('Delete failed: ' + (err.response?.data?.message || err.message));
-      }
+    setScheduleToDelete(classScheduleId);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`/admin/academic/class-schedules/${scheduleToDelete}`);
+      fetchClassSchedules();
+      setError('');
+    } catch (err) {
+      console.error('Delete failed:', err);
+      setError('Delete failed: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setShowConfirmDialog(false);
+      setScheduleToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setScheduleToDelete(null);
   };
 
   if (loading) {
@@ -405,6 +419,17 @@ const AdminClassScheduleManager = () => {
             </div>
           </div>
         )}
+
+        {/* Custom Confirm Dialog */}
+        <CustomConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={cancelDelete}
+          onConfirm={confirmDelete}
+          title="Delete Class Schedule"
+          message="Are you sure you want to delete this class schedule? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );

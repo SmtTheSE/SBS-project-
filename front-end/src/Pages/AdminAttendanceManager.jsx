@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../api/axios';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton } from '../Components/ModernForm';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminAttendanceManager = () => {
   const [activeTab, setActiveTab] = useState('summary'); // 'summary' or 'daily'
@@ -14,7 +15,9 @@ const AdminAttendanceManager = () => {
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentRecord, setCurrentRecord] = useState({});
-
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [recordToDelete, setRecordToDelete] = useState(null);
+  const [deleteType, setDeleteType] = useState(''); // 'summary' or 'daily'
 
   const fetchAttendanceSummaries = async () => {
     try {
@@ -178,28 +181,40 @@ const AdminAttendanceManager = () => {
 
   const handleDelete = async (record) => {
     if (activeTab === 'summary') {
-      if (window.confirm('Are you sure you want to delete this attendance summary?')) {
-        try {
-          await axios.delete(`/admin/academic/attendance-summaries/${record.id}`);
-          fetchAttendanceSummaries();
-          setError('');
-        } catch (err) {
-          console.error('Delete failed:', err);
-          setError('Delete failed: ' + (err.response?.data?.message || err.message));
-        }
-      }
+      setRecordToDelete(record);
+      setDeleteType('summary');
+      setShowConfirmDialog(true);
     } else {
-      if (window.confirm('Are you sure you want to delete this daily attendance record?')) {
-        try {
-          await axios.delete(`/admin/academic/daily-attendances/${record.studentId}/${record.classScheduleId}`);
-          fetchDailyAttendances();
-          setError('');
-        } catch (err) {
-          console.error('Delete failed:', err);
-          setError('Delete failed: ' + (err.response?.data?.message || err.message));
-        }
-      }
+      setRecordToDelete(record);
+      setDeleteType('daily');
+      setShowConfirmDialog(true);
     }
+  };
+
+  const confirmDelete = async () => {
+    try {
+      if (deleteType === 'summary') {
+        await axios.delete(`/admin/academic/attendance-summaries/${recordToDelete.id}`);
+        fetchAttendanceSummaries();
+      } else {
+        await axios.delete(`/admin/academic/daily-attendances/${recordToDelete.studentId}/${recordToDelete.classScheduleId}`);
+        fetchDailyAttendances();
+      }
+      setError('');
+    } catch (err) {
+      console.error('Delete failed:', err);
+      setError('Delete failed: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setShowConfirmDialog(false);
+      setRecordToDelete(null);
+      setDeleteType('');
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setRecordToDelete(null);
+    setDeleteType('');
   };
 
   if (loading) {
@@ -714,6 +729,17 @@ const AdminAttendanceManager = () => {
             </div>
           </div>
         )}
+
+        {/* Custom Confirm Dialog */}
+        <CustomConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={cancelDelete}
+          onConfirm={confirmDelete}
+          title="Delete Attendance Record"
+          message={`Are you sure you want to delete this ${deleteType === 'summary' ? 'attendance summary' : 'daily attendance record'}? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );

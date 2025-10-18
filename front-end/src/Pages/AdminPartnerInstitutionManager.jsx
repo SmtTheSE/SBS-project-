@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "../api/axios";
 import { Edit, Trash2 } from 'lucide-react'; // Import icons
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminPartnerInstitutionManager = () => {
   const [partnerInstitutions, setPartnerInstitutions] = useState([]);
@@ -13,6 +14,8 @@ const AdminPartnerInstitutionManager = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [institutionIdToDelete, setInstitutionIdToDelete] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -69,16 +72,26 @@ const AdminPartnerInstitutionManager = () => {
   };
 
   const handleDelete = async (id) => {
+    setInstitutionIdToDelete(id);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmDelete = async () => {
     try {
-      const confirmDelete = window.confirm("Are you sure you want to delete this partner institution?");
-      if (!confirmDelete) return;
-      
-      await axios.delete(`/admin/partner-institutions/${id}`);
+      await axios.delete(`/admin/partner-institutions/${institutionIdToDelete}`);
       fetchData();
     } catch (error) {
       console.error("Error deleting partner institution:", error);
       setError("Error deleting partner institution: " + error.message);
+    } finally {
+      setShowConfirmDialog(false);
+      setInstitutionIdToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setInstitutionIdToDelete(null);
   };
 
   const resetForm = () => {
@@ -252,6 +265,17 @@ const AdminPartnerInstitutionManager = () => {
           </table>
         </div>
       </div>
+
+      {/* Custom Confirm Dialog */}
+      <CustomConfirmDialog
+        isOpen={showConfirmDialog}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        title="Delete Partner Institution"
+        message="Are you sure you want to delete this partner institution? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

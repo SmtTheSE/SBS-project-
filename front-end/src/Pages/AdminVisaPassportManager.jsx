@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Save, Edit, X, Trash2 } from 'lucide-react';
 import axiosInstance from '../utils/axiosInstance';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton, FormSection } from '../Components/ModernForm';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminVisaPassportManager = () => {
   const [visaPassports, setVisaPassports] = useState([]);
@@ -19,6 +20,8 @@ const AdminVisaPassportManager = () => {
     passportIssuedDate: '',
     passportExpiredDate: ''
  });
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [visaPassportIdToDelete, setVisaPassportIdToDelete] = useState(null);
 
   useEffect(() => {
     fetchVisaPassports();
@@ -108,10 +111,13 @@ const AdminVisaPassportManager = () => {
   };
 
   const deleteVisaPassport = async (visaPassportId) => {
-    if (!window.confirm('Are you sure you want to delete this visa/passport record?')) return;
+    setVisaPassportIdToDelete(visaPassportId);
+    setShowConfirmDialog(true);
+  };
 
+  const confirmDelete = async () => {
     try {
-      await axiosInstance.delete(`/admin/visa-passports/${visaPassportId}`);
+      await axiosInstance.delete(`/admin/visa-passports/${visaPassportIdToDelete}`);
       
       alert('Visa/Passport record deleted successfully!');
       fetchVisaPassports(); // Refresh the list
@@ -126,7 +132,15 @@ const AdminVisaPassportManager = () => {
         data: error.response?.data
       });
       alert('Network error occurred while deleting visa/passport record: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setShowConfirmDialog(false);
+      setVisaPassportIdToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setVisaPassportIdToDelete(null);
   };
 
   const getVisaTypeText = (visaType) => {
@@ -531,6 +545,17 @@ const AdminVisaPassportManager = () => {
               </div>
             </div>
           )}
+
+          {/* Custom Confirm Dialog */}
+          <CustomConfirmDialog
+            isOpen={showConfirmDialog}
+            onClose={cancelDelete}
+            onConfirm={confirmDelete}
+            title="Delete Visa/Passport Record"
+            message="Are you sure you want to delete this visa/passport record? This action cannot be undone."
+            confirmText="Delete"
+            cancelText="Cancel"
+          />
         </div>
       </div>
     </div>

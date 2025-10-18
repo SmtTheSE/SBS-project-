@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, Edit, Save, X, Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminAnnouncementManager = () => {
   const [announcements, setAnnouncements] = useState([]);
@@ -19,6 +20,8 @@ const AdminAnnouncementManager = () => {
   });
   const [createImageFile, setCreateImageFile] = useState(null);
   const [creating, setCreating] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [announcementToDelete, setAnnouncementToDelete] = useState(null);
 
   const placeholderImage = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns%3D%22http%3A//www.w3.org/2000/svg%22 width%3D%22400%22 height%3D%22300%22 viewBox%3D%220 0 400 300%22%3E%3Crect width%3D%22400%22 height%3D%22300%22 fill%3D%22%23cccccc%22/%3E%3Ctext x%3D%22200%22 y%3D%22150%22 font-family%3D%22Arial%2Csans-serif%22 font-size%3D%2220%22 fill%3D%22%23666666%22 text-anchor%3D%22middle%22 dominant-baseline%3D%22middle%22%3EImage%20Placeholder%3C/text%3E%3C/svg%3E';
   const errorImage = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns%3D%22http%3A//www.w3.org/2000/svg%22 width%3D%22400%22 height%3D%22300%22 viewBox%3D%220 0 400 300%22%3E%3Crect width%3D%22400%22 height%3D%22300%22 fill%3D%22%23f8d7da%22/%3E%3Ctext x%3D%22200%22 y%3D%22150%22 font-family%3D%22Arial%2Csans-serif%22 font-size%3D%2220%22 fill%3D%22%23721c24%22 text-anchor%3D%22middle%22 dominant-baseline%3D%22middle%22%3EImage%20Error%3C/text%3E%3C/svg%3E';
@@ -283,10 +286,13 @@ const AdminAnnouncementManager = () => {
   };
 
   const deleteAnnouncement = async (announcementId) => {
-    if (!window.confirm('Are you sure you want to delete this announcement?')) return;
+    setAnnouncementToDelete(announcementId);
+    setShowConfirmDialog(true);
+  };
 
+  const confirmDelete = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/announcements/${announcementId}`, {
+      const response = await fetch(`http://localhost:8080/api/announcements/${announcementToDelete}`, {
         method: 'DELETE',
       });
 
@@ -301,7 +307,15 @@ const AdminAnnouncementManager = () => {
     } catch (error) {
       console.error('Delete error:', error);
       alert('Network error occurred while deleting announcement');
+    } finally {
+      setShowConfirmDialog(false);
+      setAnnouncementToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setAnnouncementToDelete(null);
   };
 
   return (
@@ -688,6 +702,17 @@ const AdminAnnouncementManager = () => {
             ))
           )}
         </div>
+
+        {/* Custom Confirm Dialog */}
+        <CustomConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={cancelDelete}
+          onConfirm={confirmDelete}
+          title="Delete Announcement"
+          message="Are you sure you want to delete this announcement? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );

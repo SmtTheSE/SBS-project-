@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton } from '../Components/ModernForm';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminStudentEnglishPlacementTestManager = () => {
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [testToDelete, setTestToDelete] = useState(null);
   const [editingTest, setEditingTest] = useState(null);
   const [formData, setFormData] = useState({
     testId: '',
@@ -81,28 +84,26 @@ const AdminStudentEnglishPlacementTestManager = () => {
   };
 
   const handleDelete = async (testId) => {
-    try {
-      const confirmDelete = window.confirm('Are you sure you want to delete this student english placement test?');
-      if (!confirmDelete) return;
+    setTestToDelete(testId);
+    setShowConfirmDialog(true);
+  };
 
-      await axiosInstance.delete(`/academic/student-english-placement-tests/${testId}`);
+  const confirmDelete = async () => {
+    try {
+      await axiosInstance.delete(`/academic/student-english-placement-tests/${testToDelete}`);
       fetchStudentEnglishPlacementTests();
     } catch (error) {
       console.error('Failed to delete student english placement test:', error);
       setError('Failed to delete student english placement test');
+    } finally {
+      setShowConfirmDialog(false);
+      setTestToDelete(null);
     }
   };
 
-  const handleCancel = () => {
-    setFormData({
-      testId: '',
-      studentId: '',
-      testDate: '',
-      resultLevel: '',
-      resultStatus: 0
-    });
-    setEditingTest(null);
-    setShowForm(false);
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setTestToDelete(null);
   };
 
   const getResultStatusText = (status) => {
@@ -326,6 +327,17 @@ const AdminStudentEnglishPlacementTestManager = () => {
             </div>
           )}
         </div>
+
+        {/* Custom Confirm Dialog */}
+        <CustomConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={cancelDelete}
+          onConfirm={confirmDelete}
+          title="Delete Placement Test"
+          message="Are you sure you want to delete this student english placement test? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );

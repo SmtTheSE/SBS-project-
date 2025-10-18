@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Save, Edit, X, Trash2 } from 'lucide-react';
 import axiosInstance from '../utils/axiosInstance';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton } from '../Components/ModernForm';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminTuitionPaymentManager = () => {
   const [tuitionPayments, setTuitionPayments] = useState([]);
@@ -15,6 +16,8 @@ const AdminTuitionPaymentManager = () => {
     paymentMethod: 1, // 1 = Bank Transfer, 2 = Credit Card
     amountPaid: 0.0
   });
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [paymentIdToDelete, setPaymentIdToDelete] = useState(null);
 
   useEffect(() => {
     fetchTuitionPayments();
@@ -73,17 +76,28 @@ const AdminTuitionPaymentManager = () => {
   };
 
   const deleteTuitionPayment = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this tuition payment record?')) return;
+    setPaymentIdToDelete(id);
+    setShowConfirmDialog(true);
+  };
 
+  const confirmDelete = async () => {
     try {
-      await axiosInstance.delete(`/admin/tuition-payments/${id}`);
+      await axiosInstance.delete(`/admin/tuition-payments/${paymentIdToDelete}`);
       
       alert('Tuition payment record deleted successfully!');
       fetchTuitionPayments(); // Refresh the list
     } catch (error) {
       console.error('Delete error:', error);
       alert('Network error occurred while deleting tuition payment record');
+    } finally {
+      setShowConfirmDialog(false);
+      setPaymentIdToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setPaymentIdToDelete(null);
   };
 
   const getPaymentStatusText = (status) => {
@@ -399,6 +413,17 @@ const AdminTuitionPaymentManager = () => {
               </div>
             </div>
           )}
+
+          {/* Custom Confirm Dialog */}
+          <CustomConfirmDialog
+            isOpen={showConfirmDialog}
+            onClose={cancelDelete}
+            onConfirm={confirmDelete}
+            title="Delete Tuition Payment Record"
+            message="Are you sure you want to delete this tuition payment record? This action cannot be undone."
+            confirmText="Delete"
+            cancelText="Cancel"
+          />
         </div>
       </div>
     </div>

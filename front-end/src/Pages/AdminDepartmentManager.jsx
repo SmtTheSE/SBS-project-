@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormButton } from '../Components/ModernForm';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminDepartmentManager = () => {
   const [departments, setDepartments] = useState([]);
@@ -14,6 +15,8 @@ const AdminDepartmentManager = () => {
     headOfDepartment: '',
     email: ''
   });
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [departmentIdToDelete, setDepartmentIdToDelete] = useState(null);
 
   useEffect(() => {
     fetchDepartments();
@@ -86,16 +89,26 @@ const AdminDepartmentManager = () => {
   };
 
   const handleDelete = async (departmentId) => {
-    try {
-      const confirmDelete = window.confirm('Are you sure you want to delete this department?');
-      if (!confirmDelete) return;
+    setDepartmentIdToDelete(departmentId);
+    setShowConfirmDialog(true);
+  };
 
-      await axiosInstance.delete(`/academic/departments/${departmentId}`);
+  const confirmDelete = async () => {
+    try {
+      await axiosInstance.delete(`/academic/departments/${departmentIdToDelete}`);
       fetchDepartments();
     } catch (error) {
       console.error('Failed to delete department:', error);
       setError('Failed to delete department: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setShowConfirmDialog(false);
+      setDepartmentIdToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setDepartmentIdToDelete(null);
   };
 
   const handleCancel = () => {
@@ -123,6 +136,7 @@ const AdminDepartmentManager = () => {
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg p-6">
+        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Department Management</h1>
           <FormButton
@@ -227,6 +241,7 @@ const AdminDepartmentManager = () => {
           </div>
         )}
 
+        {/* Table */}
         <div className="overflow-x-auto rounded-lg shadow">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -294,6 +309,17 @@ const AdminDepartmentManager = () => {
             </div>
           )}
         </div>
+
+        {/* Custom Confirm Dialog */}
+        <CustomConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={cancelDelete}
+          onConfirm={confirmDelete}
+          title="Delete Department"
+          message="Are you sure you want to delete this department? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );

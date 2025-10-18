@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../api/axios';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormButton } from '../Components/ModernForm';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminGradeManager = () => {
   const [grades, setGrades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [gradeToDelete, setGradeToDelete] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [currentGrade, setCurrentGrade] = useState({
     gradeName: '',
@@ -106,16 +109,27 @@ const AdminGradeManager = () => {
 
   // 删除成绩等级
   const handleDelete = async (gradeName) => {
-    if (window.confirm('Are you sure you want to delete this grade?')) {
-      try {
-        await axios.delete(`/academic/grades/${gradeName}`);
-        fetchGrades(); // 重新获取数据
-        setError(''); // 清除错误
-      } catch (err) {
-        console.error('Delete failed:', err);
-        setError('Delete failed: ' + (err.response?.data?.message || err.message));
-      }
+    setGradeToDelete(gradeName);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`/academic/grades/${gradeToDelete}`);
+      fetchGrades(); // 重新获取数据
+      setError(''); // 清除错误
+    } catch (err) {
+      console.error('Delete failed:', err);
+      setError('Delete failed: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setShowConfirmDialog(false);
+      setGradeToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setGradeToDelete(null);
   };
 
   if (loading) {
@@ -281,6 +295,17 @@ const AdminGradeManager = () => {
             </div>
           </div>
         )}
+
+        {/* Custom Confirm Dialog */}
+        <CustomConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={cancelDelete}
+          onConfirm={confirmDelete}
+          title="Delete Grade"
+          message="Are you sure you want to delete this grade? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );

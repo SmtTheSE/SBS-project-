@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Save, Edit, X, Eye, EyeOff, Trash2 } from 'lucide-react';
 import ModernDropdown from '../Components/ModernDropdown';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton, FormSection } from '../Components/ModernForm';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminStudentManager = () => {
   const [students, setStudents] = useState([]);
@@ -33,6 +34,8 @@ const AdminStudentManager = () => {
   });
   const [cities, setCities] = useState([]);
   const [wards, setWards] = useState([]);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [studentIdToDelete, setStudentIdToDelete] = useState(null);
 
   // Convert cities to dropdown options
   const cityOptions = cities.map(city => ({
@@ -226,10 +229,13 @@ const AdminStudentManager = () => {
   };
 
   const deleteStudent = async (studentId) => {
-    if (!window.confirm('Are you sure you want to deletethis student?')) return;
+    setStudentIdToDelete(studentId);
+    setShowConfirmDialog(true);
+  };
 
+  const confirmDelete = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/admin/students/${studentId}`, {
+      const response = await fetch(`http://localhost:8080/api/admin/students/${studentIdToDelete}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -245,7 +251,15 @@ const AdminStudentManager = () => {
     } catch (error) {
       console.error('Deleteerror:', error);
       alert('Network error occurred whiledeleting student');
+    } finally {
+      setShowConfirmDialog(false);
+      setStudentIdToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setStudentIdToDelete(null);
   };
 
   const toggleAccountStatus =async (student) => {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "../api/axios";
 import { Edit, Trash2 } from 'lucide-react'; // Import icons
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminLecturerCourseManager = () => {
   const [lecturerCourses, setLecturerCourses] = useState([]);
@@ -9,6 +10,8 @@ const AdminLecturerCourseManager = () => {
   const [semesters, setSemesters] = useState([]);
   const [classSchedules, setClassSchedules] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [mappingToDelete, setMappingToDelete] = useState(null);
   const [formData, setFormData] = useState({
     id: null,
     lecturerId: "",
@@ -84,12 +87,25 @@ const AdminLecturerCourseManager = () => {
   };
 
   const handleDelete = async (id) => {
+    setMappingToDelete(id);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmDelete = async () => {
     try {
-      await axios.delete(`/admin/lecturer-courses/${id}`);
+      await axios.delete(`/admin/lecturer-courses/${mappingToDelete}`);
       fetchData();
     } catch (error) {
       console.error("Error deleting lecturer-course mapping:", error);
+    } finally {
+      setShowConfirmDialog(false);
+      setMappingToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setMappingToDelete(null);
   };
 
   const resetForm = () => {
@@ -344,6 +360,17 @@ const AdminLecturerCourseManager = () => {
           </div>
         </div>
       )}
+
+      {/* Custom Confirm Dialog */}
+      <CustomConfirmDialog
+        isOpen={showConfirmDialog}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        title="Delete Lecturer-Course Mapping"
+        message="Are you sure you want to delete this lecturer-course mapping? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import { Plus, Save, X, Edit, Trash2, Users } from 'lucide-react';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton, FormSection } from '../Components/ModernForm';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminScholarshipManager = () => {
   const [scholarships, setScholarships] = useState([]);
@@ -22,6 +23,9 @@ const AdminScholarshipManager = () => {
     amount: 0.0,
     description: ''
   });
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(''); // 'deleteScholarship' or 'deleteStudentScholarship'
+  const [itemIdToDelete, setItemIdToDelete] = useState(null); // ID of item to delete
 
   useEffect(() => {
     fetchScholarships();
@@ -131,31 +135,42 @@ const AdminScholarshipManager = () => {
   };
 
   const deleteScholarship = async (scholarshipId) => {
-    if (!window.confirm('Are you sure you want to delete this scholarship?')) return;
-
-    try {
-      await axiosInstance.delete(`/admin/scholarships/${scholarshipId}`);
-      
-      alert('Scholarship deleted successfully!');
-      fetchScholarships(); // Refresh the list
-    } catch (error) {
-      console.error('Delete error:', error);
-      alert('Network error occurred while deleting scholarship');
-    }
+    setConfirmAction('deleteScholarship');
+    setItemIdToDelete(scholarshipId);
+    setShowConfirmDialog(true);
   };
 
   const deleteStudentScholarship = async (id) => {
-    if (!window.confirm('Are you sure you want to remove this scholarship assignment?')) return;
+    setConfirmAction('deleteStudentScholarship');
+    setItemIdToDelete(id);
+    setShowConfirmDialog(true);
+  };
 
+  const confirmDelete = async () => {
     try {
-      await axiosInstance.delete(`/admin/student-scholarships/${id}`);
-      
-      alert('Scholarship assignment removed successfully!');
-      fetchStudentScholarships(); // Refresh the list
+      if (confirmAction === 'deleteScholarship') {
+        await axiosInstance.delete(`/admin/scholarships/${itemIdToDelete}`);
+        alert('Scholarship deleted successfully!');
+        fetchScholarships(); // Refresh the list
+      } else if (confirmAction === 'deleteStudentScholarship') {
+        await axiosInstance.delete(`/admin/student-scholarships/${itemIdToDelete}`);
+        alert('Scholarship assignment removed successfully!');
+        fetchStudentScholarships(); // Refresh the list
+      }
     } catch (error) {
       console.error('Delete error:', error);
-      alert('Network error occurred while removing scholarship assignment');
+      alert('Network error occurred while deleting');
+    } finally {
+      setShowConfirmDialog(false);
+      setConfirmAction('');
+      setItemIdToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setConfirmAction('');
+    setItemIdToDelete(null);
   };
 
   const getStudentName = (studentId) => {
@@ -569,6 +584,19 @@ const AdminScholarshipManager = () => {
             </div>
           )}
         </div>
+
+        {/* Custom Confirm Dialog */}
+        <CustomConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={cancelDelete}
+          onConfirm={confirmDelete}
+          title={confirmAction === 'deleteScholarship' ? "Delete Scholarship" : "Remove Scholarship Assignment"}
+          message={confirmAction === 'deleteScholarship' 
+            ? "Are you sure you want to delete this scholarship? This action cannot be undone." 
+            : "Are you sure you want to remove this scholarship assignment? This action cannot be undone."}
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );

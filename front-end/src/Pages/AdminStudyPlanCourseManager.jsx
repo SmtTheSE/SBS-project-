@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "../utils/axiosInstance";
 import { Edit, Trash2 } from 'lucide-react'; // Import icons
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminStudyPlanCourseManager = () => {
   const [studyPlanCourses, setStudyPlanCourses] = useState([]);
@@ -8,6 +9,8 @@ const AdminStudyPlanCourseManager = () => {
   const [courses, setCourses] = useState([]);
   const [semesters, setSemesters] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -122,21 +125,31 @@ const AdminStudyPlanCourseManager = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this study plan course?")) {
-      setLoading(true);
-      try {
-        await axios.delete(
-          `/admin/academic/study-plan-courses/${id}`
-        );
-        setSuccess("Study plan course deleted successfully");
-        fetchAllData();
-      } catch (err) {
-        console.error("Failed to delete study plan course:", err);
-        setError("Failed to delete study plan course: " + err.message);
-      } finally {
-        setLoading(false);
-      }
+    setCourseToDelete(id);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    setLoading(true);
+    try {
+      await axios.delete(
+        `/admin/academic/study-plan-courses/${courseToDelete}`
+      );
+      setSuccess("Study plan course deleted successfully");
+      fetchAllData();
+    } catch (err) {
+      console.error("Failed to delete study plan course:", err);
+      setError("Failed to delete study plan course: " + err.message);
+    } finally {
+      setLoading(false);
+      setShowConfirmDialog(false);
+      setCourseToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setCourseToDelete(null);
   };
 
   const handleCancel = () => {
@@ -417,6 +430,17 @@ const AdminStudyPlanCourseManager = () => {
           </div>
         </div>
       )}
+
+      {/* Confirm Dialog */}
+      <CustomConfirmDialog
+        isOpen={showConfirmDialog}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        title="Delete Study Plan Course"
+        message="Are you sure you want to delete this study plan course? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

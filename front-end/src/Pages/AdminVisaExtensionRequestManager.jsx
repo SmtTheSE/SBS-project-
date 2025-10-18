@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import { ModernForm, FormButton } from '../Components/ModernForm';
+import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminVisaExtensionRequestManager = () => {
   const [extensionRequests, setExtensionRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [requestIdToDelete, setRequestIdToDelete] = useState(null);
 
   useEffect(() => {
     fetchExtensionRequests();
@@ -47,22 +50,31 @@ const AdminVisaExtensionRequestManager = () => {
 
   // Function to delete a specific request
   const deleteRequest = async (requestId) => {
-    try {
-      // Confirm with admin before deletion
-      const confirmDelete = window.confirm('Are you sure you want to delete this request? This action cannot be undone.');
-      if (!confirmDelete) return;
+    setRequestIdToDelete(requestId);
+    setShowConfirmDialog(true);
+  };
 
+  const confirmDelete = async () => {
+    try {
       // Delete the request
-      await axiosInstance.delete(`/visa-extension-requests/${requestId}`);
+      await axiosInstance.delete(`/visa-extension-requests/${requestIdToDelete}`);
       
       // Update local state to remove the deleted request
-      setExtensionRequests(prev => prev.filter(req => req.extensionRequestId !== requestId));
+      setExtensionRequests(prev => prev.filter(req => req.extensionRequestId !== requestIdToDelete));
       
       alert('Request deleted successfully!');
     } catch (error) {
       console.error('Failed to delete request:', error);
       alert('Failed to delete request');
+    } finally {
+      setShowConfirmDialog(false);
+      setRequestIdToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDialog(false);
+    setRequestIdToDelete(null);
   };
 
   const getStatusText = (status) => {
@@ -97,6 +109,7 @@ const AdminVisaExtensionRequestManager = () => {
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg p-6">
+        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Visa Extension Requests</h1>
@@ -106,6 +119,7 @@ const AdminVisaExtensionRequestManager = () => {
           </div>
         </div>
 
+        {/* Table */}
         {extensionRequests.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-lg">
             <p className="text-gray-500 text-lg">No visa extension requests found</p>
@@ -202,6 +216,17 @@ const AdminVisaExtensionRequestManager = () => {
             </table>
           </div>
         )}
+
+        {/* Custom Confirm Dialog */}
+        <CustomConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={cancelDelete}
+          onConfirm={confirmDelete}
+          title="Delete Visa Extension Request"
+          message="Are you sure you want to delete this visa extension request? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );
