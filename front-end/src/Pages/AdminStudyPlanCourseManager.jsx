@@ -7,6 +7,7 @@ const AdminStudyPlanCourseManager = () => {
   const [studyPlans, setStudyPlans] = useState([]);
   const [courses, setCourses] = useState([]);
   const [semesters, setSemesters] = useState([]);
+  const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -147,6 +148,7 @@ const AdminStudyPlanCourseManager = () => {
       assignmentDeadline: "",
     });
     setIsEditing(false);
+    setShowForm(false);
   };
 
   // Get names for display
@@ -167,7 +169,18 @@ const AdminStudyPlanCourseManager = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Study Plan Course Management</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Study Plan Course Management</h1>
+        <button
+          onClick={() => {
+            handleCancel();
+            setShowForm(true);
+          }}
+          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Add New Study Plan Course
+        </button>
+      </div>
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -180,129 +193,6 @@ const AdminStudyPlanCourseManager = () => {
           {success}
         </div>
       )}
-
-      {/* Form Section */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">
-          {isEditing ? "Edit Study Plan Course" : "Add New Study Plan Course"}
-        </h2>
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">
-                Study Plan Course ID
-              </label>
-              <input
-                type="text"
-                name="studyPlanCourseId"
-                value={formData.studyPlanCourseId}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-                disabled={isEditing}
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">
-                Study Plan
-              </label>
-              <select
-                name="studyPlanId"
-                value={formData.studyPlanId}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select Study Plan</option>
-                {studyPlans.map((studyPlan) => (
-                  <option
-                    key={studyPlan.studyPlanId}
-                    value={studyPlan.studyPlanId}
-                  >
-                    {studyPlan.pathwayName} - {studyPlan.majorName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">
-                Course
-              </label>
-              <select
-                name="courseId"
-                value={formData.courseId}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select Course</option>
-                {courses.map((course) => (
-                  <option key={course.courseId} value={course.courseId}>
-                    {course.courseName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">
-                Semester
-              </label>
-              <select
-                name="semesterId"
-                value={formData.semesterId}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select Semester</option>
-                {semesters.map((semester) => (
-                  <option
-                    key={semester.semesterId}
-                    value={semester.semesterId}
-                  >
-                    {semester.intakeMonth} {semester.year?.substring(0, 4)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">
-                Assignment Deadline
-              </label>
-              <input
-                type="date"
-                name="assignmentDeadline"
-                value={formData.assignmentDeadline}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-4 mt-6">
-            {isEditing && (
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Cancel
-              </button>
-            )}
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-            >
-              {loading ? "Saving..." : isEditing ? "Update" : "Create"}
-            </button>
-          </div>
-        </form>
-      </div>
 
       {/* Study Plan Courses Table */}
       <div className="bg-white rounded-lg shadow-md p-6">
@@ -354,7 +244,17 @@ const AdminStudyPlanCourseManager = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
-                        onClick={() => handleEdit(studyPlanCourse)}
+                        onClick={() => {
+                          setFormData({
+                            studyPlanCourseId: studyPlanCourse.studyPlanCourseId,
+                            studyPlanId: studyPlanCourse.studyPlanId,
+                            courseId: studyPlanCourse.courseId,
+                            semesterId: studyPlanCourse.semesterId,
+                            assignmentDeadline: studyPlanCourse.assignmentDeadline,
+                          });
+                          setIsEditing(true);
+                          setShowForm(true);
+                        }}
                         className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
                         title="Edit"
                       >
@@ -377,6 +277,146 @@ const AdminStudyPlanCourseManager = () => {
           </div>
         )}
       </div>
+
+      {/* Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-opacity-0 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-800">
+                  {isEditing ? "Edit Study Plan Course" : "Add New Study Plan Course"}
+                </h2>
+                <button
+                  onClick={handleCancel}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <form onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                      Study Plan Course ID
+                    </label>
+                    <input
+                      type="text"
+                      name="studyPlanCourseId"
+                      value={formData.studyPlanCourseId}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                      disabled={isEditing}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                      Study Plan
+                    </label>
+                    <select
+                      name="studyPlanId"
+                      value={formData.studyPlanId}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select Study Plan</option>
+                      {studyPlans.map((studyPlan) => (
+                        <option
+                          key={studyPlan.studyPlanId}
+                          value={studyPlan.studyPlanId}
+                        >
+                          {studyPlan.pathwayName} - {studyPlan.majorName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                      Course
+                    </label>
+                    <select
+                      name="courseId"
+                      value={formData.courseId}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select Course</option>
+                      {courses.map((course) => (
+                        <option key={course.courseId} value={course.courseId}>
+                          {course.courseName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                      Semester
+                    </label>
+                    <select
+                      name="semesterId"
+                      value={formData.semesterId}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select Semester</option>
+                      {semesters.map((semester) => (
+                        <option
+                          key={semester.semesterId}
+                          value={semester.semesterId}
+                        >
+                          {semester.intakeMonth} {semester.year?.substring(0, 4)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                      Assignment Deadline
+                    </label>
+                    <input
+                      type="date"
+                      name="assignmentDeadline"
+                      value={formData.assignmentDeadline}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-4 mt-6">
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  >
+                    {loading ? "Saving..." : isEditing ? "Update" : "Create"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

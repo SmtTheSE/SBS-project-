@@ -11,11 +11,15 @@ import {
   faCalendarAlt,
   faClipboardList} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import axiosInstance from "../utils/axiosInstance";
 
 const AdminSideBar = () => {
-  const [sideBarMenus, setSideBarMenus] = useState([
+  const location = useLocation();
+  const [adminInfo, setAdminInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [allMenus, setAllMenus] = useState([
    {
       id: 1,
       name: "Management",
@@ -218,11 +222,112 @@ name: "Course Results",
         },
       ],
     },
- ]);
+  ]);
+  
+  // Department-based access rules
+  const departmentAccessRules = {
+    "DEPT001": { // Student Services
+      allowedMenus: [
+        { parentId: 1, childIds: [5, 8] }, // Visa/Passport, Visa Extensions
+        { parentId: 2, childIds: [9, 10, 11, 14] } // Transcript Requests, Student Backgrounds, Placement Tests, Student Progress Summaries
+      ]
+    },
+    "DEPT002": { // Student Advice
+      allowedMenus: [
+        { parentId: 2, childIds: [1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15] } // All Academic sections
+      ]
+    },
+    "DEPT003": { // Finance
+      allowedMenus: [
+        { parentId: 1, childIds: [6, 7, 9] } // Scholarships, Tuition Payments, Transfer Programs
+      ]
+    }
+  };
+
+  useEffect(() => {
+    const fetchAdminInfo = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const accountId = localStorage.getItem("accountId");
+        
+        if (!token || !accountId) {
+          setLoading(false);
+          return;
+        }
+        
+        // Fetch admin profile information
+        const response = await axiosInstance.get(`/admin/${accountId}`);
+        setAdminInfo(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error("Failed to fetch admin info:", error);
+        setLoading(false);
+      }
+    };
+    
+    fetchAdminInfo();
+  }, []);
+
+  // Filter menus based on department
+  const getFilteredMenus = () => {
+    // If still loading or no admin info, return all menus
+    if (loading || !adminInfo) {
+      return allMenus;
+    }
+    
+    // ADM001 can see all sections
+    if (adminInfo.adminId === "ADM001") {
+      return allMenus;
+    }
+    
+    // Get department ID
+    const departmentId = adminInfo.departmentId;
+    
+    // If no department rules defined, return only profile section
+    if (!departmentAccessRules[departmentId]) {
+      // Return only the Profile section for departments without specific rules
+      return allMenus.filter(menu => menu.id === 3);
+    }
+    
+    // Filter menus based on department rules
+    const { allowedMenus } = departmentAccessRules[departmentId];
+    
+    const filteredMenus = allMenus.map(menu => {
+      // Always include Profile section for all admins
+      if (menu.id === 3) {
+        return menu;
+      }
+      
+      // Find if this parent menu has any allowed children for this department
+      const allowedMenu = allowedMenus.find(m => m.parentId === menu.id);
+      
+      if (allowedMenu) {
+        // Filter children based on allowed child IDs
+        const filteredChildren = menu.children.filter(child => 
+          allowedMenu.childIds.includes(child.id)
+        );
+        
+        return {
+          ...menu,
+          children: filteredChildren
+        };
+      }
+      
+      // If no allowed children, remove this menu section
+      return {
+        ...menu,
+        children: []
+      };
+    }).filter(menu => menu.id === 3 || menu.children.length > 0); // Only show menus that have children, always show Profile
+    
+    return filteredMenus;
+  };
+
+  const filteredMenus = getFilteredMenus();
 
   // Handle Management menu clicks
   const handleMenus = (id) => {
-    setSideBarMenus((prevMenus) =>
+    setAllMenus((prevMenus) =>
       prevMenus.map((menu) =>
         menu.id === id
           ? { ...menu, isCurrent: true }
@@ -233,7 +338,7 @@ name: "Course Results",
 
   // Handle Management child menu clicks
   const managementMenuHandler = (id) => {
-    setSideBarMenus((prevMenus) =>
+    setAllMenus((prevMenus) =>
       prevMenus.map((menu) =>
         menu.id === 1 // Management menu
           ? {
@@ -251,7 +356,7 @@ name: "Course Results",
 
   // Handle Academic child menu clicks
   const academicMenuHandler = (id) => {
-setSideBarMenus((prevMenus) =>
+setAllMenus((prevMenus) =>
       prevMenus.map((menu) =>
         menu.id === 2 // Academic menu
           ? {
@@ -267,10 +372,44 @@ setSideBarMenus((prevMenus) =>
     );
   };
 
+  // Set current menu based on location
+  useEffect(() => {
+    // Find the matching menu item and set it as current
+    const path = location.pathname;
+    
+    setAllMenus(prevMenus => 
+      prevMenus.map(menu => {
+        // Check if this is a top-level menu item
+        if (menu.link === path) {
+          return { ...menu, isCurrent: true };
+        }
+        
+        // Check children
+        if (menu.children) {
+          const childrenWithCurrent = menu.children.map(child => ({
+            ...child,
+            isCurrent: child.link === path
+          }));
+          
+          // Check if any child is current
+          const hasCurrentChild = childrenWithCurrent.some(child => child.isCurrent);
+          
+          return {
+            ...menu,
+            isCurrent: hasCurrentChild,
+            children: childrenWithCurrent
+          };
+        }
+        
+        return { ...menu, isCurrent: false };
+      })
+    );
+  }, [location.pathname]);
+
   return(
     <nav className="fixed bg-iconic w-80 h-screen flex flex-col justify-start items-start gap-3 p-5 overflow-y-auto">
-      {sideBarMenus.map((menu) =>
-        menu.children == null ? (
+      {filteredMenus.map((menu) =>
+        menu.children == null || menu.children.length === 0 ? (
           <Link
             key={menu.id}
             to={menu.link}

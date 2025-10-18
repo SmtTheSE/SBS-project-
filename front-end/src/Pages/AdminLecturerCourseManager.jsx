@@ -8,6 +8,7 @@ const AdminLecturerCourseManager = () => {
   const [studyPlanCourses, setStudyPlanCourses] = useState([]);
   const [semesters, setSemesters] = useState([]);
   const [classSchedules, setClassSchedules] = useState([]);
+  const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     id: null,
     lecturerId: "",
@@ -101,6 +102,7 @@ const AdminLecturerCourseManager = () => {
       totalAssignedCourse: 0
     });
     setIsEditing(false);
+    setShowForm(false);
   };
 
   if (loading) {
@@ -114,127 +116,17 @@ const AdminLecturerCourseManager = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Lecturer-Course Mapping Management</h1>
-      
-      {/* Form for creating/editing lecturer-course mappings */}
-      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-        <h2 className="text-xl font-semibold mb-4">
-          {isEditing ? "Edit Lecturer-Course Mapping" : "Add New Lecturer-Course Mapping"}
-        </h2>
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Lecturer
-            </label>
-            <select
-              name="lecturerId"
-              value={formData.lecturerId}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              required
-            >
-              <option value="">Select Lecturer</option>
-              {lecturers.map((lecturer) => (
-                <option key={lecturer.lecturerId} value={lecturer.lecturerId}>
-                  {lecturer.name} ({lecturer.lecturerId})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Study Plan Course
-            </label>
-            <select
-              name="studyPlanCourseId"
-              value={formData.studyPlanCourseId}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              required
-            >
-              <option value="">Select Study Plan Course</option>
-              {studyPlanCourses.map((course) => (
-                <option key={course.studyPlanCourseId} value={course.studyPlanCourseId}>
-                  {course.studyPlanCourseId}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Semester
-            </label>
-            <select
-              name="semesterId"
-              value={formData.semesterId}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              required
-            >
-              <option value="">Select Semester</option>
-              {semesters.map((semester) => (
-                <option key={semester.semesterId} value={semester.semesterId}>
-                  {semester.semesterId} - {semester.term} {semester.year}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Class Schedule
-            </label>
-            <select
-              name="classScheduleId"
-              value={formData.classScheduleId}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              required
-            >
-              <option value="">Select Class Schedule</option>
-              {classSchedules.map((schedule) => (
-                <option key={schedule.classScheduleId} value={schedule.classScheduleId}>
-                  {schedule.classScheduleId} - {schedule.dayOfWeek} {schedule.startTime}-{schedule.endTime}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Total Assigned Courses
-            </label>
-            <input
-              type="number"
-              name="totalAssignedCourse"
-              value={formData.totalAssignedCourse}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              min="0"
-              required
-            />
-          </div>
-
-          <div className="flex items-end space-x-2">
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-            >
-              {isEditing ? "Update" : "Create"}
-            </button>
-            {isEditing && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-        </form>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Lecturer-Course Mapping Management</h1>
+        <button
+          onClick={() => {
+            resetForm();
+            setShowForm(true);
+          }}
+          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        >
+          Add New Lecturer-Course Mapping
+        </button>
       </div>
 
       {/* Table to display lecturer-course mappings */}
@@ -290,7 +182,11 @@ const AdminLecturerCourseManager = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
-                      onClick={() => handleEdit(lecturerCourse)}
+                      onClick={() => {
+                        setFormData(lecturerCourse);
+                        setIsEditing(true);
+                        setShowForm(true);
+                      }}
                       className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
                       title="Edit"
                     >
@@ -310,6 +206,144 @@ const AdminLecturerCourseManager = () => {
           </table>
         </div>
       </div>
+
+      {/* Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-opacity-0 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-800">
+                  {isEditing ? "Edit Lecturer-Course Mapping" : "Add New Lecturer-Course Mapping"}
+                </h2>
+                <button
+                  onClick={resetForm}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Lecturer
+                  </label>
+                  <select
+                    name="lecturerId"
+                    value={formData.lecturerId}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    required
+                  >
+                    <option value="">Select Lecturer</option>
+                    {lecturers.map((lecturer) => (
+                      <option key={lecturer.lecturerId} value={lecturer.lecturerId}>
+                        {lecturer.name} ({lecturer.lecturerId})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Study Plan Course
+                  </label>
+                  <select
+                    name="studyPlanCourseId"
+                    value={formData.studyPlanCourseId}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    required
+                  >
+                    <option value="">Select Study Plan Course</option>
+                    {studyPlanCourses.map((course) => (
+                      <option key={course.studyPlanCourseId} value={course.studyPlanCourseId}>
+                        {course.studyPlanCourseId}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Semester
+                  </label>
+                  <select
+                    name="semesterId"
+                    value={formData.semesterId}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    required
+                  >
+                    <option value="">Select Semester</option>
+                    {semesters.map((semester) => (
+                      <option key={semester.semesterId} value={semester.semesterId}>
+                        {semester.semesterId} - {semester.term} {semester.year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Class Schedule
+                  </label>
+                  <select
+                    name="classScheduleId"
+                    value={formData.classScheduleId}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    required
+                  >
+                    <option value="">Select Class Schedule</option>
+                    {classSchedules.map((schedule) => (
+                      <option key={schedule.classScheduleId} value={schedule.classScheduleId}>
+                        {schedule.classScheduleId} - {schedule.dayOfWeek} {schedule.startTime}-{schedule.endTime}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Total Assigned Courses
+                  </label>
+                  <input
+                    type="number"
+                    name="totalAssignedCourse"
+                    value={formData.totalAssignedCourse}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    min="0"
+                    required
+                  />
+                </div>
+
+                <div className="flex items-end space-x-2">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                  >
+                    {isEditing ? "Update" : "Create"}
+                  </button>
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

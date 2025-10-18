@@ -161,84 +161,99 @@ const AdminCourseManager = () => {
           </div>
         )}
 
+        {/* Modal */}
         {showForm && (
-          <div className="mb-8 p-6 border-2 border-blue-200 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50">
-            <h2 className="text-xl font-bold text-blue-800 mb-4">
-              {editingCourse ? 'Edit Course' : 'Add New Course'}
-            </h2>
-            
-            <ModernForm onSubmit={handleSubmit}>
-              <FormRow>
-                <FormGroup>
-                  <FormLabel required>Course ID</FormLabel>
-                  <FormInput
-                    type="text"
-                    name="courseId"
-                    value={formData.courseId}
-                    onChange={handleInputChange}
-                    required
-                    disabled={editingCourse}
-                  />
-                </FormGroup>
-                
-                <FormGroup>
-                  <FormLabel required>Course Name</FormLabel>
-                  <FormInput
-                    type="text"
-                    name="courseName"
-                    value={formData.courseName}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </FormGroup>
-              </FormRow>
-              
-              <FormRow>
-                <FormGroup>
-                  <FormLabel required>Credit Score</FormLabel>
-                  <FormInput
-                    type="number"
-                    name="creditScore"
-                    value={formData.creditScore}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </FormGroup>
-                
-                <FormGroup>
-                  <FormLabel required>Lecturer</FormLabel>
-                  <FormSelect
-                    name="lecturerId"
-                    value={formData.lecturerId}
-                    onChange={handleInputChange}
-                    required
+          <div className="fixed inset-0 bg-opacity-0 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {editingCourse ? 'Edit Course' : 'Add New Course'}
+                  </h2>
+                  <button 
+                    onClick={handleCancel}
+                    className="text-gray-500 hover:text-gray-700"
                   >
-                    <option value="">Select a lecturer</option>
-                    {lecturers.map((lecturer) => (
-                      <option key={lecturer.lecturerId} value={lecturer.lecturerId}>
-                        {lecturer.name}
-                      </option>
-                    ))}
-                  </FormSelect>
-                </FormGroup>
-              </FormRow>
-              
-              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
-                <FormButton
-                  type="button"
-                  variant="secondary"
-                  onClick={handleCancel}
-                >
-                  Cancel
-                </FormButton>
-                <FormButton
-                  type="submit"
-                  variant="success"
-                >
-                  {editingCourse ? 'Update' : 'Create'}
-                </FormButton>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <ModernForm onSubmit={handleSubmit}>
+                  <FormRow>
+                    <FormGroup>
+                      <FormLabel required>Course ID</FormLabel>
+                      <FormInput
+                        type="text"
+                        name="courseId"
+                        value={formData.courseId}
+                        onChange={handleInputChange}
+                        required
+                        disabled={editingCourse}
+                      />
+                    </FormGroup>
+                    
+                    <FormGroup>
+                      <FormLabel required>Course Name</FormLabel>
+                      <FormInput
+                        type="text"
+                        name="courseName"
+                        value={formData.courseName}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </FormGroup>
+                  </FormRow>
+                  
+                  <FormRow>
+                    <FormGroup>
+                      <FormLabel required>Credit Score</FormLabel>
+                      <FormInput
+                        type="number"
+                        name="creditScore"
+                        value={formData.creditScore}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </FormGroup>
+                    
+                    <FormGroup>
+                      <FormLabel required>Lecturer</FormLabel>
+                      <FormSelect
+                        name="lecturerId"
+                        value={formData.lecturerId}
+                        onChange={handleInputChange}
+                        required
+                      >
+                        <option value="">Select a lecturer</option>
+                        {lecturers.map((lecturer) => (
+                          <option key={lecturer.lecturerId} value={lecturer.lecturerId}>
+                            {lecturer.name}
+                          </option>
+                        ))}
+                      </FormSelect>
+                    </FormGroup>
+                  </FormRow>
+                  
+                  <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
+                    <FormButton
+                      type="button"
+                      variant="secondary"
+                      onClick={handleCancel}
+                    >
+                      Cancel
+                    </FormButton>
+                    <FormButton
+                      type="submit"
+                      variant="success"
+                    >
+                      {editingCourse ? 'Update' : 'Create'}
+                    </FormButton>
+                  </div>
+                </ModernForm>
               </div>
-            </ModernForm>
+            </div>
           </div>
         )}
 

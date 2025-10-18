@@ -5,6 +5,7 @@ import { Edit, Trash2 } from 'lucide-react'; // Import icons
 const AdminStudentProgressSummaryManager = () => {
   const [studentProgressSummaries, setStudentProgressSummaries] = useState([]);
   const [students, setStudents] = useState([]);
+  const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     id: null,
     studentId: "",
@@ -105,6 +106,7 @@ const AdminStudentProgressSummaryManager = () => {
       totalCreditsEarned: 0
     });
     setIsEditing(false);
+    setShowForm(false);
   };
 
   if (loading) {
@@ -118,7 +120,18 @@ const AdminStudentProgressSummaryManager = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Student Progress Summary Management</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Student Progress Summary Management</h1>
+        <button
+          onClick={() => {
+            resetForm();
+            setShowForm(true);
+          }}
+          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        >
+          Add New Student Progress Summary
+        </button>
+      </div>
       
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
@@ -127,111 +140,6 @@ const AdminStudentProgressSummaryManager = () => {
         </div>
       )}
       
-      {/* Form for creating/editing student progress summaries */}
-      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-        <h2 className="text-xl font-semibold mb-4">
-          {isEditing ? "Edit Student Progress Summary" : "Add New Student Progress Summary"}
-        </h2>
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Student
-            </label>
-            <select
-              name="studentId"
-              value={formData.studentId}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              required
-            >
-              <option value="">Select Student</option>
-              {students.map((student) => (
-                <option key={student.studentId} value={student.studentId}>
-                  {student.firstName} {student.lastName} ({student.studentId})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Study Plan ID
-            </label>
-            <input
-              type="text"
-              name="studyPlanId"
-              value={formData.studyPlanId}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Total Enrolled Courses
-            </label>
-            <input
-              type="number"
-              name="totalEnrolledCourse"
-              value={formData.totalEnrolledCourse}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              min="0"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Total Completed Courses
-            </label>
-            <input
-              type="number"
-              name="totalCompletedCourse"
-              value={formData.totalCompletedCourse}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              min="0"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Total Credits Earned
-            </label>
-            <input
-              type="number"
-              name="totalCreditsEarned"
-              value={formData.totalCreditsEarned}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              min="0"
-              required
-            />
-          </div>
-
-          <div className="flex items-end space-x-2">
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-            >
-              {isEditing ? "Update" : "Create"}
-            </button>
-            {isEditing && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-        </form>
-      </div>
-
       {/* Table to display student progress summaries */}
       <div className="bg-white p-6 rounded-lg shadow-md">
         <h2 className="text-xl font-semibold mb-4">Existing Student Progress Summaries</h2>
@@ -285,7 +193,11 @@ const AdminStudentProgressSummaryManager = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
-                      onClick={() => handleEdit(summary)}
+                      onClick={() => {
+                        setFormData(summary);
+                        setIsEditing(true);
+                        setShowForm(true);
+                      }}
                       className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
                       title="Edit"
                     >
@@ -305,6 +217,128 @@ const AdminStudentProgressSummaryManager = () => {
           </table>
         </div>
       </div>
+
+      {/* Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-opacity-0 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-800">
+                  {isEditing ? "Edit Student Progress Summary" : "Add New Student Progress Summary"}
+                </h2>
+                <button
+                  onClick={resetForm}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Student
+                  </label>
+                  <select
+                    name="studentId"
+                    value={formData.studentId}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    required
+                  >
+                    <option value="">Select Student</option>
+                    {students.map((student) => (
+                      <option key={student.studentId} value={student.studentId}>
+                        {student.firstName} {student.lastName} ({student.studentId})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Study Plan ID
+                  </label>
+                  <input
+                    type="text"
+                    name="studyPlanId"
+                    value={formData.studyPlanId}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Total Enrolled Courses
+                  </label>
+                  <input
+                    type="number"
+                    name="totalEnrolledCourse"
+                    value={formData.totalEnrolledCourse}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    min="0"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Total Completed Courses
+                  </label>
+                  <input
+                    type="number"
+                    name="totalCompletedCourse"
+                    value={formData.totalCompletedCourse}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    min="0"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Total Credits Earned
+                  </label>
+                  <input
+                    type="number"
+                    name="totalCreditsEarned"
+                    value={formData.totalCreditsEarned}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    min="0"
+                    required
+                  />
+                </div>
+
+                <div className="flex items-end space-x-2">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                  >
+                    {isEditing ? "Update" : "Create"}
+                  </button>
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
