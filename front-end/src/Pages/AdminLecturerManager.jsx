@@ -23,6 +23,7 @@ const AdminLecturerManager = () => {
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [lecturerIdToDelete, setLecturerIdToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false); // 添加删除状态
 
   useEffect(() => {
     fetchLecturers();
@@ -140,6 +141,7 @@ const AdminLecturerManager = () => {
   };
 
   const confirmDelete = async () => {
+    setDeleting(true); // 设置删除状态
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`http://localhost:8080/api/admin/lecturers/${lecturerIdToDelete}`, {
@@ -151,17 +153,18 @@ const AdminLecturerManager = () => {
       });
 
       if (response.ok) {
-        alert('Lecturer deletedsuccessfully!');
+        alert('Lecturer deleted successfully!');
         fetchLecturers(); // Refresh the list
       } else {
         const errorText = await response.text();
-        console.error('Deletefailed:', errorText);
-        alert('Failed to deletelecturer: ' + errorText);
+        console.error('Delete failed:', errorText);
+        alert('Failed to delete lecturer: ' + errorText);
       }
     } catch (error) {
       console.error('Delete error:', error);
-      alert('Network error occurred while deleting lecturer');
+      alert('Network error occurred while deleting lecturer: ' + error.message);
     } finally {
+      setDeleting(false); // 重置删除状态
       setShowConfirmDialog(false);
       setLecturerIdToDelete(null);
     }
@@ -197,114 +200,127 @@ const AdminLecturerManager = () => {
 
         {/* Create New Lecturer Form */}
         {showCreateForm && (
-          <div className="bg-gradient-to-rfrom-blue-50to-indigo-50 border-2 border-blue-200 rounded-xl p-6 mb-6">
-            <h3 className="text-xl font-semiboldtext-blue-800 mb-4">Create New Lecturer</h3>
-            
-            <ModernForm>
-              <FormSection title="Personal Information">
-                <FormRow>
-                  <FormGroup>
-                    <FormLabel required>Lecturer ID</FormLabel>
-                    <FormInput
-                      type="text"
-                      value={createData.lecturerId}
-                      onChange={(e) => setCreateData({...createData, lecturerId: e.target.value})}
-                      placeholder="e.g., LEC001"
-                    />
-                  </FormGroup>
-                  
-                  <FormGroup>
-                    <FormLabel required>Full Name</FormLabel>
-                    <FormInput
-                      type="text"
-                      value={createData.name}
-                      onChange={(e) => setCreateData({...createData, name: e.target.value})}
-                      placeholder="Full Name"
-                    />
-                  </FormGroup>
-                </FormRow>
+          // 修改为与学生管理页面相同的样式
+          <div className="fixed inset-0 bg-opacity-0 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-bold text-gray-800">Create New Lecturer</h3>
+                  <button 
+                    onClick={() => setShowCreateForm(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={24}/>
+                  </button>
+                </div>
                 
-                <FormRow>
-                  <FormGroup>
-                    <FormLabel required>Date of Birth</FormLabel>
-                    <FormInput
-                      type="date"
-                      value={createData.dateOfBirth}
-                      onChange={(e) => setCreateData({...createData, dateOfBirth: e.target.value})}
-                    />
-                  </FormGroup>
+                <ModernForm>
+                  <FormSection title="Personal Information">
+                    <FormRow>
+                      <FormGroup>
+                        <FormLabel required>Lecturer ID</FormLabel>
+                        <FormInput
+                          type="text"
+                          value={createData.lecturerId}
+                          onChange={(e) => setCreateData({...createData, lecturerId: e.target.value})}
+                          placeholder="e.g., LEC001"
+                        />
+                      </FormGroup>
+                      
+                      <FormGroup>
+                        <FormLabel required>Full Name</FormLabel>
+                        <FormInput
+                          type="text"
+                          value={createData.name}
+                          onChange={(e) => setCreateData({...createData, name: e.target.value})}
+                          placeholder="Full Name"
+                        />
+                      </FormGroup>
+                    </FormRow>
+                    
+                    <FormRow>
+                      <FormGroup>
+                        <FormLabel required>Date of Birth</FormLabel>
+                        <FormInput
+                          type="date"
+                          value={createData.dateOfBirth}
+                          onChange={(e) => setCreateData({...createData, dateOfBirth: e.target.value})}
+                        />
+                      </FormGroup>
+                      
+                      <FormGroup>
+                        <FormLabel>Academic Title</FormLabel>
+                        <FormInput
+                          type="text"
+                          value={createData.academicTitle}
+                          onChange={(e) => setCreateData({...createData, academicTitle: e.target.value})}
+                          placeholder="e.g., Professor, Associate Professor"
+                        />
+                      </FormGroup>
+                    </FormRow>
+                  </FormSection>
                   
-                  <FormGroup>
-                    <FormLabel>Academic Title</FormLabel>
-                    <FormInput
-                      type="text"
-                      value={createData.academicTitle}
-                      onChange={(e) => setCreateData({...createData, academicTitle: e.target.value})}
-                      placeholder="e.g., Professor, Associate Professor"
-                    />
-                  </FormGroup>
-                </FormRow>
-              </FormSection>
-              
-              <FormSection title="Professional Information">
-                <FormRow>
-                  <FormGroup>
-                    <FormLabel>Teaching Experience (years)</FormLabel>
-                    <FormInput
-                      type="number"
-                      value={createData.teachingExperience}
-                      onChange={(e) => setCreateData({...createData, teachingExperience: e.target.value})}
-                      placeholder="Years of experience"
-                    />
-                  </FormGroup>
+                  <FormSection title="Professional Information">
+                    <FormRow>
+                      <FormGroup>
+                        <FormLabel>Teaching Experience (years)</FormLabel>
+                        <FormInput
+                          type="number"
+                          value={createData.teachingExperience}
+                          onChange={(e) => setCreateData({...createData, teachingExperience: e.target.value})}
+                          placeholder="Years of experience"
+                        />
+                      </FormGroup>
+                      
+                      <FormGroup>
+                        <FormLabel required>Department</FormLabel>
+                        <FormSelect
+                          value={createData.departmentId}
+                          onChange={(e) => setCreateData({...createData, departmentId:e.target.value})}
+                        >
+                          <option value="">Select Department</option>
+                          {departments.map(dept => (
+                            <option key={dept.departmentId} value={dept.departmentId}>
+                              {dept.departmentName}
+                            </option>
+                          ))}
+                        </FormSelect>
+                      </FormGroup>
+                    </FormRow>
+                  </FormSection>
                   
-                  <FormGroup>
-                    <FormLabel required>Department</FormLabel>
-                    <FormSelect
-                      value={createData.departmentId}
-                      onChange={(e) => setCreateData({...createData, departmentId:e.target.value})}
+                  <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
+                    <FormButton
+                      type="button"
+                      variant="secondary"
+                      onClick={() => {
+                        setShowCreateForm(false);
+                        setCreateData({
+                          lecturerId: '',
+                          name: '',
+                          dateOfBirth: '',
+                          teachingExperience: 0,
+                          academicTitle:'',
+                          departmentId: ''
+                        });
+                      }}
                     >
-                      <option value="">Select Department</option>
-                      {departments.map(dept => (
-                        <option key={dept.departmentId} value={dept.departmentId}>
-                          {dept.departmentName}
-                        </option>
-                      ))}
-                    </FormSelect>
-                  </FormGroup>
-                </FormRow>
-              </FormSection>
-              
-              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
-                <FormButton
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setShowCreateForm(false);
-                    setCreateData({
-                      lecturerId: '',
-                      name: '',
-                      dateOfBirth: '',
-                      teachingExperience: 0,
-                      academicTitle:'',
-                      departmentId: ''
-                    });
-                  }}
-                >
-                  <X size={20} />
-                  Cancel
-                </FormButton>
-                
-                <FormButton
-                  type="button"
-                  variant="success"
-                  onClick={createNewLecturer}
-                >
-                  <Save size={20} />
-                  Create Lecturer
-                </FormButton>
+                      <X size={20} />
+                      Cancel
+                    </FormButton>
+                    
+                    <FormButton
+                      type="button"
+                      variant="success"
+                      onClick={createNewLecturer}
+                    >
+                      <Save size={20} />
+                      Create Lecturer
+                    </FormButton>
+                  </div>
+                </ModernForm>
               </div>
-            </ModernForm>
+            </div>
           </div>
         )}
 
@@ -407,7 +423,12 @@ const AdminLecturerManager = () => {
                               </button>
                               <button
                                 onClick={() => deleteLecturer(lecturer.lecturerId)}
-                                className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                                disabled={deleting} // 禁用按钮当正在删除时
+                                className={`p-2 rounded-full ${
+                                  deleting 
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                                    : 'bg-red-100 text-red-600 hover:bg-red-200'
+                                }`}
                                 title="Delete"
                               >
                                 <Trash2 size={16} />
@@ -425,8 +446,9 @@ const AdminLecturerManager = () => {
           
           {/* Edit Form */}
           {editingId && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            // 修改为与学生管理页面相同的样式
+            <div className="fixed inset-0 bg-opacity-0 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-bold text-gray-800">Edit Lecturer</h3>
@@ -511,7 +533,7 @@ const AdminLecturerManager = () => {
                       </div>
                     </FormRow>
                     
-                    <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                    <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
                       <FormButton
                         type="button"
                         variant="secondary"
@@ -534,6 +556,18 @@ const AdminLecturerManager = () => {
             </div>
           )}
         </div>
+        
+        {/* 删除确认对话框 */}
+        <CustomConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={cancelDelete}
+          onConfirm={confirmDelete}
+          title="Confirm Delete"
+          message="Are you sure you want to delete this lecturer? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          isDeleting={deleting} // 传递删除状态
+        />
       </div>
     </div>
   );

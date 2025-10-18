@@ -22,6 +22,7 @@ const AdminVisaPassportManager = () => {
  });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [visaPassportIdToDelete, setVisaPassportIdToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false); // 添加删除状态
 
   useEffect(() => {
     fetchVisaPassports();
@@ -116,6 +117,7 @@ const AdminVisaPassportManager = () => {
   };
 
   const confirmDelete = async () => {
+    setDeleting(true); // 设置删除状态
     try {
       await axiosInstance.delete(`/admin/visa-passports/${visaPassportIdToDelete}`);
       
@@ -133,6 +135,7 @@ const AdminVisaPassportManager = () => {
       });
       alert('Network error occurred while deleting visa/passport record: ' + (error.response?.data?.message || error.message));
     } finally {
+      setDeleting(false); // 重置删除状态
       setShowConfirmDialog(false);
       setVisaPassportIdToDelete(null);
     }
@@ -172,144 +175,157 @@ const AdminVisaPassportManager = () => {
 
         {/* Create New Visa/Passport Form */}
         {showCreateForm && (
-          <div className="mb-8 p-6 border-2 border-blue-200 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50">
-            <h2 className="text-xl font-bold text-blue-800 mb-4">Create New Visa/Passport Record</h2>
-            
-            <ModernForm>
-              <FormSection title="Visa Information">
-                <FormRow>
-                  <FormGroup>
-                    <FormLabel required>Visa Passport ID</FormLabel>
-                    <FormInput
-                      type="text"
-                      value={createData.visaPassportId}
-                      onChange={(e) => setCreateData({...createData, visaPassportId: e.target.value})}
-                      placeholder="e.g., VP001"
-                    />
-                  </FormGroup>
-                  
-                  <FormGroup>
-                    <FormLabel required>Student ID</FormLabel>
-                    <FormInput
-                      type="text"
-                      value={createData.studentId}
-                      onChange={(e) => setCreateData({...createData, studentId: e.target.value})}
-                      placeholder="e.g., STU001"
-                    />
-                  </FormGroup>
-                </FormRow>
+          // 修改为与其他管理页面相同的样式
+          <div className="fixed inset-0 bg-opacity-0 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-bold text-gray-800">Create New Visa/Passport Record</h3>
+                  <button 
+                    onClick={() => setShowCreateForm(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={24}/>
+                  </button>
+                </div>
                 
-                <FormRow>
-                  <FormGroup>
-                    <FormLabel required>Visa ID</FormLabel>
-                    <FormInput
-                      type="text"
-                      value={createData.visaId}
-                      onChange={(e) => setCreateData({...createData, visaId: e.target.value})}
-                      placeholder="e.g., VISA123"
-                    />
-                  </FormGroup>
+                <ModernForm>
+                  <FormSection title="Visa Information">
+                    <FormRow>
+                      <FormGroup>
+                        <FormLabel required>Visa Passport ID</FormLabel>
+                        <FormInput
+                          type="text"
+                          value={createData.visaPassportId}
+                          onChange={(e) => setCreateData({...createData, visaPassportId: e.target.value})}
+                          placeholder="e.g., VP001"
+                        />
+                      </FormGroup>
+                      
+                      <FormGroup>
+                        <FormLabel required>Student ID</FormLabel>
+                        <FormInput
+                          type="text"
+                          value={createData.studentId}
+                          onChange={(e) => setCreateData({...createData, studentId: e.target.value})}
+                          placeholder="e.g., STU001"
+                        />
+                      </FormGroup>
+                    </FormRow>
+                    
+                    <FormRow>
+                      <FormGroup>
+                        <FormLabel required>Visa ID</FormLabel>
+                        <FormInput
+                          type="text"
+                          value={createData.visaId}
+                          onChange={(e) => setCreateData({...createData, visaId: e.target.value})}
+                          placeholder="e.g., VISA123"
+                        />
+                      </FormGroup>
+                      
+                      <FormGroup>
+                        <FormLabel required>Visa Type</FormLabel>
+                        <FormSelect
+                          value={createData.visaType}
+                          onChange={(e) => setCreateData({...createData, visaType: parseInt(e.target.value)})}
+                        >
+                          <option value={0}>Single Entry</option>
+                          <option value={1}>Multiple Entry</option>
+                        </FormSelect>
+                      </FormGroup>
+                    </FormRow>
+                    
+                    <FormRow>
+                      <FormGroup>
+                        <FormLabel required>Visa Issued Date</FormLabel>
+                        <FormInput
+                          type="date"
+                          value={createData.visaIssuedDate}
+                          onChange={(e) => setCreateData({...createData, visaIssuedDate: e.target.value})}
+                        />
+                      </FormGroup>
+                      
+                      <FormGroup>
+                        <FormLabel required>Visa Expired Date</FormLabel>
+                        <FormInput
+                          type="date"
+                          value={createData.visaExpiredDate}
+                          onChange={(e) => setCreateData({...createData, visaExpiredDate: e.target.value})}
+                        />
+                      </FormGroup>
+                    </FormRow>
+                  </FormSection>
                   
-                  <FormGroup>
-                    <FormLabel required>Visa Type</FormLabel>
-                    <FormSelect
-                      value={createData.visaType}
-                      onChange={(e) => setCreateData({...createData, visaType: parseInt(e.target.value)})}
+                  <FormSection title="Passport Information">
+                    <FormRow>
+                      <FormGroup>
+                        <FormLabel required>Passport Number</FormLabel>
+                        <FormInput
+                          type="text"
+                          value={createData.passportNumber}
+                          onChange={(e) => setCreateData({...createData, passportNumber: e.target.value})}
+                          placeholder="e.g., P12345678"
+                        />
+                      </FormGroup>
+                    </FormRow>
+                    
+                    <FormRow>
+                      <FormGroup>
+                        <FormLabel required>Passport Issued Date</FormLabel>
+                        <FormInput
+                          type="date"
+                          value={createData.passportIssuedDate}
+                          onChange={(e) => setCreateData({...createData, passportIssuedDate: e.target.value})}
+                        />
+                      </FormGroup>
+                      
+                      <FormGroup>
+                        <FormLabel required>Passport Expired Date</FormLabel>
+                        <FormInput
+                          type="date"
+                          value={createData.passportExpiredDate}
+                          onChange={(e) => setCreateData({...createData, passportExpiredDate: e.target.value})}
+                        />
+                      </FormGroup>
+                    </FormRow>
+                  </FormSection>
+                  
+                  <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
+                    <FormButton
+                      type="button"
+                      variant="secondary"
+                      onClick={() => {
+                        setShowCreateForm(false);
+                        setCreateData({
+                          visaPassportId: '',
+                          studentId: '',
+                          visaId: '',
+                          visaIssuedDate: '',
+                          visaExpiredDate: '',
+                          visaType: 0,
+                          passportNumber: '',
+                          passportIssuedDate: '',
+                          passportExpiredDate: ''
+                        });
+                      }}
                     >
-                      <option value={0}>Single Entry</option>
-                      <option value={1}>Multiple Entry</option>
-                    </FormSelect>
-                  </FormGroup>
-                </FormRow>
-                
-                <FormRow>
-                  <FormGroup>
-                    <FormLabel required>Visa Issued Date</FormLabel>
-                    <FormInput
-                      type="date"
-                      value={createData.visaIssuedDate}
-                      onChange={(e) => setCreateData({...createData, visaIssuedDate: e.target.value})}
-                    />
-                  </FormGroup>
-                  
-                  <FormGroup>
-                    <FormLabel required>Visa Expired Date</FormLabel>
-                    <FormInput
-                      type="date"
-                      value={createData.visaExpiredDate}
-                      onChange={(e) => setCreateData({...createData, visaExpiredDate: e.target.value})}
-                    />
-                  </FormGroup>
-                </FormRow>
-              </FormSection>
-              
-              <FormSection title="Passport Information">
-                <FormRow>
-                  <FormGroup>
-                    <FormLabel required>Passport Number</FormLabel>
-                    <FormInput
-                      type="text"
-                      value={createData.passportNumber}
-                      onChange={(e) => setCreateData({...createData, passportNumber: e.target.value})}
-                      placeholder="e.g., P12345678"
-                    />
-                  </FormGroup>
-                </FormRow>
-                
-                <FormRow>
-                  <FormGroup>
-                    <FormLabel required>Passport Issued Date</FormLabel>
-                    <FormInput
-                      type="date"
-                      value={createData.passportIssuedDate}
-                      onChange={(e) => setCreateData({...createData, passportIssuedDate: e.target.value})}
-                    />
-                  </FormGroup>
-                  
-                  <FormGroup>
-                    <FormLabel required>Passport Expired Date</FormLabel>
-                    <FormInput
-                      type="date"
-                      value={createData.passportExpiredDate}
-                      onChange={(e) => setCreateData({...createData, passportExpiredDate: e.target.value})}
-                    />
-                  </FormGroup>
-                </FormRow>
-              </FormSection>
-              
-              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
-                <FormButton
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setShowCreateForm(false);
-                    setCreateData({
-                      visaPassportId: '',
-                      studentId: '',
-                      visaId: '',
-                      visaIssuedDate: '',
-                      visaExpiredDate: '',
-                      visaType: 0,
-                      passportNumber: '',
-                      passportIssuedDate: '',
-                      passportExpiredDate: ''
-                    });
-                  }}
-                >
-                  <X size={20} />
-                  Cancel
-                </FormButton>
-                
-                <FormButton
-                  type="button"
-                  variant="success"
-                  onClick={createNewVisaPassport}
-                >
-                  <Save size={20} />
-                  Create Record
-                </FormButton>
+                      <X size={20} />
+                      Cancel
+                    </FormButton>
+                    
+                    <FormButton
+                      type="button"
+                      variant="success"
+                      onClick={createNewVisaPassport}
+                    >
+                      <Save size={20} />
+                      Create Record
+                    </FormButton>
+                  </div>
+                </ModernForm>
               </div>
-            </ModernForm>
+            </div>
           </div>
         )}
 
@@ -404,7 +420,12 @@ const AdminVisaPassportManager = () => {
                         
                         <button
                           onClick={() => deleteVisaPassport(record.visaPassportId)}
-                          className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                          disabled={deleting} // 禁用按钮当正在删除时
+                          className={`p-2 rounded-full ${
+                            deleting 
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                              : 'bg-red-100 text-red-600 hover:bg-red-200'
+                          }`}
                           title="Delete"
                         >
                           <Trash2 size={16} />
@@ -419,8 +440,9 @@ const AdminVisaPassportManager = () => {
           
           {/* Edit Modal */}
           {editingId && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            // 修改为与其他管理页面相同的样式
+            <div className="fixed inset-0 bg-opacity-0 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-bold text-gray-800">Edit Visa/Passport Record</h3>
@@ -555,6 +577,7 @@ const AdminVisaPassportManager = () => {
             message="Are you sure you want to delete this visa/passport record? This action cannot be undone."
             confirmText="Delete"
             cancelText="Cancel"
+            isDeleting={deleting} // 传递删除状态
           />
         </div>
       </div>

@@ -18,6 +18,7 @@ const AdminTuitionPaymentManager = () => {
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [paymentIdToDelete, setPaymentIdToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false); // 添加删除状态
 
   useEffect(() => {
     fetchTuitionPayments();
@@ -81,6 +82,7 @@ const AdminTuitionPaymentManager = () => {
   };
 
   const confirmDelete = async () => {
+    setDeleting(true); // 设置删除状态
     try {
       await axiosInstance.delete(`/admin/tuition-payments/${paymentIdToDelete}`);
       
@@ -90,6 +92,7 @@ const AdminTuitionPaymentManager = () => {
       console.error('Delete error:', error);
       alert('Network error occurred while deleting tuition payment record');
     } finally {
+      setDeleting(false); // 重置删除状态
       setShowConfirmDialog(false);
       setPaymentIdToDelete(null);
     }
@@ -137,96 +140,109 @@ const AdminTuitionPaymentManager = () => {
 
         {/* Create New Tuition Payment Form */}
         {showCreateForm && (
-          <div className="mb-8 p-6 border-2 border-blue-200 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50">
-            <h2 className="text-xl font-bold text-blue-800 mb-4">Create New Tuition Payment Record</h2>
-            
-            <ModernForm>
-              <FormRow>
-                <FormGroup>
-                  <FormLabel required>Student ID</FormLabel>
-                  <FormInput
-                    type="text"
-                    value={createData.studentId}
-                    onChange={(e) => setCreateData({...createData, studentId: e.target.value})}
-                    placeholder="e.g., STU001"
-                  />
-                </FormGroup>
-                
-                <FormGroup>
-                  <FormLabel>Scholarship ID</FormLabel>
-                  <FormInput
-                    type="text"
-                    value={createData.scholarshipId}
-                    onChange={(e) => setCreateData({...createData, scholarshipId: e.target.value})}
-                    placeholder="e.g., SCH001"
-                  />
-                </FormGroup>
-              </FormRow>
-              
-              <FormRow>
-                <FormGroup>
-                  <FormLabel>Payment Status</FormLabel>
-                  <FormSelect
-                    value={createData.paymentStatus}
-                    onChange={(e) => setCreateData({...createData, paymentStatus: parseInt(e.target.value)})}
+          // 修改为与其他管理页面相同的样式
+          <div className="fixed inset-0 bg-opacity-0 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold text-gray-800">Create New Tuition Payment Record</h2>
+                  <button 
+                    onClick={() => setShowCreateForm(false)}
+                    className="text-gray-500 hover:text-gray-700"
                   >
-                    <option value={0}>Unpaid</option>
-                    <option value={1}>Paid</option>
-                  </FormSelect>
-                </FormGroup>
+                    <X size={24}/>
+                  </button>
+                </div>
                 
-                <FormGroup>
-                  <FormLabel>Payment Method</FormLabel>
-                  <FormSelect
-                    value={createData.paymentMethod}
-                    onChange={(e) => setCreateData({...createData, paymentMethod: parseInt(e.target.value)})}
-                  >
-                    <option value={1}>Bank Transfer</option>
-                    <option value={2}>Credit Card</option>
-                  </FormSelect>
-                </FormGroup>
-              </FormRow>
-              
-              <FormGroup>
-                <FormLabel>Amount Paid</FormLabel>
-                <FormInput
-                  type="number"
-                  step="0.01"
-                  value={createData.amountPaid}
-                  onChange={(e) => setCreateData({...createData, amountPaid: parseFloat(e.target.value) || 0.0})}
-                  placeholder="e.g., 1000.00"
-                />
-              </FormGroup>
-              
-              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
-                <FormButton
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setShowCreateForm(false);
-                    setCreateData({
-                      studentId: '',
-                      scholarshipId: '',
-                      paymentStatus: 0,
-                      paymentMethod: 1,
-                      amountPaid: 0.0
-                    });
-                  }}
-                >
-                  <X size={20} />
-                  Cancel
-                </FormButton>
-                
-                <FormButton
-                  type="button"
-                  variant="success"
-                  onClick={createNewTuitionPayment}
-                >
-                  <Save size={20} />
-                  Create Record
-                </FormButton>
+                <ModernForm>
+                  <FormRow>
+                    <FormGroup>
+                      <FormLabel required>Student ID</FormLabel>
+                      <FormInput
+                        type="text"
+                        value={createData.studentId}
+                        onChange={(e) => setCreateData({...createData, studentId: e.target.value})}
+                        placeholder="e.g., STU001"
+                      />
+                    </FormGroup>
+                    
+                    <FormGroup>
+                      <FormLabel>Scholarship ID</FormLabel>
+                      <FormInput
+                        type="text"
+                        value={createData.scholarshipId}
+                        onChange={(e) => setCreateData({...createData, scholarshipId: e.target.value})}
+                        placeholder="e.g., SCH001"
+                      />
+                    </FormGroup>
+                  </FormRow>
+                  
+                  <FormRow>
+                    <FormGroup>
+                      <FormLabel>Payment Status</FormLabel>
+                      <FormSelect
+                        value={createData.paymentStatus}
+                        onChange={(e) => setCreateData({...createData, paymentStatus: parseInt(e.target.value)})}
+                      >
+                        <option value={0}>Unpaid</option>
+                        <option value={1}>Paid</option>
+                      </FormSelect>
+                    </FormGroup>
+                    
+                    <FormGroup>
+                      <FormLabel>Payment Method</FormLabel>
+                      <FormSelect
+                        value={createData.paymentMethod}
+                        onChange={(e) => setCreateData({...createData, paymentMethod: parseInt(e.target.value)})}
+                      >
+                        <option value={1}>Bank Transfer</option>
+                        <option value={2}>Credit Card</option>
+                      </FormSelect>
+                    </FormGroup>
+                  </FormRow>
+                  
+                  <FormGroup>
+                    <FormLabel>Amount Paid</FormLabel>
+                    <FormInput
+                      type="number"
+                      step="0.01"
+                      value={createData.amountPaid}
+                      onChange={(e) => setCreateData({...createData, amountPaid: parseFloat(e.target.value) || 0.0})}
+                      placeholder="e.g., 1000.00"
+                    />
+                  </FormGroup>
+                  
+                  <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
+                    <FormButton
+                      type="button"
+                      variant="secondary"
+                      onClick={() => {
+                        setShowCreateForm(false);
+                        setCreateData({
+                          studentId: '',
+                          scholarshipId: '',
+                          paymentStatus: 0,
+                          paymentMethod: 1,
+                          amountPaid: 0.0
+                        });
+                      }}
+                    >
+                      <X size={20} />
+                      Cancel
+                    </FormButton>
+                    
+                    <FormButton
+                      type="button"
+                      variant="success"
+                      onClick={createNewTuitionPayment}
+                    >
+                      <Save size={20} />
+                      Create Record
+                    </FormButton>
+                  </div>
+                </ModernForm>
               </div>
-            </ModernForm>
+            </div>
           </div>
         )}
 
@@ -310,7 +326,12 @@ const AdminTuitionPaymentManager = () => {
                         
                         <button
                           onClick={() => deleteTuitionPayment(payment.id)}
-                          className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                          disabled={deleting} // 禁用按钮当正在删除时
+                          className={`p-2 rounded-full ${
+                            deleting 
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                              : 'bg-red-100 text-red-600 hover:bg-red-200'
+                          }`}
                           title="Delete"
                         >
                           <Trash2 size={16} />
@@ -325,8 +346,9 @@ const AdminTuitionPaymentManager = () => {
           
           {/* Edit Modal */}
           {editingId && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            // 修改为与其他管理页面相同的样式
+            <div className="fixed inset-0 bg-opacity-0 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-bold text-gray-800">Edit Tuition Payment Record</h3>
@@ -423,6 +445,7 @@ const AdminTuitionPaymentManager = () => {
             message="Are you sure you want to delete this tuition payment record? This action cannot be undone."
             confirmText="Delete"
             cancelText="Cancel"
+            isDeleting={deleting} // 传递删除状态
           />
         </div>
       </div>
