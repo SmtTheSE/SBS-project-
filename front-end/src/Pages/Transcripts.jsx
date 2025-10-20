@@ -7,8 +7,61 @@ import DropDowns from "../Components/DropDown";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+// 自定义筛选下拉组件
+const TranscriptFilter = ({ records, onFilterChange }) => {
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [filterType, setFilterType] = useState('all'); // 'all', 'semester', 'grade'
+
+  // 获取所有学期选项
+  const semesters = [...new Set(records.map(record => record.semester))].sort();
+  
+  // 获取所有成绩选项
+  const grades = [...new Set(records.flatMap(record => 
+    record.courses.map(course => course.grade)
+  ))].filter(grade => grade !== "-").sort();
+
+  const handleFilterChange = (type, value) => {
+    setSelectedFilter(value);
+    setFilterType(type);
+    onFilterChange(type, value);
+  };
+
+  return (
+    <div className="flex gap-2">
+      <select 
+        value={selectedFilter === 'all' ? 'all' : selectedFilter}
+        onChange={(e) => handleFilterChange('all', e.target.value)}
+        className="rounded-md border border-border px-3 py-2 bg-white text-font-light focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
+      >
+        <option value="all">All Records</option>
+      </select>
+      
+      <select 
+        onChange={(e) => handleFilterChange('semester', e.target.value)}
+        className="rounded-md border border-border px-3 py-2 bg-white text-font-light focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
+      >
+        <option value="">Filter by Semester</option>
+        {semesters.map(semester => (
+          <option key={semester} value={semester}>{semester}</option>
+        ))}
+      </select>
+      
+      <select 
+        onChange={(e) => handleFilterChange('grade', e.target.value)}
+        className="rounded-md border border-border px-3 py-2 bg-white text-font-light focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
+      >
+        <option value="">Filter by Grade</option>
+        {grades.map(grade => (
+          <option key={grade} value={grade}>{grade}</option>
+        ))}
+      </select>
+    </div>
+  );
+};
+
 const Transcripts = () => {
   const [records, setRecords] = useState([]);
+  const [filteredRecords, setFilteredRecords] = useState([]);
   const [studentId, setStudentId] = useState(null);
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [requestType, setRequestType] = useState(0); // 0 = Unofficial, 1 = Official
@@ -75,8 +128,28 @@ const Transcripts = () => {
       }));
 
       setRecords(formatted);
+      setFilteredRecords(formatted);
     } catch (err) {
       console.error("Failed to fetch transcript:", err);
+    }
+  };
+
+  // 处理筛选逻辑
+  const handleFilter = (type, value) => {
+    if (value === "" || value === "all") {
+      setFilteredRecords(records);
+      return;
+    }
+
+    if (type === 'semester') {
+      const filtered = records.filter(record => record.semester === value);
+      setFilteredRecords(filtered);
+    } else if (type === 'grade') {
+      const filtered = records.map(record => {
+        const filteredCourses = record.courses.filter(course => course.grade === value);
+        return {...record, courses: filteredCourses};
+      }).filter(record => record.courses.length > 0);
+      setFilteredRecords(filtered);
     }
   };
 
@@ -117,7 +190,7 @@ const Transcripts = () => {
         <div className="shadow-md p-5 rounded-md w-[70%] bg-white">
           <div className="flex justify-between items-center mb-5">
             <h1 className="text-font text-4xl font-bold">Academic Records</h1>
-            <DropDowns />
+            <TranscriptFilter records={records} onFilterChange={handleFilter} />
           </div>
 
           <table className="w-full text-left mb-5">
@@ -130,7 +203,7 @@ const Transcripts = () => {
               </tr>
             </thead>
             <tbody>
-              {records.map((record) =>
+              {filteredRecords.map((record) =>
                 record.courses.map((course, index) => (
                   <tr
                     className="border-b border-border"

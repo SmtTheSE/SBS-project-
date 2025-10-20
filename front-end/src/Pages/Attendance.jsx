@@ -184,6 +184,7 @@ const DynamicAttendanceCalendar = ({ attendanceLogs }) => {
 
 const Attendance = () => {
   const [attendanceLogs, setAttendanceLogs] = useState([]);
+  const [filteredLogs, setFilteredLogs] = useState([]);
   const [rates, setRates] = useState({
     studentRate: 0,
     teacherRate: 91, // Keep static or fetch from another API
@@ -227,9 +228,11 @@ const Attendance = () => {
       }));
 
       setAttendanceLogs(logs);
+      setFilteredLogs(logs); // Initialize filtered logs with all data
     } catch (error) {
       console.error("Failed to fetch attendance data:", error);
       setAttendanceLogs([]);
+      setFilteredLogs([]);
     }
   };
 
@@ -284,11 +287,15 @@ const Attendance = () => {
 
           {/* Daily attendance */}
           <div className="bg-white p-5 rounded-md">
-            <div className="flex justify-between items-center mb-5">
-              <h1 className="text-font text-3xl">
-                Daily Attendance Table (Detailed Log)
-              </h1>
-              <DropDowns />
+            <h1 className="text-font text-3xl mb-5">
+              Daily Attendance Table (Detailed Log)
+            </h1>
+            
+            <div className="mb-5">
+              <AttendanceFilter 
+                logs={attendanceLogs} 
+                onFilterChange={setFilteredLogs} 
+              />
             </div>
 
             <table className="w-full">
@@ -303,14 +310,14 @@ const Attendance = () => {
                 </tr>
               </thead>
               <tbody>
-                {attendanceLogs.length === 0 ? (
+                {filteredLogs.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="py-5 text-center text-gray-500">
                       No attendance records found
                     </td>
                   </tr>
                 ) : (
-                  attendanceLogs.map((log, index) => (
+                  filteredLogs.map((log, index) => (
                     <tr key={`${log.date}-${index}`} className="border-b border-border">
                       <td className="py-3">{log.date}</td>
                       <td className="py-3">{log.courseName || "-"}</td>
@@ -387,6 +394,65 @@ const Attendance = () => {
         </div>
       </Container>
     </section>
+  );
+};
+
+// 新增的筛选组件
+const AttendanceFilter = ({ logs, onFilterChange }) => {
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [courseFilter, setCourseFilter] = useState('all');
+
+  // 获取所有唯一的课程名称
+  const courses = [...new Set(logs.map(log => log.courseName).filter(name => name))].sort();
+
+  // 获取状态选项
+  const statusOptions = [
+    { value: 'all', label: 'All Statuses' },
+    { value: '1', label: 'Present' },
+    { value: '0', label: 'Absent' },
+    { value: '2', label: 'Absent with permission' }
+  ];
+
+  // 处理筛选变化
+  useEffect(() => {
+    let result = logs;
+    
+    // 按状态筛选
+    if (statusFilter !== 'all') {
+      result = result.filter(log => log.status === parseInt(statusFilter));
+    }
+    
+    // 按课程筛选
+    if (courseFilter !== 'all') {
+      result = result.filter(log => log.courseName === courseFilter);
+    }
+    
+    onFilterChange(result);
+  }, [statusFilter, courseFilter, logs, onFilterChange]);
+
+  return (
+    <div className="flex gap-2">
+      <select
+        value={statusFilter}
+        onChange={(e) => setStatusFilter(e.target.value)}
+        className="rounded-md border border-border px-3 py-2 bg-white text-font-light focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
+      >
+        {statusOptions.map(option => (
+          <option key={option.value} value={option.value}>{option.label}</option>
+        ))}
+      </select>
+      
+      <select
+        value={courseFilter}
+        onChange={(e) => setCourseFilter(e.target.value)}
+        className="rounded-md border border-border px-3 py-2 bg-white text-font-light focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
+      >
+        <option value="all">All Courses</option>
+        {courses.map(course => (
+          <option key={course} value={course}>{course}</option>
+        ))}
+      </select>
+    </div>
   );
 };
 

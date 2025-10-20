@@ -16,17 +16,28 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 // FilterByDropDown styled like previous, **without** the manual arrow
-const FilterByDropDown = ({ filter, setFilter }) => (
-  <select
-    value={filter.filterBy}
-    onChange={e => setFilter(prev => ({ ...prev, filterBy: e.target.value }))}
-    className="w-40 rounded-md border border-border px-3 py-2 bg-white text-font-light focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
-  >
-    <option value="none" className="text-font-light">Filter By</option>
-    <option value="courseName" className="text-font-light">Course Name</option>
-  </select>
+const FilterByDropDown = ({ filter, setFilter, subjPlans }) => {
+  // 获取所有唯一的年份和学期组合
+  const uniqueYearSemOptions = [...new Set(subjPlans.map(plan => `Year ${plan.year} - Sem ${plan.sem}`))]
+    .sort((a, b) => {
+      const [yearA, semA] = a.match(/\d+/g).map(Number);
+      const [yearB, semB] = b.match(/\d+/g).map(Number);
+      return yearA === yearB ? semA - semB : yearA - yearB;
+    });
 
-);
+  return (
+    <select
+      value={filter.filterBy}
+      onChange={e => setFilter(prev => ({ ...prev, filterBy: e.target.value }))}
+      className="w-40 rounded-md border border-border px-3 py-2 bg-white text-font-light focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
+    >
+      <option value="none" className="text-font-light">All Years/Sems</option>
+      {uniqueYearSemOptions.map(option => (
+        <option key={option} value={option} className="text-font-light">{option}</option>
+      ))}
+    </select>
+  );
+};
 
 const StudyPlan = () => {
   const [academicInfos, setAcademicInfo] = useState([
@@ -171,8 +182,14 @@ const StudyPlan = () => {
   useEffect(() => {
     let filtered = subjPlans;
 
-    if (filter.filterBy === "courseName") {
-      filtered = [...filtered].sort((a, b) => a.subject.localeCompare(b.subject));
+    // 如果选择了特定的年份/学期，则进行过滤
+    if (filter.filterBy !== "none") {
+      const match = filter.filterBy.match(/Year (\d+) - Sem (\d+)/);
+      if (match) {
+        const year = parseInt(match[1]);
+        const sem = parseInt(match[2]);
+        filtered = subjPlans.filter(plan => plan.year === year && plan.sem === sem);
+      }
     }
 
     setFilteredPlans(filtered);
@@ -236,7 +253,7 @@ const StudyPlan = () => {
                 Study Plan Timeline/Roadmap
               </h1>
               {/* Previous design for filter by dropdown, no arrow */}
-              <FilterByDropDown filter={filter} setFilter={setFilter} />
+              <FilterByDropDown filter={filter} setFilter={setFilter} subjPlans={subjPlans} />
             </div>
 
             <table className="w-full border-separate border-spacing-y-2">
@@ -287,9 +304,9 @@ const StudyPlan = () => {
               {filteredPlans
                 .filter((subj) => subj.status === 1)
                 .map((subj) => (
-                  <div key={subj.id} className="flex justify-between items-center bg-blue-50 border-l-5 border-border p-3 mb-3">
-                    <h1>{subj.subject}</h1>
-                    <p>
+                  <div key={subj.id} className="flex items-center bg-blue-50 border-l-5 border-border p-3 mb-3">
+                    <h1 className="flex-grow mr-2">{subj.subject}</h1>
+                    <p className="flex items-center whitespace-nowrap">
                       <FontAwesomeIcon icon={faCircleCheck} className="text-green-600 mr-2" />
                       Completed
                     </p>
