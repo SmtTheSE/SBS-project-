@@ -120,11 +120,11 @@ const HomePage = () => {
     <section className="p-10">
       <Container>
         {/* News Section */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mb-5">
           <h1 className="text-2xl text-font">News</h1>
           <DropDowns onFilterChange={handleFilterChange} />
         </div>
-        <div>
+        <div className="mb-10">
           {filteredNews.map((el, idx) => (
             <div
               key={el.id}
