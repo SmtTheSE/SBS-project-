@@ -40,6 +40,7 @@ const HomePage = () => {
       const response = await axios.get(
         "http://localhost:8080/api/announcements/active"
       );
+      // 确保数据是数组
       const data = Array.isArray(response.data) ? response.data : [];
 
       // Filter announcements for news section (System or Emergency type)
@@ -53,28 +54,28 @@ const HomePage = () => {
       );
 
       // Map all announcements
-      const mappedAllAnnouncements = otherAnnouncements.map((a) => {
+      const mappedAllAnnouncements = Array.isArray(otherAnnouncements) ? otherAnnouncements.map((a) => {
         return {
-          id: a.announcementId,
-          title: a.title,
+          id: a.announcementId || Date.now() + Math.random(), // 添加默认ID
+          title: a.title || "Untitled Announcement",
           image: a.imageUrl || "https://via.placeholder.com/300x200?text=No+Image",
-          detail: a.announcementType,
-          duration: `${a.startDate} to ${a.endDate}`,
-          description: a.description || "",
+          detail: a.announcementType || "General",
+          duration: `${a.startDate || "N/A"} to ${a.endDate || "N/A"}`,
+          description: a.description || "No description available",
         };
-      });
+      }) : [];
 
       // Map announcements for news section
-      const mappedNews = systemOrEmergencyAnnouncements.map((a) => {
+      const mappedNews = Array.isArray(systemOrEmergencyAnnouncements) ? systemOrEmergencyAnnouncements.map((a) => {
         return {
-          id: a.announcementId,
-          title: a.title,
+          id: a.announcementId || Date.now() + Math.random(), // 添加默认ID
+          title: a.title || "Untitled News",
           image: a.imageUrl || "https://via.placeholder.com/300x200?text=No+Image",
-          detail: a.announcementType,
-          duration: `${a.startDate} to ${a.endDate}`,
-          description: a.description || "",
+          detail: a.announcementType || "News",
+          duration: `${a.startDate || "N/A"} to ${a.endDate || "N/A"}`,
+          description: a.description || "No description available",
         };
-      });
+      }) : [];
 
       // Set news - use mapped system or emergency announcements or fallback to sample
       if (mappedNews.length === 0) {
@@ -125,40 +126,46 @@ const HomePage = () => {
           <DropDowns onFilterChange={handleFilterChange} />
         </div>
         <div className="mb-10">
-          {filteredNews.map((el, idx) => (
-            <div
-              key={el.id}
-              className={`${
-                idx % 2 === 0 ? "flex-row" : "flex-row-reverse"
-              } flex items-start p-5 bg-white rounded-xl shadow-md mb-5 gap-5`}
-            >
-              {/* Image */}
-              <div className="w-64 h-40 flex-shrink-0 overflow-hidden rounded-lg">
-                <img
-                  src={el.image}
-                  alt={el.title}
-                  loading="lazy"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              {/* Content */}
-              <div className="flex flex-col flex-1">
-                <h1 className="text-xl font-semibold text-gray-800">
-                  {el.title}
-                </h1>
-
-                <div className="flex items-center gap-3 mt-1">
-                  <p className="text-sm text-gray-600">{el.detail}</p>
-                  <p className="text-xs text-gray-400">({el.duration})</p>
+          {Array.isArray(filteredNews) && filteredNews.length > 0 ? (
+            filteredNews.map((el, idx) => (
+              <div
+                key={el.id}
+                className={`${
+                  idx % 2 === 0 ? "flex-row" : "flex-row-reverse"
+                } flex items-start p-5 bg-white rounded-xl shadow-md mb-5 gap-5`}
+              >
+                {/* Image */}
+                <div className="w-64 h-40 flex-shrink-0 overflow-hidden rounded-lg">
+                  <img
+                    src={el.image}
+                    alt={el.title}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
 
-                <p className="text-sm text-gray-700 text-justify mt-5">
-                  {el.description}
-                </p>
+                {/* Content */}
+                <div className="flex flex-col flex-1">
+                  <h1 className="text-xl font-semibold text-gray-800">
+                    {el.title}
+                  </h1>
+
+                  <div className="flex items-center gap-3 mt-1">
+                    <p className="text-sm text-gray-600">{el.detail}</p>
+                    <p className="text-xs text-gray-400">({el.duration})</p>
+                  </div>
+
+                  <p className="text-sm text-gray-700 text-justify mt-5">
+                    {el.description}
+                  </p>
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="bg-white p-5 rounded-xl shadow-md mb-5">
+              <p className="text-gray-500 text-center py-5">No news available at this time</p>
             </div>
-          ))}
+          )}
         </div>
 
         {/* Announcements Section */}
@@ -166,9 +173,7 @@ const HomePage = () => {
           <div className="flex justify-between items-center my-5">
             <h1 className="text-2xl text-font">Announcements</h1>
           </div>
-          {filteredAnnouncements.length === 0 ? (
-            <p className="text-gray-500">No announcements available</p>
-          ) : (
+          {Array.isArray(filteredAnnouncements) && filteredAnnouncements.length > 0 ? (
             <div className="flex justify-between gap-5 flex-wrap">
               {filteredAnnouncements.map((announcement) => (
                 <div
@@ -196,6 +201,10 @@ const HomePage = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          ) : (
+            <div className="bg-white p-5 rounded-xl shadow-md">
+              <p className="text-gray-500 text-center py-5">No announcements available</p>
             </div>
           )}
         </div>

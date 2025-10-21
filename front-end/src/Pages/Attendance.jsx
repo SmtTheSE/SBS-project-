@@ -402,8 +402,11 @@ const AttendanceFilter = ({ logs, onFilterChange }) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [courseFilter, setCourseFilter] = useState('all');
 
+  // 确保 logs 是数组
+  const validLogs = Array.isArray(logs) ? logs : [];
+  
   // 获取所有唯一的课程名称
-  const courses = [...new Set(logs.map(log => log.courseName).filter(name => name))].sort();
+  const courses = [...new Set(validLogs.map(log => log.courseName).filter(name => name))].sort();
 
   // 获取状态选项
   const statusOptions = [
@@ -415,7 +418,7 @@ const AttendanceFilter = ({ logs, onFilterChange }) => {
 
   // 处理筛选变化
   useEffect(() => {
-    let result = logs;
+    let result = validLogs;
     
     // 按状态筛选
     if (statusFilter !== 'all') {
@@ -428,7 +431,7 @@ const AttendanceFilter = ({ logs, onFilterChange }) => {
     }
     
     onFilterChange(result);
-  }, [statusFilter, courseFilter, logs, onFilterChange]);
+  }, [statusFilter, courseFilter, validLogs, onFilterChange]);
 
   return (
     <div className="flex gap-2">

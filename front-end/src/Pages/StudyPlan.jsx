@@ -196,7 +196,13 @@ const StudyPlan = () => {
   }, [subjPlans, filter.filterBy]);
 
   const getGroupedPlans = () => {
-    const plans = filteredPlans;
+    // 确保 filteredPlans 是数组
+    const plans = Array.isArray(filteredPlans) ? filteredPlans : [];
+    
+    if (plans.length === 0) {
+      return [];
+    }
+    
     const groups = [...new Set(plans.map((p) => `Year ${p.year} - Sem ${p.sem}`))]
       .sort((a, b) => {
         const getVal = (str) => {
@@ -258,40 +264,48 @@ const StudyPlan = () => {
 
             <table className="w-full border-separate border-spacing-y-2">
               <tbody>
-                {getGroupedPlans().map(({ group, groupItems }) => (
-                  <React.Fragment key={group}>
-                    <tr>
-                      <td colSpan="2" className="bg-gray-200 font-bold p-2">
-                        {group}
-                      </td>
-                    </tr>
-                    {groupItems.map((plan) => (
-                      <tr key={plan.id}>
-                        <td className="w-1/4 text-sm text-gray-500">
-                          {plan.status === 1
-                            ? "Completed"
-                            : plan.status === 0
-                            ? "In Progress"
-                            : "Coming"}
-                        </td>
-                        <td className="flex justify-between items-center border-l-5 border-border p-3 bg-blue-50">
-                          <h1>
-                            <span className="font-bold">{plan.subject}</span> by {plan.lecturer}
-                          </h1>
-                          <span>
-                            {plan.status === 1 ? (
-                              <FontAwesomeIcon icon={faCircleCheck} className="text-green-600" />
-                            ) : plan.status === 0 ? (
-                              <FontAwesomeIcon icon={faClock} className="text-blue-800" />
-                            ) : (
-                              <FontAwesomeIcon icon={faCircleXmark} className="text-red-600" />
-                            )}
-                          </span>
+                {getGroupedPlans().length > 0 ? (
+                  getGroupedPlans().map(({ group, groupItems }) => (
+                    <React.Fragment key={group}>
+                      <tr>
+                        <td colSpan="2" className="bg-gray-200 font-bold p-2">
+                          {group}
                         </td>
                       </tr>
-                    ))}
-                  </React.Fragment>
-                ))}
+                      {groupItems.map((plan) => (
+                        <tr key={plan.id}>
+                          <td className="w-1/4 text-sm text-gray-500">
+                            {plan.status === 1
+                              ? "Completed"
+                              : plan.status === 0
+                              ? "In Progress"
+                              : "Coming"}
+                          </td>
+                          <td className="flex justify-between items-center border-l-5 border-border p-3 bg-blue-50">
+                            <h1>
+                              <span className="font-bold">{plan.subject || "Unknown Subject"}</span> by {plan.lecturer || "Unknown Lecturer"}
+                            </h1>
+                            <span>
+                              {plan.status === 1 ? (
+                                <FontAwesomeIcon icon={faCircleCheck} className="text-green-600" />
+                              ) : plan.status === 0 ? (
+                                <FontAwesomeIcon icon={faClock} className="text-blue-800" />
+                              ) : (
+                                <FontAwesomeIcon icon={faCircleXmark} className="text-red-600" />
+                              )}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="2" className="text-center py-5 text-gray-500">
+                      No study plan data available
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -301,17 +315,21 @@ const StudyPlan = () => {
               Course History
             </h1>
             <div>
-              {filteredPlans
-                .filter((subj) => subj.status === 1)
-                .map((subj) => (
-                  <div key={subj.id} className="flex items-center bg-blue-50 border-l-5 border-border p-3 mb-3">
-                    <h1 className="flex-grow mr-2">{subj.subject}</h1>
-                    <p className="flex items-center whitespace-nowrap">
-                      <FontAwesomeIcon icon={faCircleCheck} className="text-green-600 mr-2" />
-                      Completed
-                    </p>
-                  </div>
-                ))}
+              {Array.isArray(filteredPlans) && filteredPlans.filter((subj) => subj.status === 1).length > 0 ? (
+                filteredPlans
+                  .filter((subj) => subj.status === 1)
+                  .map((subj) => (
+                    <div key={subj.id} className="flex items-center bg-blue-50 border-l-5 border-border p-3 mb-3">
+                      <h1 className="flex-grow mr-2">{subj.subject || "Unknown Subject"}</h1>
+                      <p className="flex items-center whitespace-nowrap">
+                        <FontAwesomeIcon icon={faCircleCheck} className="text-green-600 mr-2" />
+                        Completed
+                      </p>
+                    </div>
+                  ))
+              ) : (
+                <p className="text-gray-500 py-3">No completed courses</p>
+              )}
             </div>
           </div>
         </div>

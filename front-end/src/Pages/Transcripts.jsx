@@ -136,19 +136,24 @@ const Transcripts = () => {
 
   // 处理筛选逻辑
   const handleFilter = (type, value) => {
+    // 确保 records 是数组
+    const validRecords = Array.isArray(records) ? records : [];
+    
     if (value === "" || value === "all") {
-      setFilteredRecords(records);
+      setFilteredRecords(validRecords);
       return;
     }
 
     if (type === 'semester') {
-      const filtered = records.filter(record => record.semester === value);
+      const filtered = validRecords.filter(record => record.semester === value);
       setFilteredRecords(filtered);
     } else if (type === 'grade') {
-      const filtered = records.map(record => {
-        const filteredCourses = record.courses.filter(course => course.grade === value);
+      const filtered = validRecords.map(record => {
+        // 确保 record.courses 是数组
+        const courses = Array.isArray(record.courses) ? record.courses : [];
+        const filteredCourses = courses.filter(course => course.grade === value);
         return {...record, courses: filteredCourses};
-      }).filter(record => record.courses.length > 0);
+      }).filter(record => Array.isArray(record.courses) && record.courses.length > 0);
       setFilteredRecords(filtered);
     }
   };
@@ -190,7 +195,7 @@ const Transcripts = () => {
         <div className="shadow-md p-5 rounded-md w-[70%] bg-white">
           <div className="flex justify-between items-center mb-5">
             <h1 className="text-font text-4xl font-bold">Academic Records</h1>
-            <TranscriptFilter records={records} onFilterChange={handleFilter} />
+            <TranscriptFilter records={Array.isArray(records) ? records : []} onFilterChange={handleFilter} />
           </div>
 
           <table className="w-full text-left mb-5">
@@ -203,20 +208,30 @@ const Transcripts = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredRecords.map((record) =>
-                record.courses.map((course, index) => (
-                  <tr
-                    className="border-b border-border"
-                    key={`${record.semester}-${course.course}`}
-                  >
-                    <td className="py-5">
-                      {index === 0 ? record.semester : ""}
-                    </td>
-                    <td className="py-5">{course.course}</td>
-                    <td className="py-5">{course.course_name}</td>
-                    <td className="py-5">{course.grade}</td>
-                  </tr>
-                ))
+              {Array.isArray(filteredRecords) && filteredRecords.length > 0 ? (
+                filteredRecords.map((record) =>
+                  Array.isArray(record.courses) && record.courses.length > 0 ? (
+                    record.courses.map((course, index) => (
+                      <tr
+                        className="border-b border-border"
+                        key={`${record.semester}-${course.course}`}
+                      >
+                        <td className="py-5">
+                          {index === 0 ? record.semester : ""}
+                        </td>
+                        <td className="py-5">{course.course || "-"}</td>
+                        <td className="py-5">{course.course_name || "-"}</td>
+                        <td className="py-5">{course.grade || "-"}</td>
+                      </tr>
+                    ))
+                  ) : null
+                ).filter(row => row !== null)
+              ) : (
+                <tr>
+                  <td colSpan="4" className="py-5 text-center text-gray-500">
+                    No academic records found
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
@@ -271,7 +286,7 @@ const Transcripts = () => {
                   Optional Message
                 </label>
                 <textarea
-                  value={optionalMessage}
+                  value={optionalMessage || ""}
                   onChange={(e) => setOptionalMessage(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-iconic"
                   rows="3"

@@ -9,10 +9,11 @@ import {
   faPassport
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 const SideBar = () => {
+  const location = useLocation();
   const [sideBarMenus, setSideBarMenus] = useState([
     {
       id: 1,
@@ -33,28 +34,28 @@ const SideBar = () => {
           id: 1,
           name: "Study Plan",
           icon: faRoute,
-          link: "study-plan",
+          link: "/study-plan",
           isCurrent: false,
         },
         {
           id: 2,
           name: "Transcripts",
           icon: faListOl,
-          link: "transcripts",
+          link: "/transcripts",
           isCurrent: true,
        },
         {
           id: 3,
           name: "Attendances",
           icon: faListCheck,
-          link: "attendence",
+          link: "/attendence",
           isCurrent: false,
         },
         {
           id: 4,
           name: "Visa/Passport",
           icon: faPassport,
-          link: "visa-passport",
+          link: "/visa-passport",
           isCurrent: false,
         },
       ],
@@ -83,6 +84,38 @@ const SideBar = () => {
 ],
     },
  ]);
+
+  // 根据当前路径更新菜单状态
+  useEffect(() => {
+    // 检查顶级菜单
+    const updatedMenus = sideBarMenus.map(menu => {
+      // 检查是否是顶级菜单项
+      if (location.pathname === menu.link) {
+        return { ...menu, isCurrent: true };
+      }
+      
+      // 检查子菜单项
+      if (menu.children) {
+        // 检查是否有子菜单项匹配当前路径
+        const hasActiveChild = menu.children.some(child => location.pathname === child.link);
+        const updatedChildren = menu.children.map(child => ({
+          ...child,
+          isCurrent: location.pathname === child.link
+        }));
+        
+        return { 
+          ...menu, 
+          isCurrent: hasActiveChild || location.pathname.startsWith(menu.link), 
+          children: updatedChildren 
+        };
+      }
+      
+      // 默认情况保持原状态
+      return { ...menu, isCurrent: location.pathname === menu.link };
+    });
+    
+    setSideBarMenus(updatedMenus);
+  }, [location.pathname]);
 
   // Handle top-level menu clicks
   const handleMenus = (id) => {
