@@ -67,6 +67,9 @@ const Transcripts = () => {
   const [requestType, setRequestType] = useState(0); // 0 = Unofficial, 1 = Official
   const [optionalMessage, setOptionalMessage] = useState("");
   const [requestStatus, setRequestStatus] = useState(""); // For success/error messages
+  // 分页状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10; // 每页显示的记录数
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -129,9 +132,32 @@ const Transcripts = () => {
 
       setRecords(formatted);
       setFilteredRecords(formatted);
+      // 重置分页
+      setCurrentPage(1);
     } catch (err) {
       console.error("Failed to fetch transcript:", err);
     }
+  };
+
+  // 计算分页数据
+  const getPaginatedData = (data, page) => {
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return data.slice(startIndex, endIndex);
+  };
+
+  // 计算总页数
+  const getTotalPages = (data) => {
+    // 计算总记录数（所有学期中的课程总数）
+    const totalRecords = data.reduce((total, record) => {
+      return total + (Array.isArray(record.courses) ? record.courses.length : 0);
+    }, 0);
+    return Math.ceil(totalRecords / itemsPerPage);
+  };
+
+  // 处理页面切换
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
   };
 
   // 处理筛选逻辑
@@ -141,10 +167,7 @@ const Transcripts = () => {
     
     if (value === "" || value === "all") {
       setFilteredRecords(validRecords);
-      return;
-    }
-
-    if (type === 'semester') {
+    } else if (type === 'semester') {
       const filtered = validRecords.filter(record => record.semester === value);
       setFilteredRecords(filtered);
     } else if (type === 'grade') {
@@ -156,6 +179,9 @@ const Transcripts = () => {
       }).filter(record => Array.isArray(record.courses) && record.courses.length > 0);
       setFilteredRecords(filtered);
     }
+    
+    // 重置分页到第一页
+    setCurrentPage(1);
   };
 
   const handleRequestSubmit = async (e) => {
@@ -188,6 +214,53 @@ const Transcripts = () => {
     }
   };
 
+  // 获取当前页的数据
+  const currentRecords = getPaginatedData(filteredRecords, currentPage);
+  const totalPages = getTotalPages(filteredRecords);
+
+  // 处理分页显示的记录
+  const getPaginatedRecords = () => {
+    let itemsToShow = [];
+    let itemsCount = 0;
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    
+    // 遍历记录并收集需要显示的项目
+    for (const record of filteredRecords) {
+      if (!Array.isArray(record.courses)) continue;
+      
+      for (const course of record.courses) {
+        // 如果还没到起始索引，跳过
+        if (itemsCount < startIndex) {
+          itemsCount++;
+          continue;
+        }
+        
+        // 如果已达到每页数量，停止添加
+        if (itemsToShow.length >= itemsPerPage) {
+          break;
+        }
+        
+        // 添加记录到显示列表
+        itemsToShow.push({
+          semester: itemsCount === startIndex ? record.semester : "", // 只在第一个课程显示学期
+          course: course.course,
+          course_name: course.course_name,
+          grade: course.grade
+        });
+        
+        itemsCount++;
+      }
+      
+      if (itemsToShow.length >= itemsPerPage) {
+        break;
+      }
+    }
+    
+    return itemsToShow;
+  };
+
+  const paginatedRecords = getPaginatedRecords();
+
   return (
     <section>
       <Container className="p-10 flex justify-between items-start gap-5">
@@ -208,24 +281,15 @@ const Transcripts = () => {
               </tr>
             </thead>
             <tbody>
-              {Array.isArray(filteredRecords) && filteredRecords.length > 0 ? (
-                filteredRecords.map((record) =>
-                  Array.isArray(record.courses) && record.courses.length > 0 ? (
-                    record.courses.map((course, index) => (
-                      <tr
-                        className="border-b border-border"
-                        key={`${record.semester}-${course.course}`}
-                      >
-                        <td className="py-5">
-                          {index === 0 ? record.semester : ""}
-                        </td>
-                        <td className="py-5">{course.course || "-"}</td>
-                        <td className="py-5">{course.course_name || "-"}</td>
-                        <td className="py-5">{course.grade || "-"}</td>
-                      </tr>
-                    ))
-                  ) : null
-                ).filter(row => row !== null)
+              {paginatedRecords.length > 0 ? (
+                paginatedRecords.map((record, index) => (
+                  <tr className="border-b border-border" key={index}>
+                    <td className="py-5">{record.semester || ""}</td>
+                    <td className="py-5">{record.course || "-"}</td>
+                    <td className="py-5">{record.course_name || "-"}</td>
+                    <td className="py-5">{record.grade || "-"}</td>
+                  </tr>
+                ))
               ) : (
                 <tr>
                   <td colSpan="4" className="py-5 text-center text-gray-500">
@@ -235,6 +299,55 @@ const Transcripts = () => {
               )}
             </tbody>
           </table>
+          
+          {/* 分页控件 */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mb-5">
+              <nav className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 rounded-md ${
+                    currentPage === 1 
+                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Previous
+                </button>
+                
+                {[...Array(totalPages)].map((_, index) => {
+                  const pageNumber = index + 1;
+                  return (
+                    <button
+                      key={pageNumber}
+                      onClick={() => handlePageChange(pageNumber)}
+                      className={`w-10 h-10 rounded-full ${
+                        currentPage === pageNumber
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                })}
+                
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1 rounded-md ${
+                    currentPage === totalPages 
+                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Next
+                </button>
+              </nav>
+            </div>
+          )}
+          
           <div className="flex gap-3 items-center">
             <button className="bg-iconic text-background py-3 px-8 rounded-md">
               Download Transcript

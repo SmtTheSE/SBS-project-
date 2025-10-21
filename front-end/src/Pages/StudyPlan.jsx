@@ -48,6 +48,10 @@ const StudyPlan = () => {
   const [filter, setFilter] = useState({
     filterBy: "none",
   });
+  // 分页状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10; // 每页显示的项目数
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -174,6 +178,8 @@ const StudyPlan = () => {
       });
 
       setSubjPlans(subjPlanArr);
+      // 重置分页
+      setCurrentPage(1);
     } catch {
       setSubjPlans([]);
     }
@@ -193,7 +199,26 @@ const StudyPlan = () => {
     }
 
     setFilteredPlans(filtered);
+    // 重置分页到第一页
+    setCurrentPage(1);
   }, [subjPlans, filter.filterBy]);
+
+  // 计算分页数据
+  const getPaginatedData = (data, page) => {
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return data.slice(startIndex, endIndex);
+  };
+
+  // 计算总页数
+  const getTotalPages = (data) => {
+    return Math.ceil(data.length / itemsPerPage);
+  };
+
+  // 处理页面切换
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   const getGroupedPlans = () => {
     // 确保 filteredPlans 是数组
@@ -203,7 +228,11 @@ const StudyPlan = () => {
       return [];
     }
     
-    const groups = [...new Set(plans.map((p) => `Year ${p.year} - Sem ${p.sem}`))]
+    // 获取当前页的数据
+    const paginatedPlans = getPaginatedData(plans, currentPage);
+    const totalPages = getTotalPages(plans);
+    
+    const groups = [...new Set(paginatedPlans.map((p) => `Year ${p.year} - Sem ${p.sem}`))]
       .sort((a, b) => {
         const getVal = (str) => {
           const match = str.match(/Year (\d+) - Sem (\d+)/);
@@ -215,12 +244,15 @@ const StudyPlan = () => {
       });
 
     return groups.map((group) => {
-      let groupItems = plans.filter(
+      let groupItems = paginatedPlans.filter(
         (plan) => `Year ${plan.year} - Sem ${plan.sem}` === group
       );
       return { group, groupItems };
     });
   };
+
+  // 获取总页数
+  const totalPages = getTotalPages(filteredPlans);
 
   return (
     <section className="p-10">
@@ -265,40 +297,94 @@ const StudyPlan = () => {
             <table className="w-full border-separate border-spacing-y-2">
               <tbody>
                 {getGroupedPlans().length > 0 ? (
-                  getGroupedPlans().map(({ group, groupItems }) => (
-                    <React.Fragment key={group}>
-                      <tr>
-                        <td colSpan="2" className="bg-gray-200 font-bold p-2">
-                          {group}
-                        </td>
-                      </tr>
-                      {groupItems.map((plan) => (
-                        <tr key={plan.id}>
-                          <td className="w-1/4 text-sm text-gray-500">
-                            {plan.status === 1
-                              ? "Completed"
-                              : plan.status === 0
-                              ? "In Progress"
-                              : "Coming"}
-                          </td>
-                          <td className="flex justify-between items-center border-l-5 border-border p-3 bg-blue-50">
-                            <h1>
-                              <span className="font-bold">{plan.subject || "Unknown Subject"}</span> by {plan.lecturer || "Unknown Lecturer"}
-                            </h1>
-                            <span>
-                              {plan.status === 1 ? (
-                                <FontAwesomeIcon icon={faCircleCheck} className="text-green-600" />
-                              ) : plan.status === 0 ? (
-                                <FontAwesomeIcon icon={faClock} className="text-blue-800" />
-                              ) : (
-                                <FontAwesomeIcon icon={faCircleXmark} className="text-red-600" />
-                              )}
-                            </span>
+                  <>
+                    {getGroupedPlans().map(({ group, groupItems }) => (
+                      <React.Fragment key={group}>
+                        <tr>
+                          <td colSpan="2" className="bg-gray-200 font-bold p-2">
+                            {group}
                           </td>
                         </tr>
-                      ))}
-                    </React.Fragment>
-                  ))
+                        {groupItems.map((plan) => (
+                          <tr key={plan.id}>
+                            <td className="w-1/4 text-sm text-gray-500">
+                              {plan.status === 1
+                                ? "Completed"
+                                : plan.status === 0
+                                ? "In Progress"
+                                : "Coming"}
+                            </td>
+                            <td className="flex justify-between items-center border-l-5 border-border p-3 bg-blue-50">
+                              <h1>
+                                <span className="font-bold">{plan.subject || "Unknown Subject"}</span> by {plan.lecturer || "Unknown Lecturer"}
+                              </h1>
+                              <span>
+                                {plan.status === 1 ? (
+                                  <FontAwesomeIcon icon={faCircleCheck} className="text-green-600" />
+                                ) : plan.status === 0 ? (
+                                  <FontAwesomeIcon icon={faClock} className="text-blue-800" />
+                                ) : (
+                                  <FontAwesomeIcon icon={faCircleXmark} className="text-red-600" />
+                                )}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    ))}
+                    
+                    {/* 分页控件 */}
+                    {totalPages > 1 && (
+                      <tr>
+                        <td colSpan="2" className="pt-4">
+                          <div className="flex justify-center">
+                            <nav className="flex items-center gap-2">
+                              <button
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className={`px-3 py-1 rounded-md ${
+                                  currentPage === 1 
+                                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                              >
+                                Previous
+                              </button>
+                              
+                              {[...Array(totalPages)].map((_, index) => {
+                                const pageNumber = index + 1;
+                                return (
+                                  <button
+                                    key={pageNumber}
+                                    onClick={() => handlePageChange(pageNumber)}
+                                    className={`w-10 h-10 rounded-full ${
+                                      currentPage === pageNumber
+                                        ? 'bg-blue-500 text-white'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    {pageNumber}
+                                  </button>
+                                );
+                              })}
+                              
+                              <button
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className={`px-3 py-1 rounded-md ${
+                                  currentPage === totalPages 
+                                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                              >
+                                Next
+                              </button>
+                            </nav>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 ) : (
                   <tr>
                     <td colSpan="2" className="text-center py-5 text-gray-500">

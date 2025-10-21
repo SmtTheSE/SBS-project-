@@ -10,7 +10,7 @@ const AdminLayout = () => {
       <Navigation />  
       <div className="flex">
         <AdminSideBar />
-        <main className="flex-1 ml-80 mt-20 p-6">
+        <main className="flex-1 ml-80 mt-12 p-4">
           <Outlet />
         </main>
       </div>

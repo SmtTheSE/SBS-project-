@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Container from "../Components/Container";
 import DropDowns from "../Components/DropDown";
 import DualCircularProgress from "../Components/DualCircularProgress";
@@ -190,6 +190,10 @@ const Attendance = () => {
     teacherRate: 91, // Keep static or fetch from another API
   });
   const navigate = useNavigate();
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -229,6 +233,7 @@ const Attendance = () => {
 
       setAttendanceLogs(logs);
       setFilteredLogs(logs); // Initialize filtered logs with all data
+      setCurrentPage(1); // Reset to first page when data changes
     } catch (error) {
       console.error("Failed to fetch attendance data:", error);
       setAttendanceLogs([]);
@@ -254,6 +259,31 @@ const Attendance = () => {
       setRates(prev => ({ ...prev, studentRate: 0 }));
     }
   };
+
+  // Pagination functions
+  const getPaginatedData = (data) => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return data.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = (data) => {
+    return Math.ceil(data.length / itemsPerPage);
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // 处理筛选变化
+  const handleFilterChange = useCallback((filteredData) => {
+    setFilteredLogs(filteredData);
+    setCurrentPage(1); // Reset to first page when filter changes
+  }, []);
+
+  // Get current data based on pagination
+  const currentLogs = getPaginatedData(filteredLogs);
+  const totalPages = getTotalPages(filteredLogs);
 
   return (
     <section className="p-10">
@@ -290,11 +320,11 @@ const Attendance = () => {
             <h1 className="text-font text-3xl mb-5">
               Daily Attendance Table (Detailed Log)
             </h1>
-            
+
             <div className="mb-5">
-              <AttendanceFilter 
-                logs={attendanceLogs} 
-                onFilterChange={setFilteredLogs} 
+              <AttendanceFilter
+                logs={attendanceLogs}
+                onFilterChange={handleFilterChange}
               />
             </div>
 
@@ -310,14 +340,14 @@ const Attendance = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredLogs.length === 0 ? (
+                {currentLogs.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="py-5 text-center text-gray-500">
                       No attendance records found
                     </td>
                   </tr>
                 ) : (
-                  filteredLogs.map((log, index) => (
+                  currentLogs.map((log, index) => (
                     <tr key={`${log.date}-${index}`} className="border-b border-border">
                       <td className="py-3">{log.date}</td>
                       <td className="py-3">{log.courseName || "-"}</td>
@@ -344,6 +374,54 @@ const Attendance = () => {
                 )}
               </tbody>
             </table>
+            
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-6">
+                <nav className="flex items-center gap-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-1 rounded-md ${
+                      currentPage === 1 
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Previous
+                  </button>
+                  
+                  {[...Array(totalPages)].map((_, index) => {
+                    const pageNumber = index + 1;
+                    return (
+                      <button
+                        key={pageNumber}
+                        onClick={() => handlePageChange(pageNumber)}
+                        className={`w-10 h-10 rounded-full ${
+                          currentPage === pageNumber
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  })}
+                  
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-1 rounded-md ${
+                      currentPage === totalPages 
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Next
+                  </button>
+                </nav>
+              </div>
+            )}
           </div>
         </div>
 
@@ -402,11 +480,8 @@ const AttendanceFilter = ({ logs, onFilterChange }) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [courseFilter, setCourseFilter] = useState('all');
 
-  // 确保 logs 是数组
-  const validLogs = Array.isArray(logs) ? logs : [];
-  
   // 获取所有唯一的课程名称
-  const courses = [...new Set(validLogs.map(log => log.courseName).filter(name => name))].sort();
+  const courses = [...new Set(logs.map(log => log.courseName).filter(name => name))].sort();
 
   // 获取状态选项
   const statusOptions = [
@@ -418,20 +493,20 @@ const AttendanceFilter = ({ logs, onFilterChange }) => {
 
   // 处理筛选变化
   useEffect(() => {
-    let result = validLogs;
-    
+    let result = logs;
+
     // 按状态筛选
     if (statusFilter !== 'all') {
       result = result.filter(log => log.status === parseInt(statusFilter));
     }
-    
+
     // 按课程筛选
     if (courseFilter !== 'all') {
       result = result.filter(log => log.courseName === courseFilter);
     }
-    
+
     onFilterChange(result);
-  }, [statusFilter, courseFilter, validLogs, onFilterChange]);
+  }, [statusFilter, courseFilter, logs, onFilterChange]);
 
   return (
     <div className="flex gap-2">
@@ -444,7 +519,7 @@ const AttendanceFilter = ({ logs, onFilterChange }) => {
           <option key={option.value} value={option.value}>{option.label}</option>
         ))}
       </select>
-      
+
       <select
         value={courseFilter}
         onChange={(e) => setCourseFilter(e.target.value)}

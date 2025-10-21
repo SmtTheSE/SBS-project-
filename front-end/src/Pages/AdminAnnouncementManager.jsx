@@ -319,53 +319,53 @@ const AdminAnnouncementManager = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
-      <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="max-w-7xl mx-auto p-4 bg-gray-50 min-h-screen">
+      <div className="bg-white rounded-lg shadow-lg p-4">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">
+            <h1 className="text-2xl font-bold text-gray-800">
               Admin Panel - Announcements
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-sm">
               Create and manage announcements for 500+ students • Total: {announcements.length}
             </p>
           </div>
 
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md text-sm"
           >
-            <Plus size={20} />
+            <Plus size={16} />
             {showCreateForm ? 'Cancel' : 'Create New'}
           </button>
         </div>
 
         {/* Create New Announcement Form */}
         {showCreateForm && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
-            <h3 className="text-xl font-semibold text-blue-800 mb-4">Create New Announcement</h3>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4 mb-4">
+            <h3 className="text-lg font-semibold text-blue-800 mb-3">Create New Announcement</h3>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Form Fields */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Announcement Title *</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Announcement Title *</label>
                   <input
                     type="text"
                     value={createData.title}
                     onChange={(e) => setCreateData({...createData, title: e.target.value})}
-                    className="w-full p-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     placeholder="e.g., Sports Day 2025, Exam Schedule Update..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Type *</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Type *</label>
                   <select
                     value={createData.announcementType}
                     onChange={(e) => setCreateData({...createData, announcementType: e.target.value})}
-                    className="w-full p-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                   >
                     <option value="General">General</option>
                     <option value="Academic">Academic</option>
@@ -376,34 +376,34 @@ const AdminAnnouncementManager = () => {
                   </select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Start Date *</label>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Start Date *</label>
                     <input
                       type="date"
                       value={createData.startDate}
                       onChange={(e) => setCreateData({...createData, startDate: e.target.value})}
-                      className="w-full p-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">End Date *</label>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">End Date *</label>
                     <input
                       type="date"
                       value={createData.endDate}
                       onChange={(e) => setCreateData({...createData, endDate: e.target.value})}
-                      className="w-full p-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Announcement ID</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Announcement ID</label>
                   <input
                     type="text"
                     value={createData.announcementId}
                     onChange={(e) => setCreateData({...createData, announcementId: e.target.value})}
-                    className="w-full p-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                     placeholder="Leave empty for auto-generation or enter custom ID"
                   />
                   <p className="text-xs text-gray-500 mt-1">Optional: Will auto-generate if empty</p>
@@ -412,10 +412,10 @@ const AdminAnnouncementManager = () => {
 
               {/* Image Upload Section */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Announcement Image</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Announcement Image</label>
 
                 {createImageFile ? (
-                  <div className="w-full h-52 bg-gray-100 rounded-lg overflow-hidden mb-3 border-2 border-green-300">
+                  <div className="w-full h-40 bg-gray-100 rounded-lg overflow-hidden mb-2 border-2 border-green-300">
                     <img
                       src={URL.createObjectURL(createImageFile)}
                       alt="Preview"
@@ -426,10 +426,10 @@ const AdminAnnouncementManager = () => {
                     />
                   </div>
                 ) : (
-                  <div className="w-full h-52 bg-gray-100 rounded-lg flex items-center justify-center mb-3 border-2 border-dashed border-gray-300">
+                  <div className="w-full h-40 bg-gray-100 rounded-lg flex items-center justify-center mb-2 border-2 border-dashed border-gray-300">
                     <div className="text-center">
-                      <Upload size={48} className="text-gray-400 mx-auto mb-2" />
-                      <span className="text-gray-400">No image selected</span>
+                      <Upload size={36} className="text-gray-400 mx-auto mb-1" />
+                      <span className="text-gray-400 text-sm">No image selected</span>
                     </div>
                   </div>
                 )}
@@ -443,27 +443,27 @@ const AdminAnnouncementManager = () => {
                 />
                 <label
                   htmlFor="create-image-upload"
-                  className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors w-full justify-center"
+                  className="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors w-full justify-center text-sm"
                 >
-                  <Upload size={20} className="text-blue-500" />
+                  <Upload size={16} className="text-blue-500" />
                   <span className="text-blue-600 font-medium">
                     {createImageFile ? 'Change Image' : 'Select Image from Computer'}
                   </span>
                 </label>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-gray-500 mt-1">
                   JPG, PNG, GIF • Max 5MB • Optional (students will see placeholder if no image)
                 </p>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 mt-6 pt-4 border-t">
+            <div className="flex gap-2 mt-4 pt-3 border-t">
               <button
                 onClick={createNewAnnouncement}
                 disabled={creating}
-                className="flex items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+                className="flex items-center gap-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-sm"
               >
-                <Save size={20} />
+                <Save size={16} />
                 {creating ? 'Creating...' : 'Create Announcement'}
               </button>
 
@@ -482,9 +482,9 @@ const AdminAnnouncementManager = () => {
                   });
                   setCreateImageFile(null);
                 }}
-                className="flex items-center gap-2 px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                className="flex items-center gap-1 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
               >
-                <X size={20} />
+                <X size={16} />
                 Cancel
               </button>
             </div>
@@ -492,30 +492,30 @@ const AdminAnnouncementManager = () => {
         )}
 
         {/* Existing Announcements Management */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-700 border-b-2 border-gray-200 pb-2">
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold text-gray-700 border-b border-gray-200 pb-1">
             Existing Announcements ({announcements.length})
           </h2>
 
           {announcements.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 text-lg">No announcements yet</p>
-              <p className="text-gray-400 text-sm mt-2">Click "Create New" to add your first announcement</p>
+            <div className="text-center py-8 bg-gray-50 rounded-lg">
+              <p className="text-gray-500">No announcements yet</p>
+              <p className="text-gray-400 text-sm mt-1">Click "Create New" to add your first announcement</p>
             </div>
           ) : (
             announcements.map((announcement) => (
               <div
                 key={announcement.announcementId}
-                className={`border-2 rounded-lg p-5 transition-all ${
+                className={`border rounded-lg p-4 transition-all ${
                   announcement.active
                     ? 'border-green-300 bg-green-50'
                     : 'border-gray-300 bg-gray-100'
                 }`}
               >
                 {/* Header */}
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                <div className="flex justify-between items-center mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                       announcement.active
                         ? 'bg-green-500 text-white'
                         : 'bg-gray-500 text-white'
@@ -523,31 +523,31 @@ const AdminAnnouncementManager = () => {
                       {announcement.announcementId}
                     </span>
 
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
                       {announcement.announcementType}
                     </span>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-1">
                     <button
                       onClick={() => toggleActive(announcement)}
-                      className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-colors font-medium ${
+                      className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors font-medium text-xs ${
                         announcement.active
                           ? 'bg-red-100 text-red-700 hover:bg-red-200'
                           : 'bg-green-100 text-green-700 hover:bg-green-200'
                       }`}
                     >
-                      {announcement.active ? <EyeOff size={16} /> : <Eye size={16} />}
+                      {announcement.active ? <EyeOff size={12} /> : <Eye size={12} />}
                       {announcement.active ? 'Hide' : 'Show'}
                     </button>
 
                     {editingId === announcement.announcementId ? (
                       <>
-                        <button onClick={saveEdit} className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
-                          <Save size={16} />
+                        <button onClick={saveEdit} className="p-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
+                          <Save size={12} />
                         </button>
-                        <button onClick={() => setEditingId(null)} className="p-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
-                          <X size={16} />
+                        <button onClick={() => setEditingId(null)} className="p-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+                          <X size={12} />
                         </button>
                       </>
                     ) : (
@@ -559,25 +559,25 @@ const AdminAnnouncementManager = () => {
                           startDate: announcement.startDate,
                           endDate: announcement.endDate,
                         });
-                      }} className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                        <Edit size={16} />
+                      }} className="p-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                        <Edit size={12} />
                       </button>
                     )}
 
                     <button
                       onClick={() => deleteAnnouncement(announcement.announcementId)}
-                      className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                      className="p-1 bg-red-500 text-white rounded-lg hover:bg-red-600"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={12} />
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                   {/* Image Section */}
                   <div>
-                    <h4 className="font-bold text-gray-700 mb-2">Image:</h4>
-                    <div className="w-full h-32 bg-gray-100 rounded-lg overflow-hidden mb-3">
+                    <h4 className="font-bold text-gray-700 text-sm mb-1">Image:</h4>
+                    <div className="w-full h-24 bg-gray-100 rounded-lg overflow-hidden mb-2">
                       <img
                         src={announcement.imageUrl || placeholderImage}
                         alt={announcement.title}
@@ -614,12 +614,12 @@ const AdminAnnouncementManager = () => {
                     />
                     <label
                       htmlFor={`upload-${announcement.announcementId}`}
-                      className={`flex items-center gap-1 px-3 py-2 border-2 border-dashed border-orange-300 rounded-lg cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-colors w-full justify-center ${
+                      className={`flex items-center gap-1 px-2 py-1 border-2 border-dashed border-orange-300 rounded-lg cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-colors w-full justify-center text-xs ${
                         uploadingId === announcement.announcementId ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
                     >
-                      <Upload size={14} className="text-orange-500" />
-                      <span className="text-orange-600 text-sm font-medium">
+                      <Upload size={12} className="text-orange-500" />
+                      <span className="text-orange-600 font-medium">
                         {uploadingId === announcement.announcementId ? 'Uploading...' : 'Update'}
                       </span>
                     </label>
@@ -627,27 +627,27 @@ const AdminAnnouncementManager = () => {
 
                   {/* Details Section */}
                   <div className="lg:col-span-3">
-                    <h4 className="font-bold text-gray-700 mb-3">Details:</h4>
+                    <h4 className="font-bold text-gray-700 text-sm mb-2">Details:</h4>
 
                     {editingId === announcement.announcementId ? (
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Title:</label>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Title:</label>
                           <input
                             type="text"
                             value={editData.title || ''}
                             onChange={(e) => setEditData({...editData, title: e.target.value})}
-                            className="w-full p-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                           />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Type:</label>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Type:</label>
                             <select
                               value={editData.announcementType || ''}
                               onChange={(e) => setEditData({...editData, announcementType: e.target.value})}
-                              className="w-full p-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                             >
                               <option value="General">General</option>
                               <option value="Academic">Academic</option>
@@ -658,40 +658,40 @@ const AdminAnnouncementManager = () => {
                             </select>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Start Date:</label>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Start Date:</label>
                             <input
                               type="date"
                               value={editData.startDate || ''}
                               onChange={(e) => setEditData({...editData, startDate: e.target.value})}
-                              className="w-full p-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">End Date:</label>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">End Date:</label>
                             <input
                               type="date"
                               value={editData.endDate || ''}
                               onChange={(e) => setEditData({...editData, endDate: e.target.value})}
-                              className="w-full p-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                             />
                           </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <div>
-                          <span className="font-bold text-gray-700">Title:</span>
-                          <p className="text-gray-800 text-lg font-medium">{announcement.title}</p>
+                          <span className="font-bold text-gray-700 text-sm">Title:</span>
+                          <p className="text-gray-800 font-medium">{announcement.title}</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div>
-                            <span className="font-bold text-gray-700">Duration:</span>
-                            <p className="text-gray-600">{announcement.startDate} → {announcement.endDate}</p>
+                            <span className="font-bold text-gray-700 text-sm">Duration:</span>
+                            <p className="text-gray-600 text-sm">{announcement.startDate} → {announcement.endDate}</p>
                           </div>
                           <div>
-                            <span className="font-bold text-gray-700">Last Updated:</span>
-                            <p className="text-gray-600">{announcement.updatedAt}</p>
+                            <span className="font-bold text-gray-700 text-sm">Last Updated:</span>
+                            <p className="text-gray-600 text-sm">{announcement.updatedAt}</p>
                           </div>
                         </div>
                       </div>
