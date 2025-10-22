@@ -23,6 +23,10 @@ const ProfilePage = () => {
   const fileInputRef = useRef(null);
  const navigate = useNavigate();
   const { profileImage, updateProfileImage, clearProfileImageCache } = useProfileImage();
+  
+  // Pagination states for upcoming deadlines
+  const [deadlinesCurrentPage, setDeadlinesCurrentPage] = useState(1);
+  const deadlinesItemsPerPage = 5; // Show 5 deadlines per page
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -82,7 +86,7 @@ const fetchProfileImage = (studentId) => {
     axios.post("http://localhost:8080/api/account/profile/upload-image", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${token}`,
+        "Authorization": `Bearer ${token}`,
       },
     })
       .then((res) => {
@@ -203,9 +207,25 @@ date: dayDate,
           deadline:new Date(item.assignmentDeadline).toLocaleDateString("en-GB"),
         }));
         setUpcomingDeadlines(deadlines);
+        setDeadlinesCurrentPage(1); // Reset to first page when data changes
       })
       .catch(() => setUpcomingDeadlines([]));
 };
+
+  // Pagination functions for upcoming deadlines
+  const getPaginatedDeadlines = () => {
+    const startIndex = (deadlinesCurrentPage - 1) * deadlinesItemsPerPage;
+    const endIndex = startIndex + deadlinesItemsPerPage;
+    return upcomingDeadlines.slice(startIndex, endIndex);
+  };
+
+  const getDeadlinesTotalPages = () => {
+    return Math.ceil(upcomingDeadlines.length / deadlinesItemsPerPage);
+  };
+
+  const handleDeadlinesPageChange = (pageNumber) => {
+    setDeadlinesCurrentPage(pageNumber);
+  };
 
   const otherInfos = [
     { id: 1, name: "Payment", icon: payment, data: generalInfo.paymentStatus},
@@ -216,6 +236,10 @@ date: dayDate,
  const todayFormatted = formatDate(today);
   const { startDate, endDate } = getWeekRange(today);
   const weekRangeText = `${formatDate(startDate)}- ${formatDate(endDate)}`;
+
+  // Get current deadlines for pagination
+  const currentDeadlines = getPaginatedDeadlines();
+  const deadlinesTotalPages = getDeadlinesTotalPages();
 
  return (
     <section>
@@ -344,7 +368,7 @@ date: dayDate,
             <div className="bg-white p-5 col-span-1 rounded-md">
               <h1 className="uppercase text-gray-500 text-xl border-b border-font-light pb-5">Upcoming Deadlines</h1>
               <div>
-                {upcomingDeadlines.map((el) => (
+                {currentDeadlines.map((el) => (
                   <div key={el.id} className="flex justify-between items-center border-b border-font-light py-3">
                     <h1 className="flex justify-start items-center gap-2">
                       <span className="block rounded-full bg-amber-600 w-2 h-2"></span>
@@ -353,6 +377,54 @@ date: dayDate,
                     <p>{el.deadline}</p>
                   </div>
                 ))}
+                
+                {/* Pagination for Upcoming Deadlines */}
+                {deadlinesTotalPages > 1 && (
+                  <div className="flex justify-center mt-4">
+                    <nav className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleDeadlinesPageChange(deadlinesCurrentPage - 1)}
+                        disabled={deadlinesCurrentPage === 1}
+                        className={`px-2 py-1 text-sm rounded ${
+                          deadlinesCurrentPage === 1 
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        Previous
+                      </button>
+                      
+                      {[...Array(deadlinesTotalPages)].map((_, index) => {
+                        const pageNumber = index + 1;
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => handleDeadlinesPageChange(pageNumber)}
+                            className={`w-8 h-8 text-sm rounded-full ${
+                              deadlinesCurrentPage === pageNumber
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      })}
+                      
+                      <button
+                        onClick={() => handleDeadlinesPageChange(deadlinesCurrentPage + 1)}
+                        disabled={deadlinesCurrentPage === deadlinesTotalPages}
+                        className={`px-2 py-1 text-sm rounded ${
+                          deadlinesCurrentPage === deadlinesTotalPages 
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        Next
+                      </button>
+                    </nav>
+                  </div>
+                )}
               </div>
             </div>
           </div>

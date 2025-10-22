@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Edit, Save, X, Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
+import { Upload, Edit, Save, X, Eye, EyeOff, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminAnnouncementManager = () => {
@@ -22,6 +22,10 @@ const AdminAnnouncementManager = () => {
   const [creating, setCreating] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [announcementToDelete, setAnnouncementToDelete] = useState(null);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
 
   const placeholderImage = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns%3D%22http%3A//www.w3.org/2000/svg%22 width%3D%22400%22 height%3D%22300%22 viewBox%3D%220 0 400 300%22%3E%3Crect width%3D%22400%22 height%3D%22300%22 fill%3D%22%23cccccc%22/%3E%3Ctext x%3D%22200%22 y%3D%22150%22 font-family%3D%22Arial%2Csans-serif%22 font-size%3D%2220%22 fill%3D%22%23666666%22 text-anchor%3D%22middle%22 dominant-baseline%3D%22middle%22%3EImage%20Placeholder%3C/text%3E%3C/svg%3E';
   const errorImage = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns%3D%22http%3A//www.w3.org/2000/svg%22 width%3D%22400%22 height%3D%22300%22 viewBox%3D%220 0 400 300%22%3E%3Crect width%3D%22400%22 height%3D%22300%22 fill%3D%22%23f8d7da%22/%3E%3Ctext x%3D%22200%22 y%3D%22150%22 font-family%3D%22Arial%2Csans-serif%22 font-size%3D%2220%22 fill%3D%22%23721c24%22 text-anchor%3D%22middle%22 dominant-baseline%3D%22middle%22%3EImage%20Error%3C/text%3E%3C/svg%3E';
@@ -37,6 +41,30 @@ const AdminAnnouncementManager = () => {
       setAnnouncements(data);
     } catch (error) {
       console.error('Failed to fetch announcements:', error);
+    }
+  };
+
+  // Get current announcements for pagination
+  const getCurrentAnnouncements = () => {
+    const indexOfLastAnnouncement = currentPage * itemsPerPage;
+    const indexOfFirstAnnouncement = indexOfLastAnnouncement - itemsPerPage;
+    return announcements.slice(indexOfFirstAnnouncement, indexOfLastAnnouncement);
+  };
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // Previous page
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  // Next page
+  const nextPage = () => {
+    if (currentPage < Math.ceil(announcements.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
     }
   };
 
@@ -127,6 +155,7 @@ const AdminAnnouncementManager = () => {
         const result = JSON.parse(responseText);
         console.log('Create success:', result);
         await fetchAnnouncements();
+        setCurrentPage(1); // Reset to first page
         setShowCreateForm(false);
         setCreateData({
           announcementId: '',
@@ -298,6 +327,11 @@ const AdminAnnouncementManager = () => {
 
       if (response.ok) {
         await fetchAnnouncements();
+        // If we're on the last page and it becomes empty, go to previous page
+        const totalPages = Math.ceil((announcements.length - 1) / itemsPerPage);
+        if (currentPage > totalPages && totalPages > 0) {
+          setCurrentPage(totalPages);
+        }
         alert('Announcement deleted successfully!');
       } else {
         const errorText = await response.text();
@@ -317,6 +351,10 @@ const AdminAnnouncementManager = () => {
     setShowConfirmDialog(false);
     setAnnouncementToDelete(null);
   };
+
+  // Get current announcements
+  const currentAnnouncements = getCurrentAnnouncements();
+  const totalPages = Math.ceil(announcements.length / itemsPerPage);
 
   return (
     <div className="max-w-7xl mx-auto p-4 bg-gray-50 min-h-screen">
@@ -503,203 +541,255 @@ const AdminAnnouncementManager = () => {
               <p className="text-gray-400 text-sm mt-1">Click "Create New" to add your first announcement</p>
             </div>
           ) : (
-            announcements.map((announcement) => (
-              <div
-                key={announcement.announcementId}
-                className={`border rounded-lg p-4 transition-all ${
-                  announcement.active
-                    ? 'border-green-300 bg-green-50'
-                    : 'border-gray-300 bg-gray-100'
-                }`}
-              >
-                {/* Header */}
-                <div className="flex justify-between items-center mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                      announcement.active
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-500 text-white'
-                    }`}>
-                      {announcement.announcementId}
-                    </span>
-
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                      {announcement.announcementType}
-                    </span>
-                  </div>
-
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => toggleActive(announcement)}
-                      className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors font-medium text-xs ${
+            <>
+              {currentAnnouncements.map((announcement) => (
+                <div
+                  key={announcement.announcementId}
+                  className={`border rounded-lg p-4 transition-all ${
+                    announcement.active
+                      ? 'border-green-300 bg-green-50'
+                      : 'border-gray-300 bg-gray-100'
+                  }`}
+                >
+                  {/* Header */}
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                         announcement.active
-                          ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                          : 'bg-green-100 text-green-700 hover:bg-green-200'
-                      }`}
-                    >
-                      {announcement.active ? <EyeOff size={12} /> : <Eye size={12} />}
-                      {announcement.active ? 'Hide' : 'Show'}
-                    </button>
+                          ? 'bg-green-500 text-white'
+                          : 'bg-gray-500 text-white'
+                      }`}>
+                        {announcement.announcementId}
+                      </span>
 
-                    {editingId === announcement.announcementId ? (
-                      <>
-                        <button onClick={saveEdit} className="p-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
-                          <Save size={12} />
-                        </button>
-                        <button onClick={() => setEditingId(null)} className="p-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
-                          <X size={12} />
-                        </button>
-                      </>
-                    ) : (
-                      <button onClick={() => {
-                        setEditingId(announcement.announcementId);
-                        setEditData({
-                          title: announcement.title,
-                          announcementType: announcement.announcementType,
-                          startDate: announcement.startDate,
-                          endDate: announcement.endDate,
-                        });
-                      }} className="p-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                        <Edit size={12} />
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() => deleteAnnouncement(announcement.announcementId)}
-                      className="p-1 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                  {/* Image Section */}
-                  <div>
-                    <h4 className="font-bold text-gray-700 text-sm mb-1">Image:</h4>
-                    <div className="w-full h-24 bg-gray-100 rounded-lg overflow-hidden mb-2">
-                      <img
-                        src={announcement.imageUrl || placeholderImage}
-                        alt={announcement.title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.src = errorImage;
-                        }}
-                      />
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                        {announcement.announcementType}
+                      </span>
                     </div>
 
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-                          if (!allowedTypes.includes(file.type)) {
-                            alert('Only JPG, PNG, and GIF files are allowed');
-                            return;
-                          }
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => toggleActive(announcement)}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors font-medium text-xs ${
+                          announcement.active
+                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                            : 'bg-green-100 text-green-700 hover:bg-green-200'
+                        }`}
+                      >
+                        {announcement.active ? <EyeOff size={12} /> : <Eye size={12} />}
+                        {announcement.active ? 'Hide' : 'Show'}
+                      </button>
 
-                          if (file.size > 5 * 1024 * 1024) {
-                            alert('File size exceeds 5MB');
-                            return;
-                          }
+                      {editingId === announcement.announcementId ? (
+                        <>
+                          <button onClick={saveEdit} className="p-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
+                            <Save size={12} />
+                          </button>
+                          <button onClick={() => setEditingId(null)} className="p-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+                            <X size={12} />
+                          </button>
+                        </>
+                      ) : (
+                        <button onClick={() => {
+                          setEditingId(announcement.announcementId);
+                          setEditData({
+                            title: announcement.title,
+                            announcementType: announcement.announcementType,
+                            startDate: announcement.startDate,
+                            endDate: announcement.endDate,
+                          });
+                        }} className="p-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                          <Edit size={12} />
+                        </button>
+                      )}
 
-                          handleImageUpload(announcement.announcementId, file);
-                        }
-                      }}
-                      className="hidden"
-                      id={`upload-${announcement.announcementId}`}
-                      disabled={uploadingId === announcement.announcementId}
-                    />
-                    <label
-                      htmlFor={`upload-${announcement.announcementId}`}
-                      className={`flex items-center gap-1 px-2 py-1 border-2 border-dashed border-orange-300 rounded-lg cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-colors w-full justify-center text-xs ${
-                        uploadingId === announcement.announcementId ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
-                    >
-                      <Upload size={12} className="text-orange-500" />
-                      <span className="text-orange-600 font-medium">
-                        {uploadingId === announcement.announcementId ? 'Uploading...' : 'Update'}
-                      </span>
-                    </label>
+                      <button
+                        onClick={() => deleteAnnouncement(announcement.announcementId)}
+                        className="p-1 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Details Section */}
-                  <div className="lg:col-span-3">
-                    <h4 className="font-bold text-gray-700 text-sm mb-2">Details:</h4>
+                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                    {/* Image Section */}
+                    <div>
+                      <h4 className="font-bold text-gray-700 text-sm mb-1">Image:</h4>
+                      <div className="w-full h-24 bg-gray-100 rounded-lg overflow-hidden mb-2">
+                        <img
+                          src={announcement.imageUrl || placeholderImage}
+                          alt={announcement.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src = errorImage;
+                          }}
+                        />
+                      </div>
 
-                    {editingId === announcement.announcementId ? (
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Title:</label>
-                          <input
-                            type="text"
-                            value={editData.title || ''}
-                            onChange={(e) => setEditData({...editData, title: e.target.value})}
-                            className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-                          />
-                        </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                            if (!allowedTypes.includes(file.type)) {
+                              alert('Only JPG, PNG, and GIF files are allowed');
+                              return;
+                            }
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            if (file.size > 5 * 1024 * 1024) {
+                              alert('File size exceeds 5MB');
+                              return;
+                            }
+
+                            handleImageUpload(announcement.announcementId, file);
+                          }
+                        }}
+                        className="hidden"
+                        id={`upload-${announcement.announcementId}`}
+                        disabled={uploadingId === announcement.announcementId}
+                      />
+                      <label
+                        htmlFor={`upload-${announcement.announcementId}`}
+                        className={`flex items-center gap-1 px-2 py-1 border-2 border-dashed border-orange-300 rounded-lg cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-colors w-full justify-center text-xs ${
+                          uploadingId === announcement.announcementId ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                      >
+                        <Upload size={12} className="text-orange-500" />
+                        <span className="text-orange-600 font-medium">
+                          {uploadingId === announcement.announcementId ? 'Uploading...' : 'Update'}
+                        </span>
+                      </label>
+                    </div>
+
+                    {/* Details Section */}
+                    <div className="lg:col-span-3">
+                      <h4 className="font-bold text-gray-700 text-sm mb-2">Details:</h4>
+
+                      {editingId === announcement.announcementId ? (
+                        <div className="space-y-3">
                           <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Type:</label>
-                            <select
-                              value={editData.announcementType || ''}
-                              onChange={(e) => setEditData({...editData, announcementType: e.target.value})}
-                              className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-                            >
-                              <option value="General">General</option>
-                              <option value="Academic">Academic</option>
-                              <option value="Events">Events</option>
-                              <option value="Emergency">Emergency</option>
-                              <option value="Sports">Sports</option>
-                              <option value="System">System</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Start Date:</label>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Title:</label>
                             <input
-                              type="date"
-                              value={editData.startDate || ''}
-                              onChange={(e) => setEditData({...editData, startDate: e.target.value})}
+                              type="text"
+                              value={editData.title || ''}
+                              onChange={(e) => setEditData({...editData, title: e.target.value})}
                               className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                             />
                           </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">End Date:</label>
-                            <input
-                              type="date"
-                              value={editData.endDate || ''}
-                              onChange={(e) => setEditData({...editData, endDate: e.target.value})}
-                              className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <div>
-                          <span className="font-bold text-gray-700 text-sm">Title:</span>
-                          <p className="text-gray-800 font-medium">{announcement.title}</p>
-                        </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div>
-                            <span className="font-bold text-gray-700 text-sm">Duration:</span>
-                            <p className="text-gray-600 text-sm">{announcement.startDate} → {announcement.endDate}</p>
-                          </div>
-                          <div>
-                            <span className="font-bold text-gray-700 text-sm">Last Updated:</span>
-                            <p className="text-gray-600 text-sm">{announcement.updatedAt}</p>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Type:</label>
+                              <select
+                                value={editData.announcementType || ''}
+                                onChange={(e) => setEditData({...editData, announcementType: e.target.value})}
+                                className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                              >
+                                <option value="General">General</option>
+                                <option value="Academic">Academic</option>
+                                <option value="Events">Events</option>
+                                <option value="Emergency">Emergency</option>
+                                <option value="Sports">Sports</option>
+                                <option value="System">System</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Start Date:</label>
+                              <input
+                                type="date"
+                                value={editData.startDate || ''}
+                                onChange={(e) => setEditData({...editData, startDate: e.target.value})}
+                                className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">End Date:</label>
+                              <input
+                                type="date"
+                                value={editData.endDate || ''}
+                                onChange={(e) => setEditData({...editData, endDate: e.target.value})}
+                                className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="space-y-2">
+                          <div>
+                            <span className="font-bold text-gray-700 text-sm">Title:</span>
+                            <p className="text-gray-800 font-medium">{announcement.title}</p>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <span className="font-bold text-gray-700 text-sm">Duration:</span>
+                              <p className="text-gray-600 text-sm">{announcement.startDate} → {announcement.endDate}</p>
+                            </div>
+                            <div>
+                              <span className="font-bold text-gray-700 text-sm">Last Updated:</span>
+                              <p className="text-gray-600 text-sm">{announcement.updatedAt}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              ))}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <nav className="flex items-center gap-2">
+                    <button
+                      onClick={prevPage}
+                      disabled={currentPage === 1}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentPage === 1 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <ChevronLeft size={16} />
+                      <span className="ml-1">Previous</span>
+                    </button>
+                    
+                    {[...Array(totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => paginate(pageNumber)}
+                          className={`w-10 h-10 rounded-full ${
+                            currentPage === pageNumber
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    })}
+                    
+                    <button
+                      onClick={nextPage}
+                      disabled={currentPage === totalPages}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentPage === totalPages 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <span className="mr-1">Next</span>
+                      <ChevronRight size={16} />
+                    </button>
+                  </nav>
+                </div>
+              )}
+            </>
           )}
         </div>
 

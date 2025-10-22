@@ -18,6 +18,10 @@ const AdminPartnerInstitutionManager = () => {
   const [error, setError] = useState("");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [institutionIdToDelete, setInstitutionIdToDelete] = useState(null);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchData();
@@ -35,6 +39,30 @@ const AdminPartnerInstitutionManager = () => {
       setError("Failed to fetch data: " + error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Get current partner institutions for pagination
+  const getCurrentPartnerInstitutions = () => {
+    const indexOfLastInstitution = currentPage * itemsPerPage;
+    const indexOfFirstInstitution = indexOfLastInstitution - itemsPerPage;
+    return partnerInstitutions.slice(indexOfFirstInstitution, indexOfLastInstitution);
+  };
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // Previous page
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  // Next page
+  const nextPage = () => {
+    if (currentPage < Math.ceil(partnerInstitutions.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
     }
   };
 
@@ -56,6 +84,7 @@ const AdminPartnerInstitutionManager = () => {
         await axios.post("/admin/partner-institutions", formData);
       }
       resetForm();
+      setCurrentPage(1); // Reset to first page
       fetchData();
     } catch (error) {
       console.error("Error saving partner institution:", error);
@@ -82,6 +111,12 @@ const AdminPartnerInstitutionManager = () => {
   const confirmDelete = async () => {
     try {
       await axios.delete(`/admin/partner-institutions/${institutionIdToDelete}`);
+      // If we're on the last page and it becomes empty, go to previous page
+      const updatedInstitutions = partnerInstitutions.filter(institution => institution.partnerInstitutionId !== institutionIdToDelete);
+      const totalPages = Math.ceil((updatedInstitutions.length) / itemsPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages);
+      }
       fetchData();
     } catch (error) {
       console.error("Error deleting partner institution:", error);
@@ -107,6 +142,10 @@ const AdminPartnerInstitutionManager = () => {
     setIsEditing(false);
     setShowCreateForm(false); // 隐藏表单
   };
+
+  // Get current partner institutions
+  const currentPartnerInstitutions = getCurrentPartnerInstitutions();
+  const totalPages = Math.ceil(partnerInstitutions.length / itemsPerPage);
 
   if (loading) {
     return (
@@ -257,63 +296,113 @@ const AdminPartnerInstitutionManager = () => {
               <p className="text-gray-400 text-sm mt-2">Click "Create New Institution" to add your first institution</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg shadow">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Institution ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Website
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {partnerInstitutions.map((institution) => (
-                    <tr key={institution.partnerInstitutionId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {institution.partnerInstitutionId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {institution.institutionName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {institution.websiteUrl || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {institution.email || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => handleEdit(institution)}
-                          className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
-                          title="Edit"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(institution.partnerInstitutionId)}
-                          className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
-                          title="Delete"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
+            <>
+              <div className="overflow-x-auto rounded-lg shadow">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Institution ID
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Website
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {currentPartnerInstitutions.map((institution) => (
+                      <tr key={institution.partnerInstitutionId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {institution.partnerInstitutionId}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {institution.institutionName}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {institution.websiteUrl || "-"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {institution.email || "-"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => handleEdit(institution)}
+                            className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
+                            title="Edit"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(institution.partnerInstitutionId)}
+                            className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <nav className="flex items-center gap-2">
+                    <button
+                      onClick={prevPage}
+                      disabled={currentPage === 1}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentPage === 1 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <span className="ml-1">Previous</span>
+                    </button>
+                    
+                    {[...Array(totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => paginate(pageNumber)}
+                          className={`w-10 h-10 rounded-full ${
+                            currentPage === pageNumber
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    })}
+                    
+                    <button
+                      onClick={nextPage}
+                      disabled={currentPage === totalPages}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentPage === totalPages 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <span className="mr-1">Next</span>
+                    </button>
+                  </nav>
+                </div>
+              )}
+            </>
           )}
         </div>
 

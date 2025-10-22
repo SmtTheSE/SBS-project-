@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Save, Edit, X, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { Plus, Save, Edit, X, Eye, EyeOff, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import ModernDropdown from '../Components/ModernDropdown';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton, FormSection } from '../Components/ModernForm';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
@@ -37,6 +37,10 @@ const AdminStudentManager = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [studentIdToDelete, setStudentIdToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false); // 添加删除状态
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   // Convert cities to dropdown options
   const cityOptions = cities.map(city => ({
@@ -68,6 +72,30 @@ const AdminStudentManager = () => {
       setStudents(data);
     } catch (error){
       console.error('Failed to fetch students:', error);
+    }
+  };
+
+  // Get current students for pagination
+  const getCurrentStudents = () => {
+    const indexOfLastStudent = currentPage * itemsPerPage;
+    const indexOfFirstStudent = indexOfLastStudent - itemsPerPage;
+    return students.slice(indexOfFirstStudent, indexOfLastStudent);
+  };
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // Previous page
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  // Next page
+  const nextPage = () => {
+    if (currentPage < Math.ceil(students.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
     }
   };
 
@@ -161,6 +189,7 @@ const AdminStudentManager = () => {
           password: ''// 重置密码字段
         });
         setShowCreateForm(false);
+        setCurrentPage(1); // Reset to first page
         fetchStudents(); // Refresh the listfetchCities(); // Refresh cities list
         fetchWards();// Refresh wardslist
       } else {
@@ -244,6 +273,11 @@ const AdminStudentManager = () => {
 
       if(response.ok){
         alert('Student deleted successfully!');
+        // If we're on the last page and it becomes empty, go to previous page
+        const totalPages = Math.ceil((students.length - 1) / itemsPerPage);
+        if (currentPage > totalPages && totalPages > 0) {
+          setCurrentPage(totalPages);
+        }
         fetchStudents(); // Refreshthe list
       } else {
         const errorText = await response.text();
@@ -297,6 +331,10 @@ const AdminStudentManager = () => {
   const getAccountStatusText = (status) => {
     return status === 1 ? 'Active' : 'Inactive';
   };
+
+  // Get current students
+  const currentStudents = getCurrentStudents();
+  const totalPages = Math.ceil(students.length / itemsPerPage);
 
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
@@ -634,137 +672,189 @@ const AdminStudentManager = () => {
               <p className="text-gray-400 text-sm mt-2">Click "Create New Student" to add your first student</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg shadow">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Student ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Phone
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date of Birth
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Gender
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Nationality
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      City</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Account Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {students.map((student) => (
-                    <tr key={student.studentId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {student.studentId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {student.firstName} {student.lastName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {student.studentEmail}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {student.phone}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {student.dateOfBirth}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {getGenderText(student.gender)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {student.nationality}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {student.cityId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          student.loginAccount && student.loginAccount.accountStatus === 1 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {getAccountStatusText(student.loginAccount ? student.loginAccount.accountStatus: 0)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() =>toggleAccountStatus(student)}
-                            className={`p-2 rounded-full ${
-                              student.loginAccount && student.loginAccount.accountStatus === 1
-                                ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                                : 'bg-green-100 text-green-600 hover:bg-green-200'
-                            }`}
-                            title={student.loginAccount && student.loginAccount.accountStatus === 1 ? 'Deactivate' : 'Activate'}
-                          >
-                            {student.loginAccount && student.loginAccount.accountStatus === 1 ? <EyeOff size={16} /> : <Eye size={16} />}
-                          </button>
-                          
-                          <button onClick={() => {
-                            setEditingId(student.studentId);
-                            setEditData({
-                              firstName: student.firstName,
-                              lastName: student.lastName,
-                              studentEmail: student.studentEmail,
-                              phone: student.phone,
-                              dateOfBirth: student.dateOfBirth,
-                              homeAddress: student.homeAddress,
-                              streetAddress:student.streetAddress,
-                              buildingName: student.buildingName,
-                              gender: student.gender,
-                              nationality: student.nationality,
-                              nationalId: student.nationalId,
-                              studyPlanId: student.studyPlanId,
-                              cityId: student.cityId || '',
-                              cityName: '', // 初始化城市名称字段
-                              wardId: student.wardId || '',
-                              wardName: '', // 初始化区域名称字段accountStatus: student.loginAccount ? student.loginAccount.accountStatus : 1,
-                              password: '' // 初始化密码字段
-                            });
-                          }}
-                            className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200"
-                            title="Edit"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          
-                          <button
-                            onClick={() => deleteStudent(student.studentId)}
-                            disabled={deleting} // 禁用按钮当正在删除时
-                            className={`p-2 rounded-full ${
-                              deleting 
-                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                                : 'bg-red-100 text-red-600 hover:bg-red-200'
-                            }`}
-                            title="Delete"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
+            <>
+              <div className="overflow-x-auto rounded-lg shadow">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Student ID
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Phone
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date of Birth
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Gender
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Nationality
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        City</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Account Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {currentStudents.map((student) => (
+                      <tr key={student.studentId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {student.studentId}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {student.firstName} {student.lastName}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {student.studentEmail}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {student.phone}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {student.dateOfBirth}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {getGenderText(student.gender)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {student.nationality}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {student.cityId}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            student.loginAccount && student.loginAccount.accountStatus === 1 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {getAccountStatusText(student.loginAccount ? student.loginAccount.accountStatus: 0)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() =>toggleAccountStatus(student)}
+                              className={`p-2 rounded-full ${
+                                student.loginAccount && student.loginAccount.accountStatus === 1
+                                  ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                                  : 'bg-green-100 text-green-600 hover:bg-green-200'
+                              }`}
+                              title={student.loginAccount && student.loginAccount.accountStatus === 1 ? 'Deactivate' : 'Activate'}
+                            >
+                              {student.loginAccount && student.loginAccount.accountStatus === 1 ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                            
+                            <button onClick={() => {
+                              setEditingId(student.studentId);
+                              setEditData({
+                                firstName: student.firstName,
+                                lastName: student.lastName,
+                                studentEmail: student.studentEmail,
+                                phone: student.phone,
+                                dateOfBirth: student.dateOfBirth,
+                                homeAddress: student.homeAddress,
+                                streetAddress:student.streetAddress,
+                                buildingName: student.buildingName,
+                                gender: student.gender,
+                                nationality: student.nationality,
+                                nationalId: student.nationalId,
+                                studyPlanId: student.studyPlanId,
+                                cityId: student.cityId || '',
+                                cityName: '', // 初始化城市名称字段
+                                wardId: student.wardId || '',
+                                wardName: '', // 初始化区域名称字段accountStatus: student.loginAccount ? student.loginAccount.accountStatus : 1,
+                                password: '' // 初始化密码字段
+                              });
+                            }}
+                              className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200"
+                              title="Edit"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            
+                            <button
+                              onClick={() => deleteStudent(student.studentId)}
+                              disabled={deleting} // 禁用按钮当正在删除时
+                              className={`p-2 rounded-full ${
+                                deleting 
+                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                                  : 'bg-red-100 text-red-600 hover:bg-red-200'
+                              }`}
+                              title="Delete"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <nav className="flex items-center gap-2">
+                    <button
+                      onClick={prevPage}
+                      disabled={currentPage === 1}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentPage === 1 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <ChevronLeft size={16} />
+                      <span className="ml-1">Previous</span>
+                    </button>
+                    
+                    {[...Array(totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => paginate(pageNumber)}
+                          className={`w-10 h-10 rounded-full ${
+                            currentPage === pageNumber
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    })}
+                    
+                    <button
+                      onClick={nextPage}
+                      disabled={currentPage === totalPages}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentPage === totalPages 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <span className="mr-1">Next</span>
+                      <ChevronRight size={16} />
+                    </button>
+                  </nav>
+                </div>
+              )}
+            </>
           )}
           {/*Edit Modal */}
           {editingId &&(

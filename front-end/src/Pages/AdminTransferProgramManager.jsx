@@ -20,6 +20,10 @@ const AdminTransferProgramManager = () => {
   const [error, setError] = useState("");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [programIdToDelete, setProgramIdToDelete] = useState(null);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchData();
@@ -52,6 +56,30 @@ const AdminTransferProgramManager = () => {
     }
   };
 
+  // Get current transfer programs for pagination
+  const getCurrentTransferPrograms = () => {
+    const indexOfLastProgram = currentPage * itemsPerPage;
+    const indexOfFirstProgram = indexOfLastProgram - itemsPerPage;
+    return transferPrograms.slice(indexOfFirstProgram, indexOfLastProgram);
+  };
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // Previous page
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  // Next page
+  const nextPage = () => {
+    if (currentPage < Math.ceil(transferPrograms.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -70,6 +98,7 @@ const AdminTransferProgramManager = () => {
         await axios.post("/admin/transfer-programs", formData);
       }
       resetForm();
+      setCurrentPage(1); // Reset to first page
       fetchData();
     } catch (error) {
       console.error("Error saving transfer program:", error);
@@ -96,6 +125,12 @@ const AdminTransferProgramManager = () => {
   const confirmDelete = async () => {
     try {
       await axios.delete(`/admin/transfer-programs/${programIdToDelete}`);
+      // If we're on the last page and it becomes empty, go to previous page
+      const updatedPrograms = transferPrograms.filter(program => program.transferProgramId !== programIdToDelete);
+      const totalPages = Math.ceil((updatedPrograms.length) / itemsPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages);
+      }
       fetchData();
     } catch (error) {
       console.error("Error deleting transfer program:", error);
@@ -121,6 +156,10 @@ const AdminTransferProgramManager = () => {
     setIsEditing(false);
     setShowCreateForm(false); // 隐藏表单
   };
+
+  // Get current transfer programs
+  const currentTransferPrograms = getCurrentTransferPrograms();
+  const totalPages = Math.ceil(transferPrograms.length / itemsPerPage);
 
   if (loading) {
     return (
@@ -283,63 +322,113 @@ const AdminTransferProgramManager = () => {
               <p className="text-gray-400 text-sm mt-2">Click "Create New Program" to add your first program</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg shadow">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Program ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Admin
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Country
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Partner Institution
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {transferPrograms.map((program) => (
-                    <tr key={program.transferProgramId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {program.transferProgramId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {program.adminId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {program.transferCountry}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {program.partnerInstitutionName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => handleEdit(program)}
-                          className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
-                          title="Edit"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(program.transferProgramId)}
-                          className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
-                          title="Delete"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
+            <>
+              <div className="overflow-x-auto rounded-lg shadow">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Program ID
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Admin
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Country
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Partner Institution
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {currentTransferPrograms.map((program) => (
+                      <tr key={program.transferProgramId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {program.transferProgramId}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {program.adminId}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {program.transferCountry}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {program.partnerInstitutionName}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => handleEdit(program)}
+                            className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
+                            title="Edit"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(program.transferProgramId)}
+                            className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <nav className="flex items-center gap-2">
+                    <button
+                      onClick={prevPage}
+                      disabled={currentPage === 1}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentPage === 1 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <span className="ml-1">Previous</span>
+                    </button>
+                    
+                    {[...Array(totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => paginate(pageNumber)}
+                          className={`w-10 h-10 rounded-full ${
+                            currentPage === pageNumber
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    })}
+                    
+                    <button
+                      onClick={nextPage}
+                      disabled={currentPage === totalPages}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentPage === totalPages 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <span className="mr-1">Next</span>
+                    </button>
+                  </nav>
+                </div>
+              )}
+            </>
           )}
         </div>
 

@@ -21,6 +21,36 @@ const AdminEnrollmentManager = () => {
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [enrollmentIdToDelete, setEnrollmentIdToDelete] = useState(null);
+  // 添加分页状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  // 获取学生姓名
+  const getStudentName = (studentId) => {
+    const student = students.find(s => s.studentId === studentId);
+    return student ? `${student.firstName} ${student.lastName}` : studentId;
+  };
+
+  // 获取当前页面的注册数据
+  const getCurrentEnrollments = () => {
+    const indexOfLastEnrollment = currentPage * itemsPerPage;
+    const indexOfFirstEnrollment = indexOfLastEnrollment - itemsPerPage;
+    return Array.isArray(enrollments) ? enrollments.slice(indexOfFirstEnrollment, indexOfLastEnrollment) : [];
+  };
+
+  // 分页控制函数
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const prevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const nextPage = () => {
+    const totalItems = Array.isArray(enrollments) ? enrollments.length : 0;
+    if (currentPage < Math.ceil(totalItems / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   // 获取所有学生选课记录
   const fetchEnrollments = async () => {
@@ -29,6 +59,8 @@ const AdminEnrollmentManager = () => {
       const response = await axios.get('/admin/academic/student-enrollments');
       setEnrollments(response.data);
       setError('');
+      // 添加新记录后返回第一页
+      setCurrentPage(1);
     } catch (err) {
       console.error('Failed to fetch student enrollments:', err);
       setError('Failed to fetch student enrollments: ' + (err.response?.data?.message || err.message));
@@ -139,6 +171,12 @@ const AdminEnrollmentManager = () => {
       await axios.delete(`/admin/academic/student-enrollments/${enrollmentIdToDelete}`);
       fetchEnrollments(); // 重新获取数据
       setError('');
+      // 删除记录后检查当前页是否为空
+      const totalItems = enrollments.length - 1; // 删除后的总数
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages);
+      }
     } catch (err) {
       console.error('Delete failed:', err);
       setError('Delete failed: ' + (err.response?.data?.message || err.message));
@@ -168,6 +206,10 @@ const AdminEnrollmentManager = () => {
       </div>
     );
   }
+
+  // 获取当前页面的数据
+  const currentEnrollments = getCurrentEnrollments();
+  const totalPages = Math.ceil((Array.isArray(enrollments) ? enrollments.length : 0) / itemsPerPage);
 
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
@@ -223,14 +265,14 @@ const AdminEnrollmentManager = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {Array.isArray(enrollments) && enrollments.length > 0 ? (
-                enrollments.map((enrollment) => (
+              {Array.isArray(currentEnrollments) && currentEnrollments.length > 0 ? (
+                currentEnrollments.map((enrollment) => (
                   <tr key={enrollment.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {enrollment.id}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {enrollment.studentId}
+                      {enrollment.studentId} - {getStudentName(enrollment.studentId)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {enrollment.studyPlanCourseId}
@@ -276,6 +318,49 @@ const AdminEnrollmentManager = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {Array.isArray(enrollments) && enrollments.length > itemsPerPage && (
+          <div className="flex justify-center items-center space-x-2 my-4">
+            <button
+              onClick={prevPage}
+              disabled={currentPage === 1}
+              className={`px-4 py-2 rounded-md ${
+                currentPage === 1 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Previous
+            </button>
+            
+            {[...Array(totalPages)].map((_, index) => (
+              <button
+                key={index + 1}
+                onClick={() => paginate(index + 1)}
+                className={`px-4 py-2 rounded-md ${
+                  currentPage === index + 1
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+            
+            <button
+              onClick={nextPage}
+              disabled={currentPage === totalPages}
+              className={`px-4 py-2 rounded-md ${
+                currentPage === totalPages 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        )}
 
         {/* Modal */}
         {showModal && (

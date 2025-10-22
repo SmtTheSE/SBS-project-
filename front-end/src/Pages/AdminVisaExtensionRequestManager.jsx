@@ -8,6 +8,10 @@ const AdminVisaExtensionRequestManager = () => {
   const [loading, setLoading] = useState(true);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [requestIdToDelete, setRequestIdToDelete] = useState(null);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchExtensionRequests();
@@ -21,6 +25,30 @@ const AdminVisaExtensionRequestManager = () => {
     } catch (error) {
       console.error('Failed to fetch visa extension requests:', error);
       setLoading(false);
+    }
+  };
+
+  // Get current extension requests for pagination
+  const getCurrentExtensionRequests = () => {
+    const indexOfLastRequest = currentPage * itemsPerPage;
+    const indexOfFirstRequest = indexOfLastRequest - itemsPerPage;
+    return extensionRequests.slice(indexOfFirstRequest, indexOfLastRequest);
+  };
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // Previous page
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  // Next page
+  const nextPage = () => {
+    if (currentPage < Math.ceil(extensionRequests.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
     }
   };
 
@@ -60,7 +88,14 @@ const AdminVisaExtensionRequestManager = () => {
       await axiosInstance.delete(`/visa-extension-requests/${requestIdToDelete}`);
       
       // Update local state to remove the deleted request
-      setExtensionRequests(prev => prev.filter(req => req.extensionRequestId !== requestIdToDelete));
+      const updatedRequests = extensionRequests.filter(req => req.extensionRequestId !== requestIdToDelete);
+      setExtensionRequests(updatedRequests);
+      
+      // If we're on the last page and it becomes empty, go to previous page
+      const totalPages = Math.ceil((updatedRequests.length) / itemsPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages);
+      }
       
       alert('Request deleted successfully!');
     } catch (error) {
@@ -95,6 +130,10 @@ const AdminVisaExtensionRequestManager = () => {
     }
   };
 
+  // Get current extension requests
+  const currentExtensionRequests = getCurrentExtensionRequests();
+  const totalPages = Math.ceil(extensionRequests.length / itemsPerPage);
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
@@ -125,96 +164,146 @@ const AdminVisaExtensionRequestManager = () => {
             <p className="text-gray-500 text-lg">No visa extension requests found</p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-lg shadow">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Request ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Student ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Visa Passport ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Request Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Requested Extension Until
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Notes
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {extensionRequests.map((request) => (
-                  <tr key={request.extensionRequestId} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {request.extensionRequestId}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {request.studentId}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {request.visaPassportId}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {request.requestDate}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {request.requestedExtensionUntil}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(request.status)}`}>
-                        {getStatusText(request.status)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {request.notes || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      {request.status === 0 && ( // Only show approve/reject for pending requests
-                        <>
-                          <FormButton
-                            type="button"
-                            variant="success"
-                            onClick={() => updateRequestStatus(request.extensionRequestId, 1)}
-                            className="mr-2"
-                          >
-                            Approve
-                          </FormButton>
-                          <FormButton
-                            type="button"
-                            variant="danger"
-                            onClick={() => updateRequestStatus(request.extensionRequestId, 2)}
-                            className="mr-2"
-                          >
-                            Reject
-                          </FormButton>
-                        </>
-                      )}
-                      <FormButton
-                        type="button"
-                        variant="secondary"
-                        onClick={() => deleteRequest(request.extensionRequestId)}
-                      >
-                        Delete
-                      </FormButton>
-                    </td>
+          <>
+            <div className="overflow-x-auto rounded-lg shadow">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Request ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Student ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Visa Passport ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Request Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Requested Extension Until
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Notes
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {currentExtensionRequests.map((request) => (
+                    <tr key={request.extensionRequestId} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {request.extensionRequestId}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {request.studentId}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {request.visaPassportId}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {request.requestDate}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {request.requestedExtensionUntil}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(request.status)}`}>
+                          {getStatusText(request.status)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {request.notes || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        {request.status === 0 && ( // Only show approve/reject for pending requests
+                          <>
+                            <FormButton
+                              type="button"
+                              variant="success"
+                              onClick={() => updateRequestStatus(request.extensionRequestId, 1)}
+                              className="mr-2"
+                            >
+                              Approve
+                            </FormButton>
+                            <FormButton
+                              type="button"
+                              variant="danger"
+                              onClick={() => updateRequestStatus(request.extensionRequestId, 2)}
+                              className="mr-2"
+                            >
+                              Reject
+                            </FormButton>
+                          </>
+                        )}
+                        <FormButton
+                          type="button"
+                          variant="secondary"
+                          onClick={() => deleteRequest(request.extensionRequestId)}
+                        >
+                          Delete
+                        </FormButton>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-6">
+                <nav className="flex items-center gap-2">
+                  <button
+                    onClick={prevPage}
+                    disabled={currentPage === 1}
+                    className={`flex items-center px-3 py-1 rounded-md ${
+                      currentPage === 1 
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span className="ml-1">Previous</span>
+                  </button>
+                  
+                  {[...Array(totalPages)].map((_, index) => {
+                    const pageNumber = index + 1;
+                    return (
+                      <button
+                        key={pageNumber}
+                        onClick={() => paginate(pageNumber)}
+                        className={`w-10 h-10 rounded-full ${
+                          currentPage === pageNumber
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  })}
+                  
+                  <button
+                    onClick={nextPage}
+                    disabled={currentPage === totalPages}
+                    className={`flex items-center px-3 py-1 rounded-md ${
+                      currentPage === totalPages 
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span className="mr-1">Next</span>
+                  </button>
+                </nav>
+              </div>
+            )}
+          </>
         )}
 
         {/* Custom Confirm Dialog */}

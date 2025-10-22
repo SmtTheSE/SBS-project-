@@ -18,6 +18,10 @@ const AdminCourseManager = () => {
     creditScore: '',
     lecturerId: ''
   });
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchCourses();
@@ -41,6 +45,30 @@ const AdminCourseManager = () => {
       setError('Failed to fetch courses: ' + (error.response?.data?.message || error.message));
       setCourses([]);
       setLoading(false);
+    }
+  };
+
+  // Get current courses for pagination
+  const getCurrentCourses = () => {
+    const indexOfLastCourse = currentPage * itemsPerPage;
+    const indexOfFirstCourse = indexOfLastCourse - itemsPerPage;
+    return courses.slice(indexOfFirstCourse, indexOfLastCourse);
+  };
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // Previous page
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  // Next page
+  const nextPage = () => {
+    if (currentPage < Math.ceil(courses.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
     }
   };
 
@@ -91,6 +119,7 @@ const AdminCourseManager = () => {
       });
       setEditingCourse(null);
       setShowForm(false);
+      setCurrentPage(1); // Reset to first page
       fetchCourses();
     } catch (error) {
       console.error('Failed to save course:', error);
@@ -118,6 +147,12 @@ const AdminCourseManager = () => {
   const confirmDelete = async () => {
     try {
       await axiosInstance.delete(`/academic/courses/${courseToDelete}`);
+      // If we're on the last page and it becomes empty, go to previous page
+      const updatedCourses = courses.filter(course => course.courseId !== courseToDelete);
+      const totalPages = Math.ceil((updatedCourses.length) / itemsPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages);
+      }
       fetchCourses();
     } catch (error) {
       console.error('Failed to delete course:', error);
@@ -143,6 +178,10 @@ const AdminCourseManager = () => {
     setEditingCourse(null);
     setShowForm(false);
   };
+
+  // Get current courses
+  const currentCourses = getCurrentCourses();
+  const totalPages = Math.ceil(courses.length / itemsPerPage);
 
   if (loading) {
     return (
@@ -292,7 +331,7 @@ const AdminCourseManager = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {Array.isArray(courses) && courses.map((course) => (
+              {Array.isArray(currentCourses) && currentCourses.map((course) => (
                 <tr key={course.courseId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {course.courseId}
@@ -337,6 +376,54 @@ const AdminCourseManager = () => {
             </div>
           )}
         </div>
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-6">
+            <nav className="flex items-center gap-2">
+              <button
+                onClick={prevPage}
+                disabled={currentPage === 1}
+                className={`flex items-center px-3 py-1 rounded-md ${
+                  currentPage === 1 
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <span className="ml-1">Previous</span>
+              </button>
+              
+              {[...Array(totalPages)].map((_, index) => {
+                const pageNumber = index + 1;
+                return (
+                  <button
+                    key={pageNumber}
+                    onClick={() => paginate(pageNumber)}
+                    className={`w-10 h-10 rounded-full ${
+                      currentPage === pageNumber
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              })}
+              
+              <button
+                onClick={nextPage}
+                disabled={currentPage === totalPages}
+                className={`flex items-center px-3 py-1 rounded-md ${
+                  currentPage === totalPages 
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <span className="mr-1">Next</span>
+              </button>
+            </nav>
+          </div>
+        )}
 
         {/* Custom Confirm Dialog */}
         <CustomConfirmDialog

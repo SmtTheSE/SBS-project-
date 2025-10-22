@@ -18,6 +18,10 @@ const AdminStudyPlanManager = () => {
     totalCreditPoint: 0,
     majorName: ''
   });
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchStudyPlans();
@@ -32,6 +36,30 @@ const AdminStudyPlanManager = () => {
       console.error('Failed to fetch study plans:', error);
       setError('Failed to fetch study plans');
       setLoading(false);
+    }
+  };
+
+  // Get current study plans for pagination
+  const getCurrentStudyPlans = () => {
+    const indexOfLastPlan = currentPage * itemsPerPage;
+    const indexOfFirstPlan = indexOfLastPlan - itemsPerPage;
+    return studyPlans.slice(indexOfFirstPlan, indexOfLastPlan);
+  };
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // Previous page
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  // Next page
+  const nextPage = () => {
+    if (currentPage < Math.ceil(studyPlans.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
     }
   };
 
@@ -63,6 +91,7 @@ const AdminStudyPlanManager = () => {
       });
       setEditingStudyPlan(null);
       closeModal();
+      setCurrentPage(1); // Reset to first page
       fetchStudyPlans();
     } catch (error) {
       console.error('Failed to save study plan:', error);
@@ -104,6 +133,12 @@ const AdminStudyPlanManager = () => {
   const confirmDelete = async () => {
     try {
       await axiosInstance.delete(`/academic/study-plans/${studyPlanToDelete}`);
+      // If we're on the last page and it becomes empty, go to previous page
+      const updatedPlans = studyPlans.filter(plan => plan.studyPlanId !== studyPlanToDelete);
+      const totalPages = Math.ceil((updatedPlans.length) / itemsPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages);
+      }
       fetchStudyPlans();
     } catch (error) {
       console.error('Failed to delete study plan:', error);
@@ -118,6 +153,10 @@ const AdminStudyPlanManager = () => {
     setShowConfirmDialog(false);
     setStudyPlanToDelete(null);
   };
+
+  // Get current study plans
+  const currentStudyPlans = getCurrentStudyPlans();
+  const totalPages = Math.ceil(studyPlans.length / itemsPerPage);
 
   if (loading) {
     return (
@@ -178,7 +217,7 @@ const AdminStudyPlanManager = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {studyPlans.map((studyPlan) => (
+              {currentStudyPlans.map((studyPlan) => (
                 <tr key={studyPlan.studyPlanId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {studyPlan.studyPlanId}
@@ -219,6 +258,54 @@ const AdminStudyPlanManager = () => {
             </div>
           )}
         </div>
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-6">
+            <nav className="flex items-center gap-2">
+              <button
+                onClick={prevPage}
+                disabled={currentPage === 1}
+                className={`flex items-center px-3 py-1 rounded-md ${
+                  currentPage === 1 
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <span className="ml-1">Previous</span>
+              </button>
+              
+              {[...Array(totalPages)].map((_, index) => {
+                const pageNumber = index + 1;
+                return (
+                  <button
+                    key={pageNumber}
+                    onClick={() => paginate(pageNumber)}
+                    className={`w-10 h-10 rounded-full ${
+                      currentPage === pageNumber
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              })}
+              
+              <button
+                onClick={nextPage}
+                disabled={currentPage === totalPages}
+                className={`flex items-center px-3 py-1 rounded-md ${
+                  currentPage === totalPages 
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <span className="mr-1">Next</span>
+              </button>
+            </nav>
+          </div>
+        )}
 
         {/* Modal */}
         {showModal && (

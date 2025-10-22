@@ -18,6 +18,58 @@ const AdminAttendanceManager = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState(null);
   const [deleteType, setDeleteType] = useState(''); // 'summary' or 'daily'
+  // 添加分页状态
+  const [currentPageSummary, setCurrentPageSummary] = useState(1);
+  const [currentPageDaily, setCurrentPageDaily] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  // 获取学生姓名
+  const getStudentName = (studentId) => {
+    const student = students.find(s => s.studentId === studentId);
+    return student ? `${student.firstName} ${student.lastName}` : studentId;
+  };
+
+  // 获取当前页面的考勤汇总数据
+  const getCurrentAttendanceSummaries = () => {
+    const indexOfLastRecord = currentPageSummary * itemsPerPage;
+    const indexOfFirstRecord = indexOfLastRecord - itemsPerPage;
+    return Array.isArray(attendanceSummaries) ? attendanceSummaries.slice(indexOfFirstRecord, indexOfLastRecord) : [];
+  };
+
+  // 获取当前页面的日常考勤数据
+  const getCurrentDailyAttendances = () => {
+    const indexOfLastRecord = currentPageDaily * itemsPerPage;
+    const indexOfFirstRecord = indexOfLastRecord - itemsPerPage;
+    return Array.isArray(dailyAttendances) ? dailyAttendances.slice(indexOfFirstRecord, indexOfLastRecord) : [];
+  };
+
+  // 考勤汇总分页控制函数
+  const paginateSummary = (pageNumber) => setCurrentPageSummary(pageNumber);
+
+  const prevPageSummary = () => {
+    if (currentPageSummary > 1) setCurrentPageSummary(currentPageSummary - 1);
+  };
+
+  const nextPageSummary = () => {
+    const totalItems = Array.isArray(attendanceSummaries) ? attendanceSummaries.length : 0;
+    if (currentPageSummary < Math.ceil(totalItems / itemsPerPage)) {
+      setCurrentPageSummary(currentPageSummary + 1);
+    }
+  };
+
+  // 日常考勤分页控制函数
+  const paginateDaily = (pageNumber) => setCurrentPageDaily(pageNumber);
+
+  const prevPageDaily = () => {
+    if (currentPageDaily > 1) setCurrentPageDaily(currentPageDaily - 1);
+  };
+
+  const nextPageDaily = () => {
+    const totalItems = Array.isArray(dailyAttendances) ? dailyAttendances.length : 0;
+    if (currentPageDaily < Math.ceil(totalItems / itemsPerPage)) {
+      setCurrentPageDaily(currentPageDaily + 1);
+    }
+  };
 
   const fetchAttendanceSummaries = async () => {
     try {
@@ -25,6 +77,8 @@ const AdminAttendanceManager = () => {
       const response = await axios.get('/admin/academic/attendance-summaries');
       setAttendanceSummaries(response.data);
       setError('');
+      // 添加新记录后返回第一页
+      setCurrentPageSummary(1);
     } catch (err) {
       console.error('Failed to fetch attendance summaries:', err);
       setError('Failed to fetch attendance summaries: ' + (err.response?.data?.message || err.message));
@@ -41,6 +95,8 @@ const AdminAttendanceManager = () => {
       const response = await axios.get('/admin/academic/daily-attendances');
       setDailyAttendances(response.data);
       setError('');
+      // 添加新记录后返回第一页
+      setCurrentPageDaily(1);
     } catch (err) {
       console.error('Failed to fetch daily attendances:', err);
       setError('Failed to fetch daily attendances: ' + (err.response?.data?.message || err.message));
@@ -196,9 +252,21 @@ const AdminAttendanceManager = () => {
       if (deleteType === 'summary') {
         await axios.delete(`/admin/academic/attendance-summaries/${recordToDelete.id}`);
         fetchAttendanceSummaries();
+        // 删除记录后检查当前页是否为空
+        const totalItems = attendanceSummaries.length - 1; // 删除后的总数
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        if (currentPageSummary > totalPages && totalPages > 0) {
+          setCurrentPageSummary(totalPages);
+        }
       } else {
         await axios.delete(`/admin/academic/daily-attendances/${recordToDelete.studentId}/${recordToDelete.classScheduleId}`);
         fetchDailyAttendances();
+        // 删除记录后检查当前页是否为空
+        const totalItems = dailyAttendances.length - 1; // 删除后的总数
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        if (currentPageDaily > totalPages && totalPages > 0) {
+          setCurrentPageDaily(totalPages);
+        }
       }
       setError('');
     } catch (err) {
@@ -232,6 +300,13 @@ const AdminAttendanceManager = () => {
       </div>
     );
   }
+
+  // 获取当前页面的数据
+  const currentAttendanceSummaries = getCurrentAttendanceSummaries();
+  const totalSummaryPages = Math.ceil((Array.isArray(attendanceSummaries) ? attendanceSummaries.length : 0) / itemsPerPage);
+  
+  const currentDailyAttendances = getCurrentDailyAttendances();
+  const totalDailyPages = Math.ceil((Array.isArray(dailyAttendances) ? dailyAttendances.length : 0) / itemsPerPage);
 
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
@@ -309,14 +384,14 @@ const AdminAttendanceManager = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {Array.isArray(attendanceSummaries) && attendanceSummaries.length > 0 ? (
-                  attendanceSummaries.map((summary) => (
+                {Array.isArray(currentAttendanceSummaries) && currentAttendanceSummaries.length > 0 ? (
+                  currentAttendanceSummaries.map((summary) => (
                     <tr key={summary.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {summary.id}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {summary.studentId}
+                        {summary.studentId} - {getStudentName(summary.studentId)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {summary.studyPlanCourseId}
@@ -370,6 +445,49 @@ const AdminAttendanceManager = () => {
           </div>
         )}
 
+        {/* Attendance Summary Pagination Controls */}
+        {activeTab === 'summary' && Array.isArray(attendanceSummaries) && attendanceSummaries.length > itemsPerPage && (
+          <div className="flex justify-center items-center space-x-2 my-4">
+            <button
+              onClick={prevPageSummary}
+              disabled={currentPageSummary === 1}
+              className={`px-4 py-2 rounded-md ${
+                currentPageSummary === 1 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Previous
+            </button>
+            
+            {[...Array(totalSummaryPages)].map((_, index) => (
+              <button
+                key={index + 1}
+                onClick={() => paginateSummary(index + 1)}
+                className={`px-4 py-2 rounded-md ${
+                  currentPageSummary === index + 1
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+            
+            <button
+              onClick={nextPageSummary}
+              disabled={currentPageSummary === totalSummaryPages}
+              className={`px-4 py-2 rounded-md ${
+                currentPageSummary === totalSummaryPages 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        )}
+
         {/* Daily Attendance Table */}
         {activeTab === 'daily' && (
           <div className="overflow-x-auto rounded-lg shadow">
@@ -403,11 +521,11 @@ const AdminAttendanceManager = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {Array.isArray(dailyAttendances) && dailyAttendances.length > 0 ? (
-                  dailyAttendances.map((attendance, index) => (
+                {Array.isArray(currentDailyAttendances) && currentDailyAttendances.length > 0 ? (
+                  currentDailyAttendances.map((attendance, index) => (
                     <tr key={`${attendance.studentId}-${attendance.classScheduleId}-${index}`} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {attendance.studentId}
+                        {attendance.studentId} - {getStudentName(attendance.studentId)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {attendance.classScheduleId}
@@ -458,6 +576,49 @@ const AdminAttendanceManager = () => {
                 )}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Daily Attendance Pagination Controls */}
+        {activeTab === 'daily' && Array.isArray(dailyAttendances) && dailyAttendances.length > itemsPerPage && (
+          <div className="flex justify-center items-center space-x-2 my-4">
+            <button
+              onClick={prevPageDaily}
+              disabled={currentPageDaily === 1}
+              className={`px-4 py-2 rounded-md ${
+                currentPageDaily === 1 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Previous
+            </button>
+            
+            {[...Array(totalDailyPages)].map((_, index) => (
+              <button
+                key={index + 1}
+                onClick={() => paginateDaily(index + 1)}
+                className={`px-4 py-2 rounded-md ${
+                  currentPageDaily === index + 1
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+            
+            <button
+              onClick={nextPageDaily}
+              disabled={currentPageDaily === totalDailyPages}
+              className={`px-4 py-2 rounded-md ${
+                currentPageDaily === totalDailyPages 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Next
+            </button>
           </div>
         )}
 

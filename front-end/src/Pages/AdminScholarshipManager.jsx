@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../utils/axiosInstance';
-import { Plus, Save, X, Edit, Trash2, Users } from 'lucide-react';
+import { Plus, Save, X, Edit, Trash2, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton, FormSection } from '../Components/ModernForm';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
@@ -27,6 +27,11 @@ const AdminScholarshipManager = () => {
   const [confirmAction, setConfirmAction] = useState(''); // 'deleteScholarship' or 'deleteStudentScholarship'
   const [itemIdToDelete, setItemIdToDelete] = useState(null); // ID of item to delete
   const [deleting, setDeleting] = useState(false); // 添加删除状态
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [currentStudentScholarshipsPage, setCurrentStudentScholarshipsPage] = useState(1);
 
   useEffect(() => {
     fetchScholarships();
@@ -61,6 +66,54 @@ const AdminScholarshipManager = () => {
     }
   };
 
+  // Get current scholarships for pagination
+  const getCurrentScholarships = () => {
+    const indexOfLastScholarship = currentPage * itemsPerPage;
+    const indexOfFirstScholarship = indexOfLastScholarship - itemsPerPage;
+    return scholarships.slice(indexOfFirstScholarship, indexOfLastScholarship);
+  };
+
+  // Get current student scholarships for pagination
+  const getCurrentStudentScholarships = () => {
+    const indexOfLastRecord = currentStudentScholarshipsPage * itemsPerPage;
+    const indexOfFirstRecord = indexOfLastRecord - itemsPerPage;
+    return studentScholarships.slice(indexOfFirstRecord, indexOfLastRecord);
+  };
+
+  // Change page for scholarships
+  const paginateScholarships = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // Previous page for scholarships
+  const prevScholarshipsPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  // Next page for scholarships
+  const nextScholarshipsPage = () => {
+    if (currentPage < Math.ceil(scholarships.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Change page for student scholarships
+  const paginateStudentScholarships = (pageNumber) => setCurrentStudentScholarshipsPage(pageNumber);
+  
+  // Previous page for student scholarships
+  const prevStudentScholarshipsPage = () => {
+    if (currentStudentScholarshipsPage > 1) {
+      setCurrentStudentScholarshipsPage(currentStudentScholarshipsPage - 1);
+    }
+  };
+  
+  // Next page for student scholarships
+  const nextStudentScholarshipsPage = () => {
+    if (currentStudentScholarshipsPage < Math.ceil(studentScholarships.length / itemsPerPage)) {
+      setCurrentStudentScholarshipsPage(currentStudentScholarshipsPage + 1);
+    }
+  };
+
   const createNewScholarship = async () => {
     // Validation
     if (!createData.scholarshipId || !createData.scholarshipType) {
@@ -81,6 +134,7 @@ const AdminScholarshipManager = () => {
         description: ''
       });
       setShowCreateForm(false);
+      setCurrentPage(1); // Reset to first page
       fetchScholarships(); // Refresh the list
     } catch (error) {
       console.error('Create error:', error);
@@ -112,6 +166,7 @@ const AdminScholarshipManager = () => {
         scholarshipPercentage: 0
       });
       setShowAssignForm(false);
+      setCurrentStudentScholarshipsPage(1); // Reset to first page
       fetchStudentScholarships(); // Refresh the list
     } catch (error) {
       console.error('Assign error:', error);
@@ -153,10 +208,20 @@ const AdminScholarshipManager = () => {
       if (confirmAction === 'deleteScholarship') {
         await axiosInstance.delete(`/admin/scholarships/${itemIdToDelete}`);
         alert('Scholarship deleted successfully!');
+        // If we're on the last page and it becomes empty, go to previous page
+        const totalPages = Math.ceil((scholarships.length - 1) / itemsPerPage);
+        if (currentPage > totalPages && totalPages > 0) {
+          setCurrentPage(totalPages);
+        }
         fetchScholarships(); // Refresh the list
       } else if (confirmAction === 'deleteStudentScholarship') {
         await axiosInstance.delete(`/admin/student-scholarships/${itemIdToDelete}`);
         alert('Scholarship assignment removed successfully!');
+        // If we're on the last page and it becomes empty, go to previous page
+        const totalPages = Math.ceil((studentScholarships.length - 1) / itemsPerPage);
+        if (currentStudentScholarshipsPage > totalPages && totalPages > 0) {
+          setCurrentStudentScholarshipsPage(totalPages);
+        }
         fetchStudentScholarships(); // Refresh the list
       }
     } catch (error) {
@@ -185,6 +250,12 @@ const AdminScholarshipManager = () => {
     const scholarship = scholarships.find(s => s.scholarshipId === scholarshipId);
     return scholarship ? scholarship.scholarshipType : 'Unknown Scholarship';
   };
+
+  // Get current data for pagination
+  const currentScholarships = getCurrentScholarships();
+  const currentStudentScholarshipRecords = getCurrentStudentScholarships();
+  const scholarshipsTotalPages = Math.ceil(scholarships.length / itemsPerPage);
+  const studentScholarshipsTotalPages = Math.ceil(studentScholarships.length / itemsPerPage);
 
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
@@ -419,55 +490,107 @@ const AdminScholarshipManager = () => {
               <p className="text-gray-400 text-sm mt-2">Click "Assign to Student" to assign scholarships to students</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg shadow">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Student
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Scholarship
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Percentage
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {studentScholarships.map((assignment) => (
-                    <tr key={assignment.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {getStudentName(assignment.studentId)} ({assignment.studentId})
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {getScholarshipType(assignment.scholarshipId)} ({assignment.scholarshipId})
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {assignment.scholarshipPercentage}%
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => deleteStudentScholarship(assignment.id)}
-                          disabled={deleting} // 禁用按钮当正在删除时
-                          className={`p-2 rounded-full ${
-                            deleting 
-                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                              : 'bg-red-100 text-red-600 hover:bg-red-200'
-                          }`}
-                          title="Remove Assignment"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
+            <>
+              <div className="overflow-x-auto rounded-lg shadow">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Student
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Scholarship
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Percentage
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {currentStudentScholarshipRecords.map((assignment) => (
+                      <tr key={assignment.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {getStudentName(assignment.studentId)} ({assignment.studentId})
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {getScholarshipType(assignment.scholarshipId)} ({assignment.scholarshipId})
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {assignment.scholarshipPercentage}%
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => deleteStudentScholarship(assignment.id)}
+                            disabled={deleting} // 禁用按钮当正在删除时
+                            className={`p-2 rounded-full ${
+                              deleting 
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                                : 'bg-red-100 text-red-600 hover:bg-red-200'
+                            }`}
+                            title="Remove Assignment"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Pagination for student scholarships */}
+              {studentScholarshipsTotalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <nav className="flex items-center gap-2">
+                    <button
+                      onClick={prevStudentScholarshipsPage}
+                      disabled={currentStudentScholarshipsPage === 1}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentStudentScholarshipsPage === 1 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <ChevronLeft size={16} />
+                      <span className="ml-1">Previous</span>
+                    </button>
+                    
+                    {[...Array(studentScholarshipsTotalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => paginateStudentScholarships(pageNumber)}
+                          className={`w-10 h-10 rounded-full ${
+                            currentStudentScholarshipsPage === pageNumber
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    })}
+                    
+                    <button
+                      onClick={nextStudentScholarshipsPage}
+                      disabled={currentStudentScholarshipsPage === studentScholarshipsTotalPages}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentStudentScholarshipsPage === studentScholarshipsTotalPages 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <span className="mr-1">Next</span>
+                      <ChevronRight size={16} />
+                    </button>
+                  </nav>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -483,76 +606,128 @@ const AdminScholarshipManager = () => {
               <p className="text-gray-400 text-sm mt-2">Click "Create New Scholarship" to add your first scholarship</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg shadow">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Scholarship ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Amount
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Description
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {scholarships.map((scholarship) => (
-                    <tr key={scholarship.scholarshipId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {scholarship.scholarshipId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {scholarship.scholarshipType}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ${scholarship.amount.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {scholarship.description}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => {
-                            setEditingId(scholarship.scholarshipId);
-                            setEditData({
-                              scholarshipType: scholarship.scholarshipType,
-                              amount: scholarship.amount,
-                              description: scholarship.description
-                            });
-                          }}
-                          className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
-                          title="Edit"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        
-                        <button
-                          onClick={() => deleteScholarship(scholarship.scholarshipId)}
-                          disabled={deleting} // 禁用按钮当正在删除时
-                          className={`p-2 rounded-full ${
-                            deleting 
-                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                              : 'bg-red-100 text-red-600 hover:bg-red-200'
-                          }`}
-                          title="Delete"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
+            <>
+              <div className="overflow-x-auto rounded-lg shadow">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Scholarship ID
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Amount
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Description
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {currentScholarships.map((scholarship) => (
+                      <tr key={scholarship.scholarshipId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {scholarship.scholarshipId}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {scholarship.scholarshipType}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          ${scholarship.amount.toFixed(2)}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {scholarship.description}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => {
+                              setEditingId(scholarship.scholarshipId);
+                              setEditData({
+                                scholarshipType: scholarship.scholarshipType,
+                                amount: scholarship.amount,
+                                description: scholarship.description
+                              });
+                            }}
+                            className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
+                            title="Edit"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          
+                          <button
+                            onClick={() => deleteScholarship(scholarship.scholarshipId)}
+                            disabled={deleting} // 禁用按钮当正在删除时
+                            className={`p-2 rounded-full ${
+                              deleting 
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                                : 'bg-red-100 text-red-600 hover:bg-red-200'
+                            }`}
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Pagination for scholarships */}
+              {scholarshipsTotalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <nav className="flex items-center gap-2">
+                    <button
+                      onClick={prevScholarshipsPage}
+                      disabled={currentPage === 1}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentPage === 1 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <ChevronLeft size={16} />
+                      <span className="ml-1">Previous</span>
+                    </button>
+                    
+                    {[...Array(scholarshipsTotalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => paginateScholarships(pageNumber)}
+                          className={`w-10 h-10 rounded-full ${
+                            currentPage === pageNumber
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    })}
+                    
+                    <button
+                      onClick={nextScholarshipsPage}
+                      disabled={currentPage === scholarshipsTotalPages}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentPage === scholarshipsTotalPages 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <span className="mr-1">Next</span>
+                      <ChevronRight size={16} />
+                    </button>
+                  </nav>
+                </div>
+              )}
+            </>
           )}
           
           {/* Edit Modal */}

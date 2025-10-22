@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Save, Edit, X, Trash2 } from 'lucide-react';
+import { Plus, Save, Edit, X, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import axiosInstance from '../utils/axiosInstance';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton, FormSection } from '../Components/ModernForm';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminVisaPassportManager = () => {
   const [visaPassports, setVisaPassports] = useState([]);
+  const [students, setStudents] = useState([]); // 添加学生数据状态
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -23,9 +24,14 @@ const AdminVisaPassportManager = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [visaPassportIdToDelete, setVisaPassportIdToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false); // 添加删除状态
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchVisaPassports();
+    fetchStudents(); // 获取学生数据
   }, []);
 
   const fetchVisaPassports = async () => {
@@ -42,6 +48,46 @@ const AdminVisaPassportManager = () => {
         statusText: error.response?.statusText,
         data: error.response?.data
       });
+    }
+  };
+
+  // 获取学生数据
+  const fetchStudents = async () => {
+    try {
+      const response = await axiosInstance.get('/admin/students');
+      setStudents(response.data);
+    } catch (error) {
+      console.error('Failed to fetch students:', error);
+    }
+  };
+
+  // 获取学生姓名
+  const getStudentName = (studentId) => {
+    const student = students.find(s => s.studentId === studentId);
+    return student ? `${student.firstName} ${student.lastName}` : studentId;
+  };
+
+  // Get current visa/passport records for pagination
+  const getCurrentVisaPassports = () => {
+    const indexOfLastRecord = currentPage * itemsPerPage;
+    const indexOfFirstRecord = indexOfLastRecord - itemsPerPage;
+    return visaPassports.slice(indexOfFirstRecord, indexOfLastRecord);
+  };
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // Previous page
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  // Next page
+  const nextPage = () => {
+    if (currentPage < Math.ceil(visaPassports.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
     }
   };
 
@@ -72,6 +118,7 @@ const AdminVisaPassportManager = () => {
         passportExpiredDate: ''
       });
       setShowCreateForm(false);
+      setCurrentPage(1); // Reset to first page
       fetchVisaPassports(); // Refresh the list
     } catch (error) {
       console.error('Create error:', error);
@@ -122,6 +169,11 @@ const AdminVisaPassportManager = () => {
       await axiosInstance.delete(`/admin/visa-passports/${visaPassportIdToDelete}`);
       
       alert('Visa/Passport record deleted successfully!');
+      // If we're on the last page and it becomes empty, go to previous page
+      const totalPages = Math.ceil((visaPassports.length - 1) / itemsPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages);
+      }
       fetchVisaPassports(); // Refresh the list
     } catch (error) {
       console.error('Delete error:', error);
@@ -149,6 +201,10 @@ const AdminVisaPassportManager = () => {
   const getVisaTypeText = (visaType) => {
     return visaType === 1 ? 'Multiple Entry' : 'Single Entry';
   };
+
+  // Get current visa/passport records
+  const currentVisaPassports = getCurrentVisaPassports();
+  const totalPages = Math.ceil(visaPassports.length / itemsPerPage);
 
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
@@ -341,101 +397,153 @@ const AdminVisaPassportManager = () => {
               <p className="text-gray-400 text-sm mt-2">Click "Create New Record" to add your first record</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg shadow">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Visa Passport ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Student ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Visa ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Visa Dates
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Visa Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Passport Number
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Passport Dates
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {visaPassports.map((record) => (
-                    <tr key={record.visaPassportId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {record.visaPassportId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {record.studentId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {record.visaId}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        <div>Issued: {record.visaIssuedDate}</div>
-                        <div>Expired: {record.visaExpiredDate}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {getVisaTypeText(record.visaType)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {record.passportNumber}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        <div>Issued: {record.passportIssuedDate}</div>
-                        <div>Expired: {record.passportExpiredDate}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => {
-                            setEditingId(record.visaPassportId);
-                            setEditData({
-                              studentId: record.studentId,
-                              visaId: record.visaId,
-                              visaIssuedDate: record.visaIssuedDate,
-                              visaExpiredDate: record.visaExpiredDate,
-                              visaType: record.visaType,
-                              passportNumber: record.passportNumber,
-                              passportIssuedDate: record.passportIssuedDate,
-                              passportExpiredDate: record.passportExpiredDate
-                            });
-                          }}
-                          className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
-                          title="Edit"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        
-                        <button
-                          onClick={() => deleteVisaPassport(record.visaPassportId)}
-                          disabled={deleting} // 禁用按钮当正在删除时
-                          className={`p-2 rounded-full ${
-                            deleting 
-                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                              : 'bg-red-100 text-red-600 hover:bg-red-200'
-                          }`}
-                          title="Delete"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
+            <>
+              <div className="overflow-x-auto rounded-lg shadow">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Visa Passport ID
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Student ID
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Visa ID
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Visa Dates
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Visa Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Passport Number
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Passport Dates
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {currentVisaPassports.map((record) => (
+                      <tr key={record.visaPassportId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {record.visaPassportId}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {record.studentId} - {getStudentName(record.studentId)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {record.visaId}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          <div>Issued: {record.visaIssuedDate}</div>
+                          <div>Expired: {record.visaExpiredDate}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {getVisaTypeText(record.visaType)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {record.passportNumber}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          <div>Issued: {record.passportIssuedDate}</div>
+                          <div>Expired: {record.passportExpiredDate}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => {
+                              setEditingId(record.visaPassportId);
+                              setEditData({
+                                studentId: record.studentId,
+                                visaId: record.visaId,
+                                visaIssuedDate: record.visaIssuedDate,
+                                visaExpiredDate: record.visaExpiredDate,
+                                visaType: record.visaType,
+                                passportNumber: record.passportNumber,
+                                passportIssuedDate: record.passportIssuedDate,
+                                passportExpiredDate: record.passportExpiredDate
+                              });
+                            }}
+                            className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
+                            title="Edit"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          
+                          <button
+                            onClick={() => deleteVisaPassport(record.visaPassportId)}
+                            disabled={deleting} // 禁用按钮当正在删除时
+                            className={`p-2 rounded-full ${
+                              deleting 
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                                : 'bg-red-100 text-red-600 hover:bg-red-200'
+                            }`}
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <nav className="flex items-center gap-2">
+                    <button
+                      onClick={prevPage}
+                      disabled={currentPage === 1}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentPage === 1 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <ChevronLeft size={16} />
+                      <span className="ml-1">Previous</span>
+                    </button>
+                    
+                    {[...Array(totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => paginate(pageNumber)}
+                          className={`w-10 h-10 rounded-full ${
+                            currentPage === pageNumber
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    })}
+                    
+                    <button
+                      onClick={nextPage}
+                      disabled={currentPage === totalPages}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentPage === totalPages 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <span className="mr-1">Next</span>
+                      <ChevronRight size={16} />
+                    </button>
+                  </nav>
+                </div>
+              )}
+            </>
           )}
           
           {/* Edit Modal */}

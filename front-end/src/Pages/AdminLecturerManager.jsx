@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Save, Edit, X, Trash2 } from 'lucide-react';
+import { Plus, Save, Edit, X, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton, FormSection } from '../Components/ModernForm';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
@@ -24,6 +24,10 @@ const AdminLecturerManager = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [lecturerIdToDelete, setLecturerIdToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false); // 添加删除状态
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchLecturers();
@@ -46,6 +50,30 @@ const AdminLecturerManager = () => {
       setLecturers(data);
     } catch (error) {
       console.error('Failed to fetch lecturers:', error);
+    }
+  };
+
+  // Get current lecturers for pagination
+  const getCurrentLecturers = () => {
+    const indexOfLastLecturer = currentPage * itemsPerPage;
+    const indexOfFirstLecturer = indexOfLastLecturer - itemsPerPage;
+    return lecturers.slice(indexOfFirstLecturer, indexOfLastLecturer);
+  };
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // Previous page
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  // Next page
+  const nextPage = () => {
+    if (currentPage < Math.ceil(lecturers.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
     }
   };
 
@@ -85,6 +113,7 @@ const AdminLecturerManager = () => {
           departmentId: ''
         });
         setShowCreateForm(false);
+        setCurrentPage(1); // Reset to first page
         fetchLecturers(); // Refreshthe list
       }else {
         const errorText = await response.text();
@@ -154,6 +183,11 @@ const AdminLecturerManager = () => {
 
       if (response.ok) {
         alert('Lecturer deleted successfully!');
+        // If we're on the last page and it becomes empty, go to previous page
+        const totalPages = Math.ceil((lecturers.length - 1) / itemsPerPage);
+        if (currentPage > totalPages && totalPages > 0) {
+          setCurrentPage(totalPages);
+        }
         fetchLecturers(); // Refresh the list
       } else {
         const errorText = await response.text();
@@ -174,6 +208,10 @@ const AdminLecturerManager = () => {
     setShowConfirmDialog(false);
     setLecturerIdToDelete(null);
   };
+
+  // Get current lecturers
+  const currentLecturers = getCurrentLecturers();
+  const totalPages = Math.ceil(lecturers.length / itemsPerPage);
 
   return (
     <div className="max-w-7xl mx-autop-6 bg-gray-50 min-h-screen">
@@ -336,112 +374,164 @@ const AdminLecturerManager = () => {
               <p className="text-gray-400 text-sm mt-2">Click "Create New Lecturer" to add your first lecturer</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg shadow">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Lecturer ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date of Birth
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Teaching Experience
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Academic Title
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Department
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {lecturers.map((lecturer)=> (
-                    <tr key={lecturer.lecturerId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {lecturer.lecturerId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {lecturer.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {lecturer.dateOfBirth}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {lecturer.teachingExperience} years
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {lecturer.academicTitle || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {departments.find(dept => dept.departmentId === lecturer.departmentId)?.departmentName || lecturer.departmentId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          {editingId === lecturer.lecturerId ? (
-                            <>
-                              <button 
-                                onClick={saveEdit}
-                                className="p-2 bg-green-100 text-green-600 rounded-full hover:bg-green-200"
-                                title="Save"
-                              >
-                                <Save size={16} />
-                              </button>
-                              <button 
-                                onClick={()=>setEditingId(null)}
-                                className="p-2 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200"
-                                title="Cancel"
-                              >
-                                <X size={16} />
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() =>{
-                                  setEditingId(lecturer.lecturerId);
-                                  setEditData({
-                                    name: lecturer.name,
-                                    dateOfBirth: lecturer.dateOfBirth,
-                                    teachingExperience: lecturer.teachingExperience,
-                                    academicTitle: lecturer.academicTitle,
-                                    departmentId: lecturer.departmentId
-                                  });
-                                }}
-                                className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200"
-                                title="Edit"
-                              >
-                                <Edit size={16} />
-                              </button>
-                              <button
-                                onClick={() => deleteLecturer(lecturer.lecturerId)}
-                                disabled={deleting} // 禁用按钮当正在删除时
-                                className={`p-2 rounded-full ${
-                                  deleting 
-                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                                    : 'bg-red-100 text-red-600 hover:bg-red-200'
-                                }`}
-                                title="Delete"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
+            <>
+              <div className="overflow-x-auto rounded-lg shadow">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Lecturer ID
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date of Birth
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Teaching Experience
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Academic Title
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Department
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {currentLecturers.map((lecturer)=> (
+                      <tr key={lecturer.lecturerId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {lecturer.lecturerId}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {lecturer.name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {lecturer.dateOfBirth}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {lecturer.teachingExperience} years
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {lecturer.academicTitle || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {departments.find(dept => dept.departmentId === lecturer.departmentId)?.departmentName || lecturer.departmentId}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-2">
+                            {editingId === lecturer.lecturerId ? (
+                              <>
+                                <button 
+                                  onClick={saveEdit}
+                                  className="p-2 bg-green-100 text-green-600 rounded-full hover:bg-green-200"
+                                  title="Save"
+                                >
+                                  <Save size={16} />
+                                </button>
+                                <button 
+                                  onClick={()=>setEditingId(null)}
+                                  className="p-2 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200"
+                                  title="Cancel"
+                                >
+                                  <X size={16} />
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() =>{
+                                    setEditingId(lecturer.lecturerId);
+                                    setEditData({
+                                      name: lecturer.name,
+                                      dateOfBirth: lecturer.dateOfBirth,
+                                      teachingExperience: lecturer.teachingExperience,
+                                      academicTitle: lecturer.academicTitle,
+                                      departmentId: lecturer.departmentId
+                                    });
+                                  }}
+                                  className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200"
+                                  title="Edit"
+                                >
+                                  <Edit size={16} />
+                                </button>
+                                <button
+                                  onClick={() => deleteLecturer(lecturer.lecturerId)}
+                                  disabled={deleting} // 禁用按钮当正在删除时
+                                  className={`p-2 rounded-full ${
+                                    deleting 
+                                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                                      : 'bg-red-100 text-red-600 hover:bg-red-200'
+                                  }`}
+                                  title="Delete"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <nav className="flex items-center gap-2">
+                    <button
+                      onClick={prevPage}
+                      disabled={currentPage === 1}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentPage === 1 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <ChevronLeft size={16} />
+                      <span className="ml-1">Previous</span>
+                    </button>
+                    
+                    {[...Array(totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => paginate(pageNumber)}
+                          className={`w-10 h-10 rounded-full ${
+                            currentPage === pageNumber
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    })}
+                    
+                    <button
+                      onClick={nextPage}
+                      disabled={currentPage === totalPages}
+                      className={`flex items-center px-3 py-1 rounded-md ${
+                        currentPage === totalPages 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <span className="mr-1">Next</span>
+                      <ChevronRight size={16} />
+                    </button>
+                  </nav>
+                </div>
+              )}
+            </>
           )}
           
           {/* Edit Form */}
