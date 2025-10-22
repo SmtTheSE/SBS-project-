@@ -22,6 +22,9 @@ const AdminLecturerCourseManager = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  // 添加分页状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchData();
@@ -51,10 +54,56 @@ const AdminLecturerCourseManager = () => {
       setStudyPlanCourses(studyPlanCoursesRes.data);
       setSemesters(semestersRes.data);
       setClassSchedules(classSchedulesRes.data);
+      // 添加新记录后返回第一页
+      setCurrentPage(1);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 获取讲师姓名
+  const getLecturerName = (lecturerId) => {
+    if (!lecturerId) return 'N/A';
+    if (!lecturers || lecturers.length === 0) return lecturerId;
+    
+    const lecturer = lecturers.find(l => l.lecturerId === lecturerId);
+    
+    if (lecturer) {
+      if (lecturer.name) {
+        return lecturer.name;
+      } else {
+        return lecturerId;
+      }
+    } else {
+      return lecturerId;
+    }
+  };
+
+  // 获取当前页面的数据
+  const getCurrentMappings = () => {
+    const indexOfLastMapping = currentPage * itemsPerPage;
+    const indexOfFirstMapping = indexOfLastMapping - itemsPerPage;
+    return lecturerCourses.slice(indexOfFirstMapping, indexOfLastMapping);
+  };
+
+  // 计算总页数
+  const totalPages = Math.ceil(lecturerCourses.length / itemsPerPage);
+
+  // 获取当前页面的数据
+  const currentMappings = getCurrentMappings();
+
+  // 分页控制函数
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const prevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const nextPage = () => {
+    if (currentPage < Math.ceil(lecturerCourses.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
     }
   };
 
@@ -95,6 +144,12 @@ const AdminLecturerCourseManager = () => {
     try {
       await axios.delete(`/admin/lecturer-courses/${mappingToDelete}`);
       fetchData();
+      // 删除记录后检查当前页是否为空
+      const totalItems = lecturerCourses.length - 1; // 删除后的总数
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages);
+      }
     } catch (error) {
       console.error("Error deleting lecturer-course mapping:", error);
     } finally {
@@ -176,13 +231,13 @@ const AdminLecturerCourseManager = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {lecturerCourses.map((lecturerCourse) => (
+              {currentMappings.map((lecturerCourse) => (
                 <tr key={lecturerCourse.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {lecturerCourse.id}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {lecturerCourse.lecturerId}
+                    {lecturerCourse.lecturerId ? `${lecturerCourse.lecturerId} - ${getLecturerName(lecturerCourse.lecturerId)}` : 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {lecturerCourse.studyPlanCourseId}
@@ -221,6 +276,49 @@ const AdminLecturerCourseManager = () => {
             </tbody>
           </table>
         </div>
+        
+        {/* Pagination Controls */}
+        {lecturerCourses.length > itemsPerPage && (
+          <div className="flex justify-center items-center space-x-2 my-4">
+            <button
+              onClick={prevPage}
+              disabled={currentPage === 1}
+              className={`px-4 py-2 rounded-md ${
+                currentPage === 1 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Previous
+            </button>
+            
+            {[...Array(totalPages)].map((_, index) => (
+              <button
+                key={index + 1}
+                onClick={() => paginate(index + 1)}
+                className={`px-4 py-2 rounded-md ${
+                  currentPage === index + 1
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+            
+            <button
+              onClick={nextPage}
+              disabled={currentPage === totalPages}
+              className={`px-4 py-2 rounded-md ${
+                currentPage === totalPages 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Modal */}

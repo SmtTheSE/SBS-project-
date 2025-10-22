@@ -21,7 +21,42 @@ const AdminCourseResultManager = () => {
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [courseResultIdToDelete, setCourseResultIdToDelete] = useState(null);
+  // 添加分页状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
+  // 获取学生姓名
+  const getStudentName = (studentId) => {
+    const student = students.find(s => s.studentId === studentId);
+    return student ? `${student.firstName} ${student.lastName}` : studentId;
+  };
+
+  // 获取当前页面的课程结果数据
+  const getCurrentCourseResults = () => {
+    const indexOfLastResult = currentPage * itemsPerPage;
+    const indexOfFirstResult = indexOfLastResult - itemsPerPage;
+    return Array.isArray(courseResults) ? courseResults.slice(indexOfFirstResult, indexOfLastResult) : [];
+  };
+
+  // 计算总页数
+  const totalPages = Math.ceil((Array.isArray(courseResults) ? courseResults.length : 0) / itemsPerPage);
+
+  // 获取当前页面的数据
+  const currentCourseResults = getCurrentCourseResults();
+
+  // 分页控制函数
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const prevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const nextPage = () => {
+    const totalItems = Array.isArray(courseResults) ? courseResults.length : 0;
+    if (currentPage < Math.ceil(totalItems / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   const fetchCourseResults = async () => {
     try {
@@ -29,6 +64,8 @@ const AdminCourseResultManager = () => {
       const response = await axios.get('/admin/academic/course-results');
       setCourseResults(response.data);
       setError('');
+      // 添加新记录后返回第一页
+      setCurrentPage(1);
     } catch (err) {
       console.error('Failed to fetch course results:', err);
       setError('Failed to fetch course results: ' + (err.response?.data?.message || err.message));
@@ -148,6 +185,12 @@ const AdminCourseResultManager = () => {
       await axios.delete(`/admin/academic/course-results/${courseResultIdToDelete}`);
       fetchCourseResults(); // 重新获取数据
       setError('');
+      // 删除记录后检查当前页是否为空
+      const totalItems = courseResults.length - 1; // 删除后的总数
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages);
+      }
     } catch (err) {
       console.error('Delete failed:', err);
       setError('Delete failed: ' + (err.response?.data?.message || err.message));
@@ -229,14 +272,14 @@ const AdminCourseResultManager = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {Array.isArray(courseResults) && courseResults.length > 0 ? (
-                courseResults.map((courseResult) => (
+              {Array.isArray(currentCourseResults) && currentCourseResults.length > 0 ? (
+                currentCourseResults.map((courseResult) => (
                   <tr key={courseResult.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {courseResult.id}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {courseResult.studentId}
+                      {courseResult.studentId} - {getStudentName(courseResult.studentId)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {courseResult.studyPlanCourseId}
@@ -279,6 +322,49 @@ const AdminCourseResultManager = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {Array.isArray(courseResults) && courseResults.length > itemsPerPage && (
+          <div className="flex justify-center items-center space-x-2 my-4">
+            <button
+              onClick={prevPage}
+              disabled={currentPage === 1}
+              className={`px-4 py-2 rounded-md ${
+                currentPage === 1 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Previous
+            </button>
+            
+            {[...Array(totalPages)].map((_, index) => (
+              <button
+                key={index + 1}
+                onClick={() => paginate(index + 1)}
+                className={`px-4 py-2 rounded-md ${
+                  currentPage === index + 1
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+            
+            <button
+              onClick={nextPage}
+              disabled={currentPage === totalPages}
+              className={`px-4 py-2 rounded-md ${
+                currentPage === totalPages 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        )}
 
         {/* Modal */}
         {showModal && (

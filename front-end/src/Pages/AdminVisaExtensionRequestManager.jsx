@@ -5,6 +5,7 @@ import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminVisaExtensionRequestManager = () => {
   const [extensionRequests, setExtensionRequests] = useState([]);
+  const [students, setStudents] = useState([]); // 添加学生数据状态
   const [loading, setLoading] = useState(true);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [requestIdToDelete, setRequestIdToDelete] = useState(null);
@@ -15,6 +16,7 @@ const AdminVisaExtensionRequestManager = () => {
 
   useEffect(() => {
     fetchExtensionRequests();
+    fetchStudents(); // 获取学生数据
   }, []);
 
   const fetchExtensionRequests = async () => {
@@ -26,6 +28,22 @@ const AdminVisaExtensionRequestManager = () => {
       console.error('Failed to fetch visa extension requests:', error);
       setLoading(false);
     }
+  };
+
+  // 获取学生数据
+  const fetchStudents = async () => {
+    try {
+      const response = await axiosInstance.get('/admin/students');
+      setStudents(response.data);
+    } catch (error) {
+      console.error('Failed to fetch students:', error);
+    }
+  };
+
+  // 获取学生姓名
+  const getStudentName = (studentId) => {
+    const student = students.find(s => s.studentId === studentId);
+    return student ? `${student.firstName} ${student.lastName}` : studentId;
   };
 
   // Get current extension requests for pagination
@@ -202,7 +220,7 @@ const AdminVisaExtensionRequestManager = () => {
                         {request.extensionRequestId}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {request.studentId}
+                        {request.studentId} - {getStudentName(request.studentId)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {request.visaPassportId}

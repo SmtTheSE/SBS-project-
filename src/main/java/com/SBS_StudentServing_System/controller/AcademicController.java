@@ -2,6 +2,7 @@ package com.SBS_StudentServing_System.controller;
 
 import com.SBS_StudentServing_System.dto.academic.*;
 import com.SBS_StudentServing_System.mapping.CourseMapper;
+import com.SBS_StudentServing_System.mapping.StudentEnglishPlacementTestMapper;
 import com.SBS_StudentServing_System.model.academic.*;
 import com.SBS_StudentServing_System.model.lecturer.Lecturer;
 import com.SBS_StudentServing_System.service.academic.AcademicService;
@@ -45,8 +46,9 @@ public class AcademicController {
     
     // ---StudentEnglishPlacementTest ---
     @GetMapping("/student-english-placement-tests")
-    public List<StudentEnglishPlacementTest> getAllStudentEnglishPlacementTests() {
-        return academicService.getAllStudentEnglishPlacementTests();
+    public List<StudentEnglishPlacementTestDto> getAllStudentEnglishPlacementTests() {
+        List<StudentEnglishPlacementTest> tests = academicService.getAllStudentEnglishPlacementTests();
+        return tests.stream().map(StudentEnglishPlacementTestMapper::toDto).toList();
     }
     @GetMapping("/student-english-placement-tests/{id}")
     public ResponseEntity<StudentEnglishPlacementTest> getStudentEnglishPlacementTest(@PathVariable String id) {

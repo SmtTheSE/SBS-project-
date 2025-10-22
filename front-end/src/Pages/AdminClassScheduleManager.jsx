@@ -21,7 +21,9 @@ const AdminClassScheduleManager = () => {
     durationMinutes: '',
     room: ''
   });
-
+  // 添加分页状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   const fetchClassSchedules = async () => {
     try {
@@ -29,6 +31,8 @@ const AdminClassScheduleManager = () => {
       const response = await axios.get('/admin/academic/class-schedules');
       setClassSchedules(response.data);
       setError('');
+      // 添加新记录后返回第一页
+      setCurrentPage(1);
     } catch (err) {
       console.error('Failed to fetch class schedules:', err);
       setError('Failed to fetch class schedules: ' + (err.response?.data?.message || err.message));
@@ -37,7 +41,6 @@ const AdminClassScheduleManager = () => {
       setLoading(false);
     }
   };
-
 
   const fetchStudyPlanCourses = async () => {
     try {
@@ -53,6 +56,31 @@ const AdminClassScheduleManager = () => {
     fetchStudyPlanCourses();
   }, []);
 
+  // 获取当前页面的数据
+  const getCurrentSchedules = () => {
+    const indexOfLastSchedule = currentPage * itemsPerPage;
+    const indexOfFirstSchedule = indexOfLastSchedule - itemsPerPage;
+    return classSchedules.slice(indexOfFirstSchedule, indexOfLastSchedule);
+  };
+
+  // 计算总页数
+  const totalPages = Math.ceil(classSchedules.length / itemsPerPage);
+
+  // 获取当前页面的数据
+  const currentSchedules = getCurrentSchedules();
+
+  // 分页控制函数
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const prevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const nextPage = () => {
+    if (currentPage < Math.ceil(classSchedules.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -61,7 +89,6 @@ const AdminClassScheduleManager = () => {
       [name]: value
     }));
   };
-
 
   const openAddModal = () => {
     setIsEditing(false);
@@ -77,7 +104,6 @@ const AdminClassScheduleManager = () => {
     setShowModal(true);
   };
 
-
   const openEditModal = (classSchedule) => {
     setIsEditing(true);
     setCurrentClassSchedule({
@@ -92,26 +118,21 @@ const AdminClassScheduleManager = () => {
     setShowModal(true);
   };
 
-
   const closeModal = () => {
     setShowModal(false);
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-
       const classScheduleData = {
         ...currentClassSchedule,
         durationMinutes: parseInt(currentClassSchedule.durationMinutes) || 0
       };
 
       if (isEditing) {
-
         await axios.put(`/admin/academic/class-schedules/${currentClassSchedule.classScheduleId}`, classScheduleData);
       } else {
-
         await axios.post('/admin/academic/class-schedules', classScheduleData);
       }
       closeModal();
@@ -123,7 +144,6 @@ const AdminClassScheduleManager = () => {
     }
   };
 
-
   const handleDelete = async (classScheduleId) => {
     setScheduleToDelete(classScheduleId);
     setShowConfirmDialog(true);
@@ -133,6 +153,12 @@ const AdminClassScheduleManager = () => {
     try {
       await axios.delete(`/admin/academic/class-schedules/${scheduleToDelete}`);
       fetchClassSchedules();
+      // 删除记录后检查当前页是否为空
+      const totalItems = classSchedules.length - 1; // 删除后的总数
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages);
+      }
       setError('');
     } catch (err) {
       console.error('Delete failed:', err);
@@ -219,8 +245,8 @@ const AdminClassScheduleManager = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {Array.isArray(classSchedules) && classSchedules.length > 0 ? (
-                classSchedules.map((classSchedule) => (
+              {Array.isArray(currentSchedules) && currentSchedules.length > 0 ? (
+                currentSchedules.map((classSchedule) => (
                   <tr key={classSchedule.classScheduleId} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {classSchedule.classScheduleId}
@@ -275,6 +301,49 @@ const AdminClassScheduleManager = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {classSchedules.length > itemsPerPage && (
+          <div className="flex justify-center items-center space-x-2 my-4">
+            <button
+              onClick={prevPage}
+              disabled={currentPage === 1}
+              className={`px-4 py-2 rounded-md ${
+                currentPage === 1 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Previous
+            </button>
+            
+            {[...Array(totalPages)].map((_, index) => (
+              <button
+                key={index + 1}
+                onClick={() => paginate(index + 1)}
+                className={`px-4 py-2 rounded-md ${
+                  currentPage === index + 1
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+            
+            <button
+              onClick={nextPage}
+              disabled={currentPage === totalPages}
+              className={`px-4 py-2 rounded-md ${
+                currentPage === totalPages 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        )}
 
         {/* Modal */}
         {showModal && (

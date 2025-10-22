@@ -6,6 +6,7 @@ import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminTuitionPaymentManager = () => {
   const [tuitionPayments, setTuitionPayments] = useState([]);
+  const [students, setStudents] = useState([]); // 添加学生数据状态
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -26,6 +27,7 @@ const AdminTuitionPaymentManager = () => {
 
   useEffect(() => {
     fetchTuitionPayments();
+    fetchStudents(); // 获取学生数据
   }, []);
 
   const fetchTuitionPayments = async () => {
@@ -35,6 +37,22 @@ const AdminTuitionPaymentManager = () => {
     } catch (error) {
       console.error('Failed to fetch tuition payments:', error);
     }
+  };
+
+  // 获取学生数据
+  const fetchStudents = async () => {
+    try {
+      const response = await axiosInstance.get('/admin/students');
+      setStudents(response.data);
+    } catch (error) {
+      console.error('Failed to fetch students:', error);
+    }
+  };
+
+  // 获取学生姓名
+  const getStudentName = (studentId) => {
+    const student = students.find(s => s.studentId === studentId);
+    return student ? `${student.firstName} ${student.lastName}` : studentId;
   };
 
   // Get current tuition payments for pagination
@@ -325,7 +343,7 @@ const AdminTuitionPaymentManager = () => {
                     {currentTuitionPayments.map((payment) => (
                       <tr key={payment.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {payment.studentId}
+                          {payment.studentId} - {getStudentName(payment.studentId)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {payment.scholarshipId || 'N/A'}

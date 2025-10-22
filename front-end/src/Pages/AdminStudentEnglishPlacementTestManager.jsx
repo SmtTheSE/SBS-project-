@@ -5,6 +5,7 @@ import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminStudentEnglishPlacementTestManager = () => {
   const [tests, setTests] = useState([]);
+  const [students, setStudents] = useState([]); // 添加学生数据状态
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -18,9 +19,13 @@ const AdminStudentEnglishPlacementTestManager = () => {
     resultLevel: '',
     resultStatus: 0 // 0 = Fail, 1 = Pass
   });
+  // 添加分页状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchStudentEnglishPlacementTests();
+    fetchStudents(); // 获取学生数据
   }, []);
 
   const fetchStudentEnglishPlacementTests = async () => {
@@ -28,10 +33,45 @@ const AdminStudentEnglishPlacementTestManager = () => {
       const response = await axiosInstance.get('/academic/student-english-placement-tests');
       setTests(response.data);
       setLoading(false);
+      // 添加新记录后返回第一页
+      setCurrentPage(1);
     } catch (error) {
       console.error('Failed to fetch student english placement tests:', error);
       setError('Failed to fetch student english placement tests');
       setLoading(false);
+    }
+  };
+
+  // 获取学生数据
+  const fetchStudents = async () => {
+    try {
+      const response = await axiosInstance.get('/admin/students');
+      setStudents(response.data);
+    } catch (error) {
+      console.error('Failed to fetch students:', error);
+    }
+  };
+
+  // 获取学生姓名
+  const getStudentName = (studentId) => {
+    // 检查参数和学生列表是否有效
+    if (!studentId) return 'N/A';
+    if (!students || students.length === 0) return studentId;
+    
+    const student = students.find(s => s.studentId === studentId);
+    
+    if (student) {
+      if (student.firstName && student.lastName) {
+        return `${student.firstName} ${student.lastName}`;
+      } else if (student.firstName) {
+        return student.firstName;
+      } else if (student.lastName) {
+        return student.lastName;
+      } else {
+        return studentId;
+      }
+    } else {
+      return studentId;
     }
   };
 
@@ -92,6 +132,12 @@ const AdminStudentEnglishPlacementTestManager = () => {
     try {
       await axiosInstance.delete(`/academic/student-english-placement-tests/${testToDelete}`);
       fetchStudentEnglishPlacementTests();
+      // 删除记录后检查当前页是否为空
+      const totalItems = tests.length - 1; // 删除后的总数
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages);
+      }
     } catch (error) {
       console.error('Failed to delete student english placement test:', error);
       setError('Failed to delete student english placement test');
@@ -106,8 +152,46 @@ const AdminStudentEnglishPlacementTestManager = () => {
     setTestToDelete(null);
   };
 
+  const handleCancel = () => {
+    setFormData({
+      testId: '',
+      studentId: '',
+      testDate: '',
+      resultLevel: '',
+      resultStatus: 0
+    });
+    setEditingTest(null);
+    setShowForm(false);
+  };
+
   const getResultStatusText = (status) => {
     return status === 1 ? 'Pass' : 'Fail';
+  };
+
+  // 获取当前页面的测试数据
+  const getCurrentTests = () => {
+    const indexOfLastTest = currentPage * itemsPerPage;
+    const indexOfFirstTest = indexOfLastTest - itemsPerPage;
+    return tests.slice(indexOfFirstTest, indexOfLastTest);
+  };
+
+  // 计算总页数
+  const totalPages = Math.ceil(tests.length / itemsPerPage);
+
+  // 获取当前页面的数据
+  const currentTests = getCurrentTests();
+
+  // 分页控制函数
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const prevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const nextPage = () => {
+    if (currentPage < Math.ceil(tests.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
+    }
   };
 
   if (loading) {
@@ -273,13 +357,13 @@ const AdminStudentEnglishPlacementTestManager = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {tests.map((test) => (
+              {currentTests.map((test) => (
                 <tr key={test.testId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {test.testId}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {test.studentId}
+                    {test.studentId ? `${test.studentId} - ${getStudentName(test.studentId)}` : 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {test.testDate}
@@ -327,6 +411,49 @@ const AdminStudentEnglishPlacementTestManager = () => {
             </div>
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {tests.length > itemsPerPage && (
+          <div className="flex justify-center items-center space-x-2 my-4">
+            <button
+              onClick={prevPage}
+              disabled={currentPage === 1}
+              className={`px-4 py-2 rounded-md ${
+                currentPage === 1 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Previous
+            </button>
+            
+            {[...Array(totalPages)].map((_, index) => (
+              <button
+                key={index + 1}
+                onClick={() => paginate(index + 1)}
+                className={`px-4 py-2 rounded-md ${
+                  currentPage === index + 1
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+            
+            <button
+              onClick={nextPage}
+              disabled={currentPage === totalPages}
+              className={`px-4 py-2 rounded-md ${
+                currentPage === totalPages 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        )}
 
         {/* Custom Confirm Dialog */}
         <CustomConfirmDialog

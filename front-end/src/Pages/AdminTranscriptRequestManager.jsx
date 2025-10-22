@@ -6,6 +6,29 @@ const AdminTranscriptRequestManager = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // 添加分页状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  // 获取当前页面的请求数据
+  const getCurrentRequests = () => {
+    const indexOfLastRequest = currentPage * itemsPerPage;
+    const indexOfFirstRequest = indexOfLastRequest - itemsPerPage;
+    return requests.slice(indexOfFirstRequest, indexOfLastRequest);
+  };
+
+  // 分页控制函数
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const prevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const nextPage = () => {
+    if (currentPage < Math.ceil(requests.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   useEffect(() => {
     fetchTranscriptRequests();
@@ -21,6 +44,8 @@ const AdminTranscriptRequestManager = () => {
       });
       if (response.data.success) {
         setRequests(response.data.data);
+        // 添加新记录后返回第一页
+        setCurrentPage(1);
       } else {
         setError('Failed to fetch transcript requests');
       }
@@ -56,6 +81,12 @@ const AdminTranscriptRequestManager = () => {
       setError('Error updating request status: ' + err.message);
     }
   };
+
+  // 计算总页数
+  const totalPages = Math.ceil(requests.length / itemsPerPage);
+
+  // 获取当前页面的数据
+  const currentRequests = getCurrentRequests();
 
   if (loading) {
     return (
@@ -107,101 +138,146 @@ const AdminTranscriptRequestManager = () => {
             <p className="text-gray-500 text-lg">No transcript requests found</p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-lg shadow">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Request ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Student ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Student Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Message
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {requests.map((request) => (
-                  <tr key={request.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {request.request?.requestId || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {request.student?.studentId || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {request.student?.firstName || ''} {request.student?.lastName || ''}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {request.request?.transcriptType === 0 ? 'Unofficial' : 
-                       request.request?.transcriptType === 1 ? 'Official' : 'Unknown'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {request.request?.requestDate ? new Date(request.request.requestDate).toLocaleDateString() : 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        request.requestStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                        request.requestStatus === 'Approved' ? 'bg-blue-100 text-blue-800' :
-                        request.requestStatus === 'Rejected' ? 'bg-red-100 text-red-800' :
-                        request.requestStatus === 'Issued' ? 'bg-green-100 text-green-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {request.requestStatus}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {request.optionalMessage || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      {request.requestStatus === 'Pending' && (
-                        <div className="flex space-x-2">
-                          <FormButton
-                            variant="success"
-                            onClick={() => updateRequestStatus(request.id, 'Approved')}
-                            className="mr-2"
-                          >
-                            Approve
-                          </FormButton>
-                          <FormButton
-                            variant="danger"
-                            onClick={() => updateRequestStatus(request.id, 'Rejected')}
-                          >
-                            Reject
-                          </FormButton>
-                        </div>
-                      )}
-                      {request.requestStatus === 'Approved' && (
-                        <FormButton
-                          variant="primary"
-                          onClick={() => updateRequestStatus(request.id, 'Issued')}
-                        >
-                          Mark as Issued
-                        </FormButton>
-                      )}
-                    </td>
+          <>
+            <div className="overflow-x-auto rounded-lg shadow">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Request ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Student ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Student Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Message
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {currentRequests.map((request) => (
+                    <tr key={request.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {request.request?.requestId || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {request.student?.studentId || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {request.student?.firstName || ''} {request.student?.lastName || ''}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {request.request?.transcriptType === 0 ? 'Unofficial' : 
+                         request.request?.transcriptType === 1 ? 'Official' : 'Unknown'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {request.request?.requestDate ? new Date(request.request.requestDate).toLocaleDateString() : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          request.requestStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                          request.requestStatus === 'Approved' ? 'bg-blue-100 text-blue-800' :
+                          request.requestStatus === 'Rejected' ? 'bg-red-100 text-red-800' :
+                          request.requestStatus === 'Issued' ? 'bg-green-100 text-green-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {request.requestStatus}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {request.optionalMessage || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        {request.requestStatus === 'Pending' && (
+                          <div className="flex space-x-2">
+                            <FormButton
+                              variant="success"
+                              onClick={() => updateRequestStatus(request.id, 'Approved')}
+                              className="mr-2"
+                            >
+                              Approve
+                            </FormButton>
+                            <FormButton
+                              variant="danger"
+                              onClick={() => updateRequestStatus(request.id, 'Rejected')}
+                            >
+                              Reject
+                            </FormButton>
+                          </div>
+                        )}
+                        {request.requestStatus === 'Approved' && (
+                          <FormButton
+                            variant="primary"
+                            onClick={() => updateRequestStatus(request.id, 'Issued')}
+                          >
+                            Mark as Issued
+                          </FormButton>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Pagination Controls */}
+            {requests.length > itemsPerPage && (
+              <div className="flex justify-center items-center space-x-2 my-4">
+                <button
+                  onClick={prevPage}
+                  disabled={currentPage === 1}
+                  className={`px-4 py-2 rounded-md ${
+                    currentPage === 1 
+                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  Previous
+                </button>
+                
+                {[...Array(totalPages)].map((_, index) => (
+                  <button
+                    key={index + 1}
+                    onClick={() => paginate(index + 1)}
+                    className={`px-4 py-2 rounded-md ${
+                      currentPage === index + 1
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
                 ))}
-              </tbody>
-            </table>
-          </div>
+                
+                <button
+                  onClick={nextPage}
+                  disabled={currentPage === totalPages}
+                  className={`px-4 py-2 rounded-md ${
+                    currentPage === totalPages 
+                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

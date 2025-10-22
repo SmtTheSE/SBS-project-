@@ -5,6 +5,7 @@ import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminStudentAcademicBackgroundManager = () => {
   const [backgrounds, setBackgrounds] = useState([]);
+  const [students, setStudents] = useState([]); // 添加学生数据状态
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -21,9 +22,39 @@ const AdminStudentAcademicBackgroundManager = () => {
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [backgroundIdToDelete, setBackgroundIdToDelete] = useState(null);
+  // 添加分页状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  // 获取当前页面的学术背景数据
+  const getCurrentBackgrounds = () => {
+    const indexOfLastBackground = currentPage * itemsPerPage;
+    const indexOfFirstBackground = indexOfLastBackground - itemsPerPage;
+    return backgrounds.slice(indexOfFirstBackground, indexOfLastBackground);
+  };
+
+  // 计算总页数
+  const totalPages = Math.ceil(backgrounds.length / itemsPerPage);
+
+  // 获取当前页面的数据
+  const currentBackgrounds = getCurrentBackgrounds();
+
+  // 分页控制函数
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const prevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const nextPage = () => {
+    if (currentPage < Math.ceil(backgrounds.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   useEffect(() => {
     fetchStudentAcademicBackgrounds();
+    fetchStudents(); // 获取学生数据
   }, []);
 
   const fetchStudentAcademicBackgrounds = async () => {
@@ -31,11 +62,29 @@ const AdminStudentAcademicBackgroundManager = () => {
       const response = await axiosInstance.get('/admin/academic/student-academic-backgrounds');
       setBackgrounds(response.data);
       setLoading(false);
+      // 添加新记录后返回第一页
+      setCurrentPage(1);
     } catch (error) {
       console.error('Failed to fetch student academic backgrounds:', error);
       setError('Failed to fetch student academic backgrounds');
       setLoading(false);
     }
+  };
+
+  // 获取学生数据
+  const fetchStudents = async () => {
+    try {
+      const response = await axiosInstance.get('/admin/students');
+      setStudents(response.data);
+    } catch (error) {
+      console.error('Failed to fetch students:', error);
+    }
+  };
+
+  // 获取学生姓名
+  const getStudentName = (studentId) => {
+    const student = students.find(s => s.studentId === studentId);
+    return student ? `${student.firstName} ${student.lastName}` : studentId;
   };
 
   const handleInputChange = (e) => {
@@ -123,6 +172,12 @@ const AdminStudentAcademicBackgroundManager = () => {
     try {
       await axiosInstance.delete(`/admin/academic/student-academic-backgrounds/${backgroundIdToDelete}`);
       fetchStudentAcademicBackgrounds();
+      // 删除记录后检查当前页是否为空
+      const totalItems = backgrounds.length - 1; // 删除后的总数
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages);
+      }
     } catch (error) {
       console.error('Failed to delete student academic background:', error);
       setError('Failed to delete student academic background: ' + (error.response?.data?.message || error.message));
@@ -356,13 +411,13 @@ const AdminStudentAcademicBackgroundManager = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {backgrounds.map((background) => (
+              {currentBackgrounds.map((background) => (
                 <tr key={background.backgroundId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {background.backgroundId}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {background.studentId}
+                    {background.studentId} - {getStudentName(background.studentId)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {background.highestQualification}
@@ -410,6 +465,49 @@ const AdminStudentAcademicBackgroundManager = () => {
             </div>
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {backgrounds.length > itemsPerPage && (
+          <div className="flex justify-center items-center space-x-2 my-4">
+            <button
+              onClick={prevPage}
+              disabled={currentPage === 1}
+              className={`px-4 py-2 rounded-md ${
+                currentPage === 1 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Previous
+            </button>
+            
+            {[...Array(totalPages)].map((_, index) => (
+              <button
+                key={index + 1}
+                onClick={() => paginate(index + 1)}
+                className={`px-4 py-2 rounded-md ${
+                  currentPage === index + 1
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+            
+            <button
+              onClick={nextPage}
+              disabled={currentPage === totalPages}
+              className={`px-4 py-2 rounded-md ${
+                currentPage === totalPages 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        )}
 
         {/* Custom Confirm Dialog */}
         <CustomConfirmDialog
