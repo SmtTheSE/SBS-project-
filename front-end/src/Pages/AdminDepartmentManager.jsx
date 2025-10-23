@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormButton } from '../Components/ModernForm';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
+import { Search, Filter } from 'lucide-react';
 
 const AdminDepartmentManager = () => {
   const [departments, setDepartments] = useState([]);
@@ -17,6 +18,36 @@ const AdminDepartmentManager = () => {
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [departmentIdToDelete, setDepartmentIdToDelete] = useState(null);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    departmentName: '',
+    headOfDepartment: '',
+    email: ''
+  });
+
+  // Filtered departments based on search and filters
+  const filteredDepartments = useMemo(() => {
+    return departments.filter(department => {
+      // Apply search term
+      const matchesSearch = !searchTerm || 
+        department.departmentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        department.departmentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (department.headOfDepartment && department.headOfDepartment.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (department.email && department.email.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      // Apply filters
+      const matchesDepartmentName = !filters.departmentName || 
+        department.departmentName.toLowerCase().includes(filters.departmentName.toLowerCase());
+      const matchesHeadOfDepartment = !filters.headOfDepartment || 
+        (department.headOfDepartment && department.headOfDepartment.toLowerCase().includes(filters.headOfDepartment.toLowerCase()));
+      const matchesEmail = !filters.email || 
+        (department.email && department.email.toLowerCase().includes(filters.email.toLowerCase()));
+      
+      return matchesSearch && matchesDepartmentName && matchesHeadOfDepartment && matchesEmail;
+    });
+  }, [departments, searchTerm, filters]);
 
   useEffect(() => {
     fetchDepartments();
@@ -48,6 +79,14 @@ const AdminDepartmentManager = () => {
       ...formData,
       [name]: value
     });
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -122,6 +161,36 @@ const AdminDepartmentManager = () => {
     setShowForm(false);
   };
 
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilters({
+      departmentName: '',
+      headOfDepartment: '',
+      email: ''
+    });
+  };
+
+  const removeFilter = (filterKey) => {
+    if (filterKey === 'search') {
+      setSearchTerm('');
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [filterKey]: ''
+      }));
+    }
+  };
+
+  // Get active filters for display
+  const activeFilters = useMemo(() => {
+    const filtersList = [];
+    if (searchTerm) filtersList.push({ key: 'search', label: `Search: ${searchTerm}` });
+    if (filters.departmentName) filtersList.push({ key: 'departmentName', label: `Department: ${filters.departmentName}` });
+    if (filters.headOfDepartment) filtersList.push({ key: 'headOfDepartment', label: `Head: ${filters.headOfDepartment}` });
+    if (filters.email) filtersList.push({ key: 'email', label: `Email: ${filters.email}` });
+    return filtersList;
+  }, [searchTerm, filters]);
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
@@ -152,6 +221,95 @@ const AdminDepartmentManager = () => {
             {error}
           </div>
         )}
+
+        {/* Search and Filter Section */}
+        <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            {/* Search Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search by ID, Name, Head or Email..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            {/* Filter Inputs */}
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <input
+                  type="text"
+                  name="departmentName"
+                  placeholder="Filter by Name"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.departmentName}
+                  onChange={handleFilterChange}
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  name="headOfDepartment"
+                  placeholder="Filter by Head"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.headOfDepartment}
+                  onChange={handleFilterChange}
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  name="email"
+                  placeholder="Filter by Email"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.email}
+                  onChange={handleFilterChange}
+                />
+              </div>
+            </div>
+
+            {/* Clear Filters Button */}
+            <div className="flex items-center">
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <Filter className="h-4 w-4 inline mr-1" />
+                Clear Filters
+              </button>
+            </div>
+          </div>
+
+          {/* Active Filters Display */}
+          {activeFilters.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm font-medium text-gray-700">Active Filters:</span>
+              {activeFilters.map((filter) => (
+                <span 
+                  key={filter.key} 
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                >
+                  {filter.label}
+                  <button
+                    type="button"
+                    className="flex-shrink-0 ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                    onClick={() => removeFilter(filter.key)}
+                  >
+                    <span className="sr-only">Remove filter</span>
+                    <svg className="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
+                      <path strokeLinecap="round" strokeWidth="1.5" d="M1 1l6 6m0-6L1 7" />
+                    </svg>
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Modal */}
         {showForm && (
@@ -264,7 +422,7 @@ const AdminDepartmentManager = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {Array.isArray(departments) && departments.map((department) => (
+              {Array.isArray(filteredDepartments) && filteredDepartments.map((department) => (
                 <tr key={department.departmentId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {department.departmentId}
@@ -306,6 +464,12 @@ const AdminDepartmentManager = () => {
           {(!Array.isArray(departments) || departments.length === 0) && (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <p className="text-gray-500 text-lg">No departments found</p>
+            </div>
+          )}
+          
+          {Array.isArray(filteredDepartments) && filteredDepartments.length === 0 && searchTerm && (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <p className="text-gray-500 text-lg">No departments match your search criteria</p>
             </div>
           )}
         </div>

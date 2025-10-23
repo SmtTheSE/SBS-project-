@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from '../api/axios';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton } from '../Components/ModernForm';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
+import { Search, Filter } from 'lucide-react';
 
 const AdminCourseResultManager = () => {
   const [courseResults, setCourseResults] = useState([]);
@@ -21,6 +22,15 @@ const AdminCourseResultManager = () => {
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [courseResultIdToDelete, setCourseResultIdToDelete] = useState(null);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    student: '',
+    studyPlanCourse: '',
+    grade: ''
+  });
+
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -31,15 +41,39 @@ const AdminCourseResultManager = () => {
     return student ? `${student.firstName} ${student.lastName}` : studentId;
   };
 
+  // Filtered course results based on search and filters
+  const filteredCourseResults = useMemo(() => {
+    return courseResults.filter(courseResult => {
+      // Apply search term
+      const matchesSearch = !searchTerm || 
+        courseResult.id.toString().includes(searchTerm) ||
+        courseResult.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        getStudentName(courseResult.studentId).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        courseResult.studyPlanCourseId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        courseResult.gradeName.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Apply filters
+      const matchesStudent = !filters.student || 
+        courseResult.studentId.toLowerCase().includes(filters.student.toLowerCase()) ||
+        getStudentName(courseResult.studentId).toLowerCase().includes(filters.student.toLowerCase());
+      const matchesStudyPlanCourse = !filters.studyPlanCourse || 
+        courseResult.studyPlanCourseId.toLowerCase().includes(filters.studyPlanCourse.toLowerCase());
+      const matchesGrade = !filters.grade || 
+        courseResult.gradeName.toLowerCase().includes(filters.grade.toLowerCase());
+      
+      return matchesSearch && matchesStudent && matchesStudyPlanCourse && matchesGrade;
+    });
+  }, [courseResults, searchTerm, filters, students]);
+
   // 获取当前页面的课程结果数据
   const getCurrentCourseResults = () => {
     const indexOfLastResult = currentPage * itemsPerPage;
     const indexOfFirstResult = indexOfLastResult - itemsPerPage;
-    return Array.isArray(courseResults) ? courseResults.slice(indexOfFirstResult, indexOfLastResult) : [];
+    return Array.isArray(filteredCourseResults) ? filteredCourseResults.slice(indexOfFirstResult, indexOfLastResult) : [];
   };
 
   // 计算总页数
-  const totalPages = Math.ceil((Array.isArray(courseResults) ? courseResults.length : 0) / itemsPerPage);
+  const totalPages = Math.ceil((Array.isArray(filteredCourseResults) ? filteredCourseResults.length : 0) / itemsPerPage);
 
   // 获取当前页面的数据
   const currentCourseResults = getCurrentCourseResults();
@@ -52,11 +86,52 @@ const AdminCourseResultManager = () => {
   };
 
   const nextPage = () => {
-    const totalItems = Array.isArray(courseResults) ? courseResults.length : 0;
+    const totalItems = Array.isArray(filteredCourseResults) ? filteredCourseResults.length : 0;
     if (currentPage < Math.ceil(totalItems / itemsPerPage)) {
       setCurrentPage(currentPage + 1);
     }
   };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilters({
+      student: '',
+      studyPlanCourse: '',
+      grade: ''
+    });
+    setCurrentPage(1);
+  };
+
+  const removeFilter = (filterKey) => {
+    if (filterKey === 'search') {
+      setSearchTerm('');
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [filterKey]: ''
+      }));
+    }
+    setCurrentPage(1);
+  };
+
+  // Get active filters for display
+  const activeFilters = useMemo(() => {
+    const filtersList = [];
+    if (searchTerm) filtersList.push({ key: 'search', label: `Search: ${searchTerm}` });
+    if (filters.student) filtersList.push({ key: 'student', label: `Student: ${filters.student}` });
+    if (filters.studyPlanCourse) filtersList.push({ key: 'studyPlanCourse', label: `Course: ${filters.studyPlanCourse}` });
+    if (filters.grade) filtersList.push({ key: 'grade', label: `Grade: ${filters.grade}` });
+    return filtersList;
+  }, [searchTerm, filters]);
 
   const fetchCourseResults = async () => {
     try {
@@ -186,7 +261,7 @@ const AdminCourseResultManager = () => {
       fetchCourseResults(); // 重新获取数据
       setError('');
       // 删除记录后检查当前页是否为空
-      const totalItems = courseResults.length - 1; // 删除后的总数
+      const totalItems = filteredCourseResults.length - 1; // 删除后的总数
       const totalPages = Math.ceil(totalItems / itemsPerPage);
       if (currentPage > totalPages && totalPages > 0) {
         setCurrentPage(totalPages);
@@ -229,7 +304,7 @@ const AdminCourseResultManager = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Course Result Management</h1>
             <p className="text-gray-600">
-              Manage student course results and grades • Total: {courseResults.length}
+              Manage student course results and grades • Total: {filteredCourseResults.length}
             </p>
           </div>
           <FormButton
@@ -245,6 +320,98 @@ const AdminCourseResultManager = () => {
             {error}
           </div>
         )}
+
+        {/* Search and Filter Section */}
+        <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            {/* Search Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search by ID, Student, Course or Grade..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+
+            {/* Filter Inputs */}
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <input
+                  type="text"
+                  name="student"
+                  placeholder="Filter by Student"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.student}
+                  onChange={handleFilterChange}
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  name="studyPlanCourse"
+                  placeholder="Filter by Course"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.studyPlanCourse}
+                  onChange={handleFilterChange}
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  name="grade"
+                  placeholder="Filter by Grade"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.grade}
+                  onChange={handleFilterChange}
+                />
+              </div>
+            </div>
+
+            {/* Clear Filters Button */}
+            <div className="flex items-center">
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <Filter className="h-4 w-4 inline mr-1" />
+                Clear Filters
+              </button>
+            </div>
+          </div>
+
+          {/* Active Filters Display */}
+          {activeFilters.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm font-medium text-gray-700">Active Filters:</span>
+              {activeFilters.map((filter) => (
+                <span 
+                  key={filter.key} 
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                >
+                  {filter.label}
+                  <button
+                    type="button"
+                    className="flex-shrink-0 ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                    onClick={() => removeFilter(filter.key)}
+                  >
+                    <span className="sr-only">Remove filter</span>
+                    <svg className="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
+                      <path strokeLinecap="round" strokeWidth="1.5" d="M1 1l6 6m0-6L1 7" />
+                    </svg>
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Table */}
         <div className="overflow-x-auto rounded-lg shadow">
@@ -321,10 +488,16 @@ const AdminCourseResultManager = () => {
               )}
             </tbody>
           </table>
+          
+          {Array.isArray(filteredCourseResults) && filteredCourseResults.length === 0 && searchTerm && (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <p className="text-gray-500 text-lg">No course results match your search criteria</p>
+            </div>
+          )}
         </div>
 
         {/* Pagination Controls */}
-        {Array.isArray(courseResults) && courseResults.length > itemsPerPage && (
+        {Array.isArray(filteredCourseResults) && filteredCourseResults.length > itemsPerPage && (
           <div className="flex justify-center items-center space-x-2 my-4">
             <button
               onClick={prevPage}

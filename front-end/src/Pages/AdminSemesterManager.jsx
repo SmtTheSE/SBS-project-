@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormButton } from '../Components/ModernForm';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
+import { Search, Filter } from 'lucide-react';
 
 const AdminSemesterManager = () => {
   const [semesters, setSemesters] = useState([]);
@@ -17,10 +18,40 @@ const AdminSemesterManager = () => {
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [semesterIdToDelete, setSemesterIdToDelete] = useState(null);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    year: '',
+    intakeMonth: '',
+    term: ''
+  });
 
   // 分页状态
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+
+  // Filtered semesters based on search and filters
+  const filteredSemesters = useMemo(() => {
+    return semesters.filter(semester => {
+      // Apply search term
+      const matchesSearch = !searchTerm || 
+        semester.semesterId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (semester.year && semester.year.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        semester.intakeMonth.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        semester.term.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Apply filters
+      const matchesYear = !filters.year || 
+        (semester.year && semester.year.toLowerCase().includes(filters.year.toLowerCase()));
+      const matchesIntakeMonth = !filters.intakeMonth || 
+        semester.intakeMonth.toLowerCase().includes(filters.intakeMonth.toLowerCase());
+      const matchesTerm = !filters.term || 
+        semester.term.toLowerCase().includes(filters.term.toLowerCase());
+      
+      return matchesSearch && matchesYear && matchesIntakeMonth && matchesTerm;
+    });
+  }, [semesters, searchTerm, filters]);
 
   useEffect(() => {
     fetchSemesters();
@@ -54,6 +85,15 @@ const AdminSemesterManager = () => {
       ...formData,
       [name]: value
     });
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   const handleSubmit = async (e) => {
@@ -109,7 +149,7 @@ const AdminSemesterManager = () => {
       await axiosInstance.delete(`/academic/semesters/${semesterIdToDelete}`);
       fetchSemesters();
       // 删除记录后检查当前页是否为空
-      const totalItems = semesters.length - 1; // 删除后的总数
+      const totalItems = filteredSemesters.length - 1; // 删除后的总数
       const totalPages = Math.ceil(totalItems / itemsPerPage);
       if (currentPage > totalPages && totalPages > 0) {
         setCurrentPage(totalPages);
@@ -139,11 +179,43 @@ const AdminSemesterManager = () => {
     setShowForm(false);
   };
 
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilters({
+      year: '',
+      intakeMonth: '',
+      term: ''
+    });
+    setCurrentPage(1);
+  };
+
+  const removeFilter = (filterKey) => {
+    if (filterKey === 'search') {
+      setSearchTerm('');
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [filterKey]: ''
+      }));
+    }
+    setCurrentPage(1);
+  };
+
+  // Get active filters for display
+  const activeFilters = useMemo(() => {
+    const filtersList = [];
+    if (searchTerm) filtersList.push({ key: 'search', label: `Search: ${searchTerm}` });
+    if (filters.year) filtersList.push({ key: 'year', label: `Year: ${filters.year}` });
+    if (filters.intakeMonth) filtersList.push({ key: 'intakeMonth', label: `Intake: ${filters.intakeMonth}` });
+    if (filters.term) filtersList.push({ key: 'term', label: `Term: ${filters.term}` });
+    return filtersList;
+  }, [searchTerm, filters]);
+
   // 获取当前页面的学期数据
   const getCurrentSemesters = () => {
     const indexOfLastSemester = currentPage * itemsPerPage;
     const indexOfFirstSemester = indexOfLastSemester - itemsPerPage;
-    return Array.isArray(semesters) ? semesters.slice(indexOfFirstSemester, indexOfLastSemester) : [];
+    return Array.isArray(filteredSemesters) ? filteredSemesters.slice(indexOfFirstSemester, indexOfLastSemester) : [];
   };
 
   // 分页控制函数
@@ -154,7 +226,7 @@ const AdminSemesterManager = () => {
   };
 
   const nextPage = () => {
-    const totalItems = Array.isArray(semesters) ? semesters.length : 0;
+    const totalItems = Array.isArray(filteredSemesters) ? filteredSemesters.length : 0;
     if (currentPage < Math.ceil(totalItems / itemsPerPage)) {
       setCurrentPage(currentPage + 1);
     }
@@ -173,7 +245,7 @@ const AdminSemesterManager = () => {
 
   // 获取当前页面的数据
   const currentSemesters = getCurrentSemesters();
-  const totalPages = Math.ceil((Array.isArray(semesters) ? semesters.length : 0) / itemsPerPage);
+  const totalPages = Math.ceil((Array.isArray(filteredSemesters) ? filteredSemesters.length : 0) / itemsPerPage);
 
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
@@ -194,6 +266,98 @@ const AdminSemesterManager = () => {
             {error}
           </div>
         )}
+
+        {/* Search and Filter Section */}
+        <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            {/* Search Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search by ID, Year, Month or Term..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+
+            {/* Filter Inputs */}
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <input
+                  type="text"
+                  name="year"
+                  placeholder="Filter by Year"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.year}
+                  onChange={handleFilterChange}
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  name="intakeMonth"
+                  placeholder="Filter by Month"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.intakeMonth}
+                  onChange={handleFilterChange}
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  name="term"
+                  placeholder="Filter by Term"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.term}
+                  onChange={handleFilterChange}
+                />
+              </div>
+            </div>
+
+            {/* Clear Filters Button */}
+            <div className="flex items-center">
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <Filter className="h-4 w-4 inline mr-1" />
+                Clear Filters
+              </button>
+            </div>
+          </div>
+
+          {/* Active Filters Display */}
+          {activeFilters.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm font-medium text-gray-700">Active Filters:</span>
+              {activeFilters.map((filter) => (
+                <span 
+                  key={filter.key} 
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                >
+                  {filter.label}
+                  <button
+                    type="button"
+                    className="flex-shrink-0 ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                    onClick={() => removeFilter(filter.key)}
+                  >
+                    <span className="sr-only">Remove filter</span>
+                    <svg className="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
+                      <path strokeLinecap="round" strokeWidth="1.5" d="M1 1l6 6m0-6L1 7" />
+                    </svg>
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Modal */}
         {showForm && (
@@ -352,10 +516,16 @@ const AdminSemesterManager = () => {
               <p className="text-gray-500 text-lg">No semesters found</p>
             </div>
           )}
+          
+          {Array.isArray(filteredSemesters) && filteredSemesters.length === 0 && searchTerm && (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <p className="text-gray-500 text-lg">No semesters match your search criteria</p>
+            </div>
+          )}
         </div>
 
         {/* Pagination Controls */}
-        {Array.isArray(semesters) && semesters.length > itemsPerPage && (
+        {Array.isArray(filteredSemesters) && filteredSemesters.length > itemsPerPage && (
           <div className="flex justify-center items-center space-x-2 my-4">
             <button
               onClick={prevPage}

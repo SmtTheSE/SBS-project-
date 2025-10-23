@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "../api/axios";
-import { Edit, Trash2, Plus, Save, X } from 'lucide-react'; // Import icons
+import { Edit, Trash2, Plus, Save, X, Search, Filter } from 'lucide-react'; // Import icons
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton } from '../Components/ModernForm';
 
@@ -24,6 +24,14 @@ const AdminTransferProgramManager = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    country: '',
+    admin: '',
+    institution: ''
+  });
 
   useEffect(() => {
     fetchData();
@@ -56,11 +64,78 @@ const AdminTransferProgramManager = () => {
     }
   };
 
+  // Handle search term change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Handle filter change
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilters({
+      country: '',
+      admin: '',
+      institution: ''
+    });
+    setCurrentPage(1);
+  };
+
+  // Filter and search transfer programs
+  const filteredTransferPrograms = useMemo(() => {
+    return transferPrograms.filter(program => {
+      // Apply search term filter
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        if (!(program.transferProgramId.toLowerCase().includes(term) ||
+              program.transferCountry.toLowerCase().includes(term))) {
+          return false;
+        }
+      }
+
+      // Apply country filter
+      if (filters.country && !program.transferCountry.toLowerCase().includes(filters.country.toLowerCase())) {
+        return false;
+      }
+
+      // Apply admin filter
+      if (filters.admin) {
+        const admin = admins.find(a => a.adminId === program.adminId);
+        if (admin) {
+          const adminName = `${admin.firstName} ${admin.lastName}`.toLowerCase();
+          if (!adminName.includes(filters.admin.toLowerCase()) && 
+              !program.adminId.toLowerCase().includes(filters.admin.toLowerCase())) {
+            return false;
+          }
+        } else if (!program.adminId.toLowerCase().includes(filters.admin.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Apply institution filter
+      if (filters.institution && 
+          !program.partnerInstitutionName.toLowerCase().includes(filters.institution.toLowerCase())) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [transferPrograms, searchTerm, filters, admins]);
+
   // Get current transfer programs for pagination
   const getCurrentTransferPrograms = () => {
     const indexOfLastProgram = currentPage * itemsPerPage;
     const indexOfFirstProgram = indexOfLastProgram - itemsPerPage;
-    return transferPrograms.slice(indexOfFirstProgram, indexOfLastProgram);
+    return filteredTransferPrograms.slice(indexOfFirstProgram, indexOfLastProgram);
   };
 
   // Change page
@@ -75,7 +150,7 @@ const AdminTransferProgramManager = () => {
   
   // Next page
   const nextPage = () => {
-    if (currentPage < Math.ceil(transferPrograms.length / itemsPerPage)) {
+    if (currentPage < Math.ceil(filteredTransferPrograms.length / itemsPerPage)) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -126,7 +201,7 @@ const AdminTransferProgramManager = () => {
     try {
       await axios.delete(`/admin/transfer-programs/${programIdToDelete}`);
       // If we're on the last page and it becomes empty, go to previous page
-      const updatedPrograms = transferPrograms.filter(program => program.transferProgramId !== programIdToDelete);
+      const updatedPrograms = filteredTransferPrograms.filter(program => program.transferProgramId !== programIdToDelete);
       const totalPages = Math.ceil((updatedPrograms.length) / itemsPerPage);
       if (currentPage > totalPages && totalPages > 0) {
         setCurrentPage(totalPages);
@@ -159,7 +234,10 @@ const AdminTransferProgramManager = () => {
 
   // Get current transfer programs
   const currentTransferPrograms = getCurrentTransferPrograms();
-  const totalPages = Math.ceil(transferPrograms.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredTransferPrograms.length / itemsPerPage);
+  
+  // Check if any filters are active
+  const hasActiveFilters = searchTerm || filters.country || filters.admin || filters.institution;
 
   if (loading) {
     return (
@@ -183,7 +261,7 @@ const AdminTransferProgramManager = () => {
               Admin Panel - Transfer Program Management
             </h1>
             <p className="text-gray-600">
-              Manage student transfer programs • Total: {transferPrograms.length}
+              Manage student transfer programs • Total: {filteredTransferPrograms.length}
             </p>
           </div>
           
@@ -204,6 +282,125 @@ const AdminTransferProgramManager = () => {
             {error}
           </div>
         )}
+        
+        {/* Search and Filter Section */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            {/* Search Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Search by ID, Country..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            
+            {/* Country Filter */}
+            <div>
+              <input
+                type="text"
+                value={filters.country}
+                onChange={(e) => handleFilterChange('country', e.target.value)}
+                placeholder="Filter by Country"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            
+            {/* Admin Filter */}
+            <div>
+              <input
+                type="text"
+                value={filters.admin}
+                onChange={(e) => handleFilterChange('admin', e.target.value)}
+                placeholder="Filter by Admin"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            
+            {/* Institution Filter */}
+            <div>
+              <input
+                type="text"
+                value={filters.institution}
+                onChange={(e) => handleFilterChange('institution', e.target.value)}
+                placeholder="Filter by Institution"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+          </div>
+          
+          {/* Clear Filters Button */}
+          <div className="flex justify-between items-center">
+            {(hasActiveFilters) && (
+              <button
+                onClick={clearFilters}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Clear All Filters
+              </button>
+            )}
+            
+            {/* Active Filters Display */}
+            {hasActiveFilters && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Active filters:</span>
+                
+                {searchTerm && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Search: {searchTerm}
+                    <button 
+                      onClick={() => setSearchTerm('')}
+                      className="ml-1 inline-flex h-4 w-4 rounded-full items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+                
+                {filters.country && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Country: {filters.country}
+                    <button 
+                      onClick={() => handleFilterChange('country', '')}
+                      className="ml-1 inline-flex h-4 w-4 rounded-full items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+                
+                {filters.admin && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Admin: {filters.admin}
+                    <button 
+                      onClick={() => handleFilterChange('admin', '')}
+                      className="ml-1 inline-flex h-4 w-4 rounded-full items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+                
+                {filters.institution && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Institution: {filters.institution}
+                    <button 
+                      onClick={() => handleFilterChange('institution', '')}
+                      className="ml-1 inline-flex h-4 w-4 rounded-full items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
         
         {/* Create/Edit Form Modal - 使用与学费支付页面相同的样式 */}
         {showCreateForm && (
@@ -313,12 +510,21 @@ const AdminTransferProgramManager = () => {
         {/* Table to display transfer programs */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-gray-700 border-b-2 border-gray-200 pb-2">
-            Existing Transfer Programs ({transferPrograms.length})
+            Existing Transfer Programs ({filteredTransferPrograms.length})
           </h2>
           
-          {transferPrograms.length === 0 ? (
+          {filteredTransferPrograms.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 text-lg">No transfer programs yet</p>
+              <p className="text-gray-500 text-lg">
+                {transferPrograms.length === 0 
+                  ? "No transfer programs yet" 
+                  : "No transfer programs match your search criteria"}
+              </p>
+              {hasActiveFilters && (
+                <p className="text-gray-400 text-sm mt-2">
+                  Try adjusting your search or filter criteria
+                </p>
+              )}
               <p className="text-gray-400 text-sm mt-2">Click "Create New Program" to add your first program</p>
             </div>
           ) : (
@@ -351,7 +557,9 @@ const AdminTransferProgramManager = () => {
                           {program.transferProgramId}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {program.adminId}
+                          {program.adminId} - {admins.find(a => a.adminId === program.adminId) ? 
+                            `${admins.find(a => a.adminId === program.adminId).firstName} ${admins.find(a => a.adminId === program.adminId).lastName}` : 
+                            'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {program.transferCountry}

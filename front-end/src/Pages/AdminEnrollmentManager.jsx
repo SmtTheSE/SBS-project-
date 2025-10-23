@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from '../api/axios';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton } from '../Components/ModernForm';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
+import { Search, Filter } from 'lucide-react';
 
 const AdminEnrollmentManager = () => {
   const [enrollments, setEnrollments] = useState([]);
@@ -21,6 +22,16 @@ const AdminEnrollmentManager = () => {
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [enrollmentIdToDelete, setEnrollmentIdToDelete] = useState(null);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    student: '',
+    studyPlanCourse: '',
+    enrollmentStatus: '',
+    completionStatus: ''
+  });
+
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -31,11 +42,36 @@ const AdminEnrollmentManager = () => {
     return student ? `${student.firstName} ${student.lastName}` : studentId;
   };
 
+  // Filtered enrollments based on search and filters
+  const filteredEnrollments = useMemo(() => {
+    return enrollments.filter(enrollment => {
+      // Apply search term
+      const matchesSearch = !searchTerm || 
+        enrollment.id.toString().includes(searchTerm) ||
+        enrollment.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        getStudentName(enrollment.studentId).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        enrollment.studyPlanCourseId.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Apply filters
+      const matchesStudent = !filters.student || 
+        enrollment.studentId.toLowerCase().includes(filters.student.toLowerCase()) ||
+        getStudentName(enrollment.studentId).toLowerCase().includes(filters.student.toLowerCase());
+      const matchesStudyPlanCourse = !filters.studyPlanCourse || 
+        enrollment.studyPlanCourseId.toLowerCase().includes(filters.studyPlanCourse.toLowerCase());
+      const matchesEnrollmentStatus = !filters.enrollmentStatus || 
+        enrollment.enrollmentStatus.toString() === filters.enrollmentStatus;
+      const matchesCompletionStatus = !filters.completionStatus || 
+        enrollment.completionStatus === filters.completionStatus;
+      
+      return matchesSearch && matchesStudent && matchesStudyPlanCourse && matchesEnrollmentStatus && matchesCompletionStatus;
+    });
+  }, [enrollments, searchTerm, filters, students]);
+
   // 获取当前页面的注册数据
   const getCurrentEnrollments = () => {
     const indexOfLastEnrollment = currentPage * itemsPerPage;
     const indexOfFirstEnrollment = indexOfLastEnrollment - itemsPerPage;
-    return Array.isArray(enrollments) ? enrollments.slice(indexOfFirstEnrollment, indexOfLastEnrollment) : [];
+    return Array.isArray(filteredEnrollments) ? filteredEnrollments.slice(indexOfFirstEnrollment, indexOfLastEnrollment) : [];
   };
 
   // 分页控制函数
@@ -46,10 +82,19 @@ const AdminEnrollmentManager = () => {
   };
 
   const nextPage = () => {
-    const totalItems = Array.isArray(enrollments) ? enrollments.length : 0;
+    const totalItems = Array.isArray(filteredEnrollments) ? filteredEnrollments.length : 0;
     if (currentPage < Math.ceil(totalItems / itemsPerPage)) {
       setCurrentPage(currentPage + 1);
     }
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   // 获取所有学生选课记录
@@ -172,7 +217,7 @@ const AdminEnrollmentManager = () => {
       fetchEnrollments(); // 重新获取数据
       setError('');
       // 删除记录后检查当前页是否为空
-      const totalItems = enrollments.length - 1; // 删除后的总数
+      const totalItems = filteredEnrollments.length - 1; // 删除后的总数
       const totalPages = Math.ceil(totalItems / itemsPerPage);
       if (currentPage > totalPages && totalPages > 0) {
         setCurrentPage(totalPages);
@@ -190,6 +235,40 @@ const AdminEnrollmentManager = () => {
     setShowConfirmDialog(false);
     setEnrollmentIdToDelete(null);
   };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilters({
+      student: '',
+      studyPlanCourse: '',
+      enrollmentStatus: '',
+      completionStatus: ''
+    });
+    setCurrentPage(1);
+  };
+
+  const removeFilter = (filterKey) => {
+    if (filterKey === 'search') {
+      setSearchTerm('');
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [filterKey]: ''
+      }));
+    }
+    setCurrentPage(1);
+  };
+
+  // Get active filters for display
+  const activeFilters = useMemo(() => {
+    const filtersList = [];
+    if (searchTerm) filtersList.push({ key: 'search', label: `Search: ${searchTerm}` });
+    if (filters.student) filtersList.push({ key: 'student', label: `Student: ${filters.student}` });
+    if (filters.studyPlanCourse) filtersList.push({ key: 'studyPlanCourse', label: `Course: ${filters.studyPlanCourse}` });
+    if (filters.enrollmentStatus) filtersList.push({ key: 'enrollmentStatus', label: `Enrollment: ${filters.enrollmentStatus === '1' ? 'Qualified' : 'Not Qualified'}` });
+    if (filters.completionStatus) filtersList.push({ key: 'completionStatus', label: `Completion: ${filters.completionStatus}` });
+    return filtersList;
+  }, [searchTerm, filters]);
 
   if (loading) {
     return (
@@ -209,7 +288,7 @@ const AdminEnrollmentManager = () => {
 
   // 获取当前页面的数据
   const currentEnrollments = getCurrentEnrollments();
-  const totalPages = Math.ceil((Array.isArray(enrollments) ? enrollments.length : 0) / itemsPerPage);
+  const totalPages = Math.ceil((Array.isArray(filteredEnrollments) ? filteredEnrollments.length : 0) / itemsPerPage);
 
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
@@ -219,7 +298,7 @@ const AdminEnrollmentManager = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Student Enrollment Management</h1>
             <p className="text-gray-600">
-              Manage student course enrollments • Total: {enrollments.length}
+              Manage student course enrollments • Total: {filteredEnrollments.length}
             </p>
           </div>
           <FormButton
@@ -235,6 +314,118 @@ const AdminEnrollmentManager = () => {
             {error}
           </div>
         )}
+
+        {/* Search and Filter Section */}
+        <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            {/* Search Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search by ID, Student or Course..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+
+            {/* Filter Inputs */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <input
+                  type="text"
+                  name="student"
+                  placeholder="Filter by Student"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.student}
+                  onChange={handleFilterChange}
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  name="studyPlanCourse"
+                  placeholder="Filter by Course"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.studyPlanCourse}
+                  onChange={handleFilterChange}
+                />
+              </div>
+            </div>
+
+            {/* Status Filters */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <select
+                  name="enrollmentStatus"
+                  value={filters.enrollmentStatus}
+                  onChange={handleFilterChange}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All Enrollment Status</option>
+                  <option value="1">Qualified</option>
+                  <option value="0">Not Qualified</option>
+                </select>
+              </div>
+              <div>
+                <select
+                  name="completionStatus"
+                  value={filters.completionStatus}
+                  onChange={handleFilterChange}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All Completion Status</option>
+                  <option value="Completed">Completed</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Upcoming">Upcoming</option>
+                  <option value="Retake">Retake</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Clear Filters Button */}
+          <div className="flex justify-end mb-2">
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <Filter className="h-4 w-4 inline mr-1" />
+              Clear Filters
+            </button>
+          </div>
+
+          {/* Active Filters Display */}
+          {activeFilters.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm font-medium text-gray-700">Active Filters:</span>
+              {activeFilters.map((filter) => (
+                <span 
+                  key={filter.key} 
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                >
+                  {filter.label}
+                  <button
+                    type="button"
+                    className="flex-shrink-0 ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                    onClick={() => removeFilter(filter.key)}
+                  >
+                    <span className="sr-only">Remove filter</span>
+                    <svg className="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
+                      <path strokeLinecap="round" strokeWidth="1.5" d="M1 1l6 6m0-6L1 7" />
+                    </svg>
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Table */}
         <div className="overflow-x-auto rounded-lg shadow">
@@ -317,10 +508,16 @@ const AdminEnrollmentManager = () => {
               )}
             </tbody>
           </table>
+          
+          {Array.isArray(filteredEnrollments) && filteredEnrollments.length === 0 && searchTerm && (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <p className="text-gray-500 text-lg">No student enrollments match your search criteria</p>
+            </div>
+          )}
         </div>
 
         {/* Pagination Controls */}
-        {Array.isArray(enrollments) && enrollments.length > itemsPerPage && (
+        {Array.isArray(filteredEnrollments) && filteredEnrollments.length > itemsPerPage && (
           <div className="flex justify-center items-center space-x-2 my-4">
             <button
               onClick={prevPage}

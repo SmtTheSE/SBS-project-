@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "../api/axios";
-import { Edit, Trash2, Plus, Save, X } from 'lucide-react'; // Import icons
+import { Edit, Trash2, Plus, Save, X, Search, Filter } from 'lucide-react'; // Import icons
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormButton } from '../Components/ModernForm';
 
@@ -22,6 +22,13 @@ const AdminPartnerInstitutionManager = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    name: '',
+    email: ''
+  });
 
   useEffect(() => {
     fetchData();
@@ -42,11 +49,62 @@ const AdminPartnerInstitutionManager = () => {
     }
   };
 
+  // Handle search term change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Handle filter change
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilters({
+      name: '',
+      email: ''
+    });
+    setCurrentPage(1);
+  };
+
+  // Filter and search partner institutions
+  const filteredPartnerInstitutions = useMemo(() => {
+    return partnerInstitutions.filter(institution => {
+      // Apply search term filter
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        if (!(institution.partnerInstitutionId.toLowerCase().includes(term) ||
+              institution.institutionName.toLowerCase().includes(term))) {
+          return false;
+        }
+      }
+
+      // Apply name filter
+      if (filters.name && !institution.institutionName.toLowerCase().includes(filters.name.toLowerCase())) {
+        return false;
+      }
+
+      // Apply email filter
+      if (filters.email && !institution.email.toLowerCase().includes(filters.email.toLowerCase())) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [partnerInstitutions, searchTerm, filters]);
+
   // Get current partner institutions for pagination
   const getCurrentPartnerInstitutions = () => {
     const indexOfLastInstitution = currentPage * itemsPerPage;
     const indexOfFirstInstitution = indexOfLastInstitution - itemsPerPage;
-    return partnerInstitutions.slice(indexOfFirstInstitution, indexOfLastInstitution);
+    return filteredPartnerInstitutions.slice(indexOfFirstInstitution, indexOfLastInstitution);
   };
 
   // Change page
@@ -61,7 +119,7 @@ const AdminPartnerInstitutionManager = () => {
   
   // Next page
   const nextPage = () => {
-    if (currentPage < Math.ceil(partnerInstitutions.length / itemsPerPage)) {
+    if (currentPage < Math.ceil(filteredPartnerInstitutions.length / itemsPerPage)) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -112,7 +170,7 @@ const AdminPartnerInstitutionManager = () => {
     try {
       await axios.delete(`/admin/partner-institutions/${institutionIdToDelete}`);
       // If we're on the last page and it becomes empty, go to previous page
-      const updatedInstitutions = partnerInstitutions.filter(institution => institution.partnerInstitutionId !== institutionIdToDelete);
+      const updatedInstitutions = filteredPartnerInstitutions.filter(institution => institution.partnerInstitutionId !== institutionIdToDelete);
       const totalPages = Math.ceil((updatedInstitutions.length) / itemsPerPage);
       if (currentPage > totalPages && totalPages > 0) {
         setCurrentPage(totalPages);
@@ -145,7 +203,10 @@ const AdminPartnerInstitutionManager = () => {
 
   // Get current partner institutions
   const currentPartnerInstitutions = getCurrentPartnerInstitutions();
-  const totalPages = Math.ceil(partnerInstitutions.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredPartnerInstitutions.length / itemsPerPage);
+  
+  // Check if any filters are active
+  const hasActiveFilters = searchTerm || filters.name || filters.email;
 
   if (loading) {
     return (
@@ -169,7 +230,7 @@ const AdminPartnerInstitutionManager = () => {
               Admin Panel - Partner Institution Management
             </h1>
             <p className="text-gray-600">
-              Manage partner institutions • Total: {partnerInstitutions.length}
+              Manage partner institutions • Total: {filteredPartnerInstitutions.length}
             </p>
           </div>
           
@@ -190,6 +251,102 @@ const AdminPartnerInstitutionManager = () => {
             {error}
           </div>
         )}
+        
+        {/* Search and Filter Section */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            {/* Search Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Search by ID, Name..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            
+            {/* Name Filter */}
+            <div>
+              <input
+                type="text"
+                value={filters.name}
+                onChange={(e) => handleFilterChange('name', e.target.value)}
+                placeholder="Filter by Name"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            
+            {/* Email Filter */}
+            <div>
+              <input
+                type="text"
+                value={filters.email}
+                onChange={(e) => handleFilterChange('email', e.target.value)}
+                placeholder="Filter by Email"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            
+            {/* Clear Filters Button */}
+            <div className="flex items-end">
+              {(hasActiveFilters) && (
+                <button
+                  onClick={clearFilters}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Clear All Filters
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Active Filters Display */}
+          {hasActiveFilters && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">Active filters:</span>
+              
+              {searchTerm && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Search: {searchTerm}
+                  <button 
+                    onClick={() => setSearchTerm('')}
+                    className="ml-1 inline-flex h-4 w-4 rounded-full items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+              
+              {filters.name && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Name: {filters.name}
+                  <button 
+                    onClick={() => handleFilterChange('name', '')}
+                    className="ml-1 inline-flex h-4 w-4 rounded-full items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+              
+              {filters.email && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Email: {filters.email}
+                  <button 
+                    onClick={() => handleFilterChange('email', '')}
+                    className="ml-1 inline-flex h-4 w-4 rounded-full items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
         
         {/* Create/Edit Form Modal - 使用与其他管理页面相同的样式 */}
         {showCreateForm && (
@@ -287,12 +444,21 @@ const AdminPartnerInstitutionManager = () => {
         {/* Table to display partner institutions */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-gray-700 border-b-2 border-gray-200 pb-2">
-            Existing Partner Institutions ({partnerInstitutions.length})
+            Existing Partner Institutions ({filteredPartnerInstitutions.length})
           </h2>
           
-          {partnerInstitutions.length === 0 ? (
+          {filteredPartnerInstitutions.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 text-lg">No partner institutions yet</p>
+              <p className="text-gray-500 text-lg">
+                {partnerInstitutions.length === 0 
+                  ? "No partner institutions yet" 
+                  : "No partner institutions match your search criteria"}
+              </p>
+              {hasActiveFilters && (
+                <p className="text-gray-400 text-sm mt-2">
+                  Try adjusting your search or filter criteria
+                </p>
+              )}
               <p className="text-gray-400 text-sm mt-2">Click "Create New Institution" to add your first institution</p>
             </div>
           ) : (

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axiosInstance from '../utils/axiosInstance';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Search, Filter } from 'lucide-react';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormButton } from '../Components/ModernForm';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
@@ -19,9 +19,35 @@ const AdminStudyPlanManager = () => {
     majorName: ''
   });
   
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    pathwayName: '',
+    majorName: ''
+  });
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+
+  // Filtered study plans based on search and filters
+  const filteredStudyPlans = useMemo(() => {
+    return studyPlans.filter(plan => {
+      // Apply search term
+      const matchesSearch = !searchTerm || 
+        plan.studyPlanId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        plan.pathwayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        plan.majorName.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Apply filters
+      const matchesPathwayName = !filters.pathwayName || 
+        plan.pathwayName.toLowerCase().includes(filters.pathwayName.toLowerCase());
+      const matchesMajorName = !filters.majorName || 
+        plan.majorName.toLowerCase().includes(filters.majorName.toLowerCase());
+      
+      return matchesSearch && matchesPathwayName && matchesMajorName;
+    });
+  }, [studyPlans, searchTerm, filters]);
 
   useEffect(() => {
     fetchStudyPlans();
@@ -43,7 +69,7 @@ const AdminStudyPlanManager = () => {
   const getCurrentStudyPlans = () => {
     const indexOfLastPlan = currentPage * itemsPerPage;
     const indexOfFirstPlan = indexOfLastPlan - itemsPerPage;
-    return studyPlans.slice(indexOfFirstPlan, indexOfLastPlan);
+    return filteredStudyPlans.slice(indexOfFirstPlan, indexOfLastPlan);
   };
 
   // Change page
@@ -58,7 +84,7 @@ const AdminStudyPlanManager = () => {
   
   // Next page
   const nextPage = () => {
-    if (currentPage < Math.ceil(studyPlans.length / itemsPerPage)) {
+    if (currentPage < Math.ceil(filteredStudyPlans.length / itemsPerPage)) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -69,6 +95,15 @@ const AdminStudyPlanManager = () => {
       ...formData,
       [name]: type === 'number' ? parseInt(value) : value
     });
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   const handleSubmit = async (e) => {
@@ -154,9 +189,39 @@ const AdminStudyPlanManager = () => {
     setStudyPlanToDelete(null);
   };
 
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilters({
+      pathwayName: '',
+      majorName: ''
+    });
+    setCurrentPage(1);
+  };
+
+  const removeFilter = (filterKey) => {
+    if (filterKey === 'search') {
+      setSearchTerm('');
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [filterKey]: ''
+      }));
+    }
+    setCurrentPage(1);
+  };
+
+  // Get active filters for display
+  const activeFilters = useMemo(() => {
+    const filtersList = [];
+    if (searchTerm) filtersList.push({ key: 'search', label: `Search: ${searchTerm}` });
+    if (filters.pathwayName) filtersList.push({ key: 'pathwayName', label: `Pathway: ${filters.pathwayName}` });
+    if (filters.majorName) filtersList.push({ key: 'majorName', label: `Major: ${filters.majorName}` });
+    return filtersList;
+  }, [searchTerm, filters]);
+
   // Get current study plans
   const currentStudyPlans = getCurrentStudyPlans();
-  const totalPages = Math.ceil(studyPlans.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredStudyPlans.length / itemsPerPage);
 
   if (loading) {
     return (
@@ -194,6 +259,88 @@ const AdminStudyPlanManager = () => {
             {error}
           </div>
         )}
+
+        {/* Search and Filter Section */}
+        <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            {/* Search Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search by ID, Pathway or Major..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+
+            {/* Filter Inputs */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <input
+                  type="text"
+                  name="pathwayName"
+                  placeholder="Filter by Pathway..."
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.pathwayName}
+                  onChange={handleFilterChange}
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  name="majorName"
+                  placeholder="Filter by Major..."
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.majorName}
+                  onChange={handleFilterChange}
+                />
+              </div>
+            </div>
+
+            {/* Clear Filters Button */}
+            <div className="flex items-center">
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <Filter className="h-4 w-4 inline mr-1" />
+                Clear Filters
+              </button>
+            </div>
+          </div>
+
+          {/* Active Filters Display */}
+          {activeFilters.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm font-medium text-gray-700">Active Filters:</span>
+              {activeFilters.map((filter) => (
+                <span 
+                  key={filter.key} 
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                >
+                  {filter.label}
+                  <button
+                    type="button"
+                    className="flex-shrink-0 ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                    onClick={() => removeFilter(filter.key)}
+                  >
+                    <span className="sr-only">Remove filter</span>
+                    <svg className="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
+                      <path strokeLinecap="round" strokeWidth="1.5" d="M1 1l6 6m0-6L1 7" />
+                    </svg>
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="overflow-x-auto rounded-lg shadow">
           <table className="min-w-full divide-y divide-gray-200">
@@ -252,7 +399,7 @@ const AdminStudyPlanManager = () => {
             </tbody>
           </table>
 
-          {studyPlans.length === 0 && (
+          {filteredStudyPlans.length === 0 && (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <p className="text-gray-500 text-lg">No study plans found</p>
             </div>

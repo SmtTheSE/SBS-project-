@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Save, Edit, X, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, Save, Edit, X, Trash2, ChevronLeft, ChevronRight, Search, Filter } from 'lucide-react';
 import axiosInstance from '../utils/axiosInstance';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton, FormSection } from '../Components/ModernForm';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
@@ -28,6 +28,15 @@ const AdminVisaPassportManager = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    student: '',
+    visaType: '',
+    dateFrom: '',
+    dateTo: ''
+  });
 
   useEffect(() => {
     fetchVisaPassports();
@@ -67,11 +76,97 @@ const AdminVisaPassportManager = () => {
     return student ? `${student.firstName} ${student.lastName}` : studentId;
   };
 
+  // Handle search term change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Handle filter change
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilters({
+      student: '',
+      visaType: '',
+      dateFrom: '',
+      dateTo: ''
+    });
+    setCurrentPage(1);
+  };
+
+  // Filter and search visa passports
+  const filteredVisaPassports = useMemo(() => {
+    return visaPassports.filter(record => {
+      // Apply search term filter
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        const studentName = getStudentName(record.studentId).toLowerCase();
+        if (!(record.visaPassportId.toLowerCase().includes(term) ||
+              record.studentId.toLowerCase().includes(term) ||
+              record.visaId.toLowerCase().includes(term) ||
+              record.passportNumber.toLowerCase().includes(term) ||
+              studentName.includes(term))) {
+          return false;
+        }
+      }
+
+      // Apply student filter (ID or name)
+      if (filters.student) {
+        const studentTerm = filters.student.toLowerCase();
+        const studentIdMatch = record.studentId.toLowerCase().includes(studentTerm);
+        const studentNameMatch = getStudentName(record.studentId).toLowerCase().includes(studentTerm);
+        if (!studentIdMatch && !studentNameMatch) {
+          return false;
+        }
+      }
+
+      // Apply visa type filter
+      if (filters.visaType && record.visaType.toString() !== filters.visaType) {
+        return false;
+      }
+
+      // Apply date range filter
+      if (filters.dateFrom || filters.dateTo) {
+        const visaIssued = new Date(record.visaIssuedDate);
+        const visaExpired = new Date(record.visaExpiredDate);
+        const passportIssued = new Date(record.passportIssuedDate);
+        const passportExpired = new Date(record.passportExpiredDate);
+        
+        if (filters.dateFrom) {
+          const fromDate = new Date(filters.dateFrom);
+          if (visaIssued < fromDate && visaExpired < fromDate && 
+              passportIssued < fromDate && passportExpired < fromDate) {
+            return false;
+          }
+        }
+        
+        if (filters.dateTo) {
+          const toDate = new Date(filters.dateTo);
+          if (visaIssued > toDate && visaExpired > toDate && 
+              passportIssued > toDate && passportExpired > toDate) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    });
+  }, [visaPassports, searchTerm, filters, students]);
+
   // Get current visa/passport records for pagination
   const getCurrentVisaPassports = () => {
     const indexOfLastRecord = currentPage * itemsPerPage;
     const indexOfFirstRecord = indexOfLastRecord - itemsPerPage;
-    return visaPassports.slice(indexOfFirstRecord, indexOfLastRecord);
+    return filteredVisaPassports.slice(indexOfFirstRecord, indexOfLastRecord);
   };
 
   // Change page
@@ -86,7 +181,8 @@ const AdminVisaPassportManager = () => {
   
   // Next page
   const nextPage = () => {
-    if (currentPage < Math.ceil(visaPassports.length / itemsPerPage)) {
+    const totalPages = Math.ceil(filteredVisaPassports.length / itemsPerPage);
+    if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -170,7 +266,7 @@ const AdminVisaPassportManager = () => {
       
       alert('Visa/Passport record deleted successfully!');
       // If we're on the last page and it becomes empty, go to previous page
-      const totalPages = Math.ceil((visaPassports.length - 1) / itemsPerPage);
+      const totalPages = Math.ceil((filteredVisaPassports.length - 1) / itemsPerPage);
       if (currentPage > totalPages && totalPages > 0) {
         setCurrentPage(totalPages);
       }
@@ -204,7 +300,10 @@ const AdminVisaPassportManager = () => {
 
   // Get current visa/passport records
   const currentVisaPassports = getCurrentVisaPassports();
-  const totalPages = Math.ceil(visaPassports.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredVisaPassports.length / itemsPerPage);
+  
+  // Check if any filters are active
+  const hasActiveFilters = searchTerm || filters.student || filters.visaType || filters.dateFrom || filters.dateTo;
 
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
@@ -216,7 +315,7 @@ const AdminVisaPassportManager = () => {
               Admin Panel - Visa/Passport Management
             </h1>
             <p className="text-gray-600">
-              Manage student visa and passport information • Total: {visaPassports.length}
+              Manage student visa and passport information • Total: {filteredVisaPassports.length}
             </p>
           </div>
 
@@ -227,6 +326,147 @@ const AdminVisaPassportManager = () => {
             <Plus size={20} />
             {showCreateForm ? 'Cancel' : 'Create New Record'}
           </FormButton>
+        </div>
+
+        {/* Search and Filter Section */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            {/* Search Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Search by ID, Visa ID, Passport or Student..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            
+            {/* Student Filter */}
+            <div>
+              <input
+                type="text"
+                value={filters.student}
+                onChange={(e) => handleFilterChange('student', e.target.value)}
+                placeholder="Filter by Student ID or Name"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            
+            {/* Visa Type Filter */}
+            <div>
+              <select
+                value={filters.visaType}
+                onChange={(e) => handleFilterChange('visaType', e.target.value)}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value="">All Visa Types</option>
+                <option value="0">Single Entry</option>
+                <option value="1">Multiple Entry</option>
+              </select>
+            </div>
+            
+            {/* Date Range Filter */}
+            <div className="relative">
+              <details className="group">
+                <summary className="cursor-pointer flex items-center text-blue-600 hover:text-blue-800">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <span>Date Range</span>
+                </summary>
+                
+                <div className="mt-2 p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700">From</label>
+                      <input
+                        type="date"
+                        value={filters.dateFrom}
+                        onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                        className="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700">To</label>
+                      <input
+                        type="date"
+                        value={filters.dateTo}
+                        onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                        className="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </div>
+          
+          {/* Active Filters Display */}
+          {hasActiveFilters && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">Active filters:</span>
+              
+              {searchTerm && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Search: {searchTerm}
+                  <button 
+                    onClick={() => setSearchTerm('')}
+                    className="ml-1 inline-flex h-4 w-4 rounded-full items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+              
+              {filters.student && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Student: {filters.student}
+                  <button 
+                    onClick={() => handleFilterChange('student', '')}
+                    className="ml-1 inline-flex h-4 w-4 rounded-full items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+              
+              {filters.visaType && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Visa Type: {filters.visaType === '0' ? 'Single Entry' : 'Multiple Entry'}
+                  <button 
+                    onClick={() => handleFilterChange('visaType', '')}
+                    className="ml-1 inline-flex h-4 w-4 rounded-full items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+              
+              {(filters.dateFrom || filters.dateTo) && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Date Range: {filters.dateFrom || '...'} to {filters.dateTo || '...'}
+                  <button 
+                    onClick={() => {
+                      handleFilterChange('dateFrom', '');
+                      handleFilterChange('dateTo', '');
+                    }}
+                    className="ml-1 inline-flex h-4 w-4 rounded-full items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+              
+              <button
+                onClick={clearFilters}
+                className="ml-2 px-3 py-1 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Clear All
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Create New Visa/Passport Form */}
@@ -388,13 +628,21 @@ const AdminVisaPassportManager = () => {
         {/* Existing Visa/Passport Records Management */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-gray-700 border-b-2 border-gray-200 pb-2">
-            Existing Records ({visaPassports.length})
+            Existing Records ({filteredVisaPassports.length})
           </h2>
 
-          {visaPassports.length === 0 ? (
+          {filteredVisaPassports.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 text-lg">No visa/passport records yet</p>
-              <p className="text-gray-400 text-sm mt-2">Click "Create New Record" to add your first record</p>
+              <p className="text-gray-500 text-lg">
+                {visaPassports.length === 0 
+                  ? "No visa/passport records yet" 
+                  : "No visa/passport records match your search criteria"}
+              </p>
+              {hasActiveFilters && (
+                <p className="text-gray-400 text-sm mt-2">
+                  Try adjusting your search or filter criteria
+                </p>
+              )}
             </div>
           ) : (
             <>

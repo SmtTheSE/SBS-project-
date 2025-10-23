@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import { ModernForm, FormButton } from '../Components/ModernForm';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
+import { Search, Filter, X } from 'lucide-react';
 
 const AdminVisaExtensionRequestManager = () => {
   const [extensionRequests, setExtensionRequests] = useState([]);
@@ -13,6 +14,15 @@ const AdminVisaExtensionRequestManager = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    student: '',
+    status: '',
+    dateFrom: '',
+    dateTo: ''
+  });
 
   useEffect(() => {
     fetchExtensionRequests();
@@ -46,11 +56,91 @@ const AdminVisaExtensionRequestManager = () => {
     return student ? `${student.firstName} ${student.lastName}` : studentId;
   };
 
+  // Handle search term change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Handle filter change
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilters({
+      student: '',
+      status: '',
+      dateFrom: '',
+      dateTo: ''
+    });
+    setCurrentPage(1);
+  };
+
+  // Filter and search extension requests
+  const filteredExtensionRequests = useMemo(() => {
+    return extensionRequests.filter(request => {
+      // Apply search term filter
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        const studentName = getStudentName(request.studentId).toLowerCase();
+        if (!(request.extensionRequestId.toLowerCase().includes(term) ||
+              request.studentId.toLowerCase().includes(term) ||
+              request.visaPassportId.toLowerCase().includes(term) ||
+              studentName.includes(term))) {
+          return false;
+        }
+      }
+
+      // Apply student filter (ID or name)
+      if (filters.student) {
+        const studentTerm = filters.student.toLowerCase();
+        const studentIdMatch = request.studentId.toLowerCase().includes(studentTerm);
+        const studentNameMatch = getStudentName(request.studentId).toLowerCase().includes(studentTerm);
+        if (!studentIdMatch && !studentNameMatch) {
+          return false;
+        }
+      }
+
+      // Apply status filter
+      if (filters.status !== '' && request.status.toString() !== filters.status) {
+        return false;
+      }
+
+      // Apply date range filter
+      if (filters.dateFrom || filters.dateTo) {
+        const requestDate = new Date(request.requestDate);
+        
+        if (filters.dateFrom) {
+          const fromDate = new Date(filters.dateFrom);
+          if (requestDate < fromDate) {
+            return false;
+          }
+        }
+        
+        if (filters.dateTo) {
+          const toDate = new Date(filters.dateTo);
+          if (requestDate > toDate) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    });
+  }, [extensionRequests, searchTerm, filters, students]);
+
   // Get current extension requests for pagination
   const getCurrentExtensionRequests = () => {
     const indexOfLastRequest = currentPage * itemsPerPage;
     const indexOfFirstRequest = indexOfLastRequest - itemsPerPage;
-    return extensionRequests.slice(indexOfFirstRequest, indexOfLastRequest);
+    return filteredExtensionRequests.slice(indexOfFirstRequest, indexOfLastRequest);
   };
 
   // Change page
@@ -65,7 +155,7 @@ const AdminVisaExtensionRequestManager = () => {
   
   // Next page
   const nextPage = () => {
-    if (currentPage < Math.ceil(extensionRequests.length / itemsPerPage)) {
+    if (currentPage < Math.ceil(filteredExtensionRequests.length / itemsPerPage)) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -106,7 +196,7 @@ const AdminVisaExtensionRequestManager = () => {
       await axiosInstance.delete(`/visa-extension-requests/${requestIdToDelete}`);
       
       // Update local state to remove the deleted request
-      const updatedRequests = extensionRequests.filter(req => req.extensionRequestId !== requestIdToDelete);
+      const updatedRequests = filteredExtensionRequests.filter(req => req.extensionRequestId !== requestIdToDelete);
       setExtensionRequests(updatedRequests);
       
       // If we're on the last page and it becomes empty, go to previous page
@@ -150,7 +240,11 @@ const AdminVisaExtensionRequestManager = () => {
 
   // Get current extension requests
   const currentExtensionRequests = getCurrentExtensionRequests();
-  const totalPages = Math.ceil(extensionRequests.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredExtensionRequests.length / itemsPerPage);
+  
+  // Check if any filters are active
+  const hasActiveFilters = searchTerm || filters.student || filters.status !== '' || 
+    filters.dateFrom || filters.dateTo;
 
   if (loading) {
     return (
@@ -171,15 +265,169 @@ const AdminVisaExtensionRequestManager = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Visa Extension Requests</h1>
             <p className="text-gray-600">
-              Manage student visa extension requests • Total: {extensionRequests.length}
+              Manage student visa extension requests • Total: {filteredExtensionRequests.length}
             </p>
           </div>
         </div>
 
+        {/* Search and Filter Section */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            {/* Search Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Search by ID, Student..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            
+            {/* Student Filter */}
+            <div>
+              <input
+                type="text"
+                value={filters.student}
+                onChange={(e) => handleFilterChange('student', e.target.value)}
+                placeholder="Filter by Student"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            
+            {/* Status Filter */}
+            <div>
+              <select
+                value={filters.status}
+                onChange={(e) => handleFilterChange('status', e.target.value)}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value="">All Status</option>
+                <option value="0">Pending</option>
+                <option value="1">Approved</option>
+                <option value="2">Rejected</option>
+              </select>
+            </div>
+            
+            {/* Date Range Filter */}
+            <div className="relative">
+              <details className="group">
+                <summary className="cursor-pointer flex items-center text-blue-600 hover:text-blue-800">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <span>Date Range</span>
+                </summary>
+                
+                <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">From</label>
+                    <input
+                      type="date"
+                      value={filters.dateFrom}
+                      onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">To</label>
+                    <input
+                      type="date"
+                      value={filters.dateTo}
+                      onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    />
+                  </div>
+                </div>
+              </details>
+            </div>
+          </div>
+          
+          {/* Clear Filters Button */}
+          <div className="flex justify-between items-center">
+            {(hasActiveFilters) && (
+              <button
+                onClick={clearFilters}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Clear All Filters
+              </button>
+            )}
+            
+            {/* Active Filters Display */}
+            {hasActiveFilters && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Active filters:</span>
+                
+                {searchTerm && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Search: {searchTerm}
+                    <button 
+                      onClick={() => setSearchTerm('')}
+                      className="ml-1 inline-flex h-4 w-4 rounded-full items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+                
+                {filters.student && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Student: {filters.student}
+                    <button 
+                      onClick={() => handleFilterChange('student', '')}
+                      className="ml-1 inline-flex h-4 w-4 rounded-full items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+                
+                {filters.status !== '' && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Status: {filters.status === '0' ? 'Pending' : filters.status === '1' ? 'Approved' : 'Rejected'}
+                    <button 
+                      onClick={() => handleFilterChange('status', '')}
+                      className="ml-1 inline-flex h-4 w-4 rounded-full items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+                
+                {(filters.dateFrom || filters.dateTo) && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Date: {filters.dateFrom || '...'} to {filters.dateTo || '...'}
+                    <button 
+                      onClick={() => {
+                        handleFilterChange('dateFrom', '');
+                        handleFilterChange('dateTo', '');
+                      }}
+                      className="ml-1 inline-flex h-4 w-4 rounded-full items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Table */}
-        {extensionRequests.length === 0 ? (
+        {filteredExtensionRequests.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <p className="text-gray-500 text-lg">No visa extension requests found</p>
+            <p className="text-gray-500 text-lg">
+              {extensionRequests.length === 0 
+                ? "No visa extension requests found" 
+                : "No visa extension requests match your search criteria"}
+            </p>
+            {hasActiveFilters && (
+              <p className="text-gray-400 text-sm mt-2">
+                Try adjusting your search or filter criteria
+              </p>
+            )}
           </div>
         ) : (
           <>

@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Save, Edit, X, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Save, Edit, X, Trash2, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton, FormSection } from '../Components/ModernForm';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminLecturerManager = () => {
   const [lecturers, setLecturers] = useState([]);
-  const [departments] = useState([
-    {departmentId: 'DS', departmentName: 'Data Science' },
-    { departmentId: 'BUS', departmentName: 'Business' },
-    {departmentId: 'HOSP', departmentName: 'Hospitality' }
-  ]);
+  const [departments, setDepartments] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
   const[showCreateForm, setShowCreateForm] = useState(false);
@@ -28,9 +24,14 @@ const AdminLecturerManager = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  
+  // Filter and search states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState('All');
 
   useEffect(() => {
     fetchLecturers();
+    fetchDepartments();
   }, []);
 
   const fetchLecturers = async () => {
@@ -53,11 +54,57 @@ const AdminLecturerManager = () => {
     }
   };
 
+  const fetchDepartments = async () => {
+    try{
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:8080/api/admin/departments', {
+        credentials:'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setDepartments(data);
+    } catch (error) {
+      console.error('Failed to fetch departments:', error);
+      // Fallback to hardcoded departments if API fails
+      setDepartments([
+        {departmentId: 'DS', departmentName: 'Data Science' },
+        { departmentId: 'BUS', departmentName: 'Business' },
+        {departmentId: 'HOSP', departmentName: 'Hospitality' }
+      ]);
+    }
+  };
+
+  // Filter and search lecturers
+  const getFilteredLecturers = () => {
+    return lecturers.filter(lecturer => {
+      // Search filter - check multiple fields
+      const matchesSearch = 
+        lecturer.lecturerId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        lecturer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (lecturer.academicTitle && lecturer.academicTitle.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      // Department filter - match by department name
+      let matchesDepartment = true;
+      if (filterDepartment !== 'All') {
+        matchesDepartment = lecturer.departmentName === filterDepartment;
+      }
+      
+      return matchesSearch && matchesDepartment;
+    });
+  };
+
   // Get current lecturers for pagination
   const getCurrentLecturers = () => {
+    const filteredLecturers = getFilteredLecturers();
     const indexOfLastLecturer = currentPage * itemsPerPage;
     const indexOfFirstLecturer = indexOfLastLecturer - itemsPerPage;
-    return lecturers.slice(indexOfFirstLecturer, indexOfLastLecturer);
+    return filteredLecturers.slice(indexOfFirstLecturer, indexOfLastLecturer);
   };
 
   // Change page
@@ -72,9 +119,27 @@ const AdminLecturerManager = () => {
   
   // Next page
   const nextPage = () => {
-    if (currentPage < Math.ceil(lecturers.length / itemsPerPage)) {
+    const filteredLecturers = getFilteredLecturers();
+    const totalPages = Math.ceil(filteredLecturers.length / itemsPerPage);
+    if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+    setCurrentPage(1); // Reset to first page when search changes
+  };
+
+  const handleDepartmentFilterChange = (event) => {
+    setFilterDepartment(event.target.value);
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilterDepartment('All');
+    setCurrentPage(1);
   };
 
   const createNewLecturer = async () => {
@@ -184,7 +249,8 @@ const AdminLecturerManager = () => {
       if (response.ok) {
         alert('Lecturer deleted successfully!');
         // If we're on the last page and it becomes empty, go to previous page
-        const totalPages = Math.ceil((lecturers.length - 1) / itemsPerPage);
+        const filteredLecturers = getFilteredLecturers();
+        const totalPages = Math.ceil((filteredLecturers.length - 1) / itemsPerPage);
         if (currentPage > totalPages && totalPages > 0) {
           setCurrentPage(totalPages);
         }
@@ -211,7 +277,8 @@ const AdminLecturerManager = () => {
 
   // Get current lecturers
   const currentLecturers = getCurrentLecturers();
-  const totalPages = Math.ceil(lecturers.length / itemsPerPage);
+  const filteredLecturers = getFilteredLecturers();
+  const totalPages = Math.ceil(filteredLecturers.length / itemsPerPage);
 
   return (
     <div className="max-w-7xl mx-autop-6 bg-gray-50 min-h-screen">
@@ -234,6 +301,53 @@ const AdminLecturerManager = () => {
             <Plus size={20} />
             {showCreateForm ? 'Cancel' : 'Create New Lecturer'}
           </FormButton>
+        </div>
+
+        {/* Search and Filter Section */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Search Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Search by ID, name or title..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            
+            {/* Department Filter */}
+            <div>
+              <select
+                value={filterDepartment}
+                onChange={handleDepartmentFilterChange}
+                className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value="All">All Departments</option>
+                {departments.map(dept => (
+                  <option key={dept.departmentId} value={dept.departmentName}>
+                    {dept.departmentName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Clear Filters Button */}
+            {(searchTerm || filterDepartment !== 'All') && (
+              <div className="flex items-center">
+                <button
+                  onClick={clearFilters}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Clear All Filters
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Create New Lecturer Form */}
@@ -365,13 +479,21 @@ const AdminLecturerManager = () => {
         {/* Existing Lecturers Management */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-gray-700 border-b-2 border-gray-200 pb-2">
-            Existing Lecturers ({lecturers.length})
+            Existing Lecturers ({filteredLecturers.length})
           </h2>
 
-          {lecturers.length === 0 ? (
+          {filteredLecturers.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 text-lg">No lecturers yet</p>
-              <p className="text-gray-400 text-sm mt-2">Click "Create New Lecturer" to add your first lecturer</p>
+              <p className="text-gray-500 text-lg">
+                {searchTerm || filterDepartment !== 'All'
+                  ? 'No lecturers match your search/filter criteria'
+                  : 'No lecturers yet'}
+              </p>
+              <p className="text-gray-400 text-sm mt-2">
+                {searchTerm || filterDepartment !== 'All'
+                  ? 'Try adjusting your search or filter criteria'
+                  : 'Click "Create New Lecturer" to add your first lecturer'}
+              </p>
             </div>
           ) : (
             <>
@@ -421,7 +543,7 @@ const AdminLecturerManager = () => {
                           {lecturer.academicTitle || 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {departments.find(dept => dept.departmentId === lecturer.departmentId)?.departmentName || lecturer.departmentId}
+                          {lecturer.departmentId && lecturer.departmentName ? `${lecturer.departmentId} - ${lecturer.departmentName}` : lecturer.departmentId || 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
@@ -664,3 +786,4 @@ const AdminLecturerManager = () => {
 };
 
 export default AdminLecturerManager;
+

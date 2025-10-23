@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton } from '../Components/ModernForm';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
+import { Search, Filter } from 'lucide-react';
 
 const AdminCourseManager = () => {
   const [courses, setCourses] = useState([]);
@@ -19,9 +20,35 @@ const AdminCourseManager = () => {
     lecturerId: ''
   });
   
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    courseName: '',
+    lecturer: ''
+  });
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+
+  // Filtered courses based on search and filters
+  const filteredCourses = useMemo(() => {
+    return courses.filter(course => {
+      // Apply search term
+      const matchesSearch = !searchTerm || 
+        course.courseId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (course.lecturer && course.lecturer.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      // Apply filters
+      const matchesCourseName = !filters.courseName || 
+        course.courseName.toLowerCase().includes(filters.courseName.toLowerCase());
+      const matchesLecturer = !filters.lecturer || 
+        (course.lecturer && course.lecturer.name.toLowerCase().includes(filters.lecturer.toLowerCase()));
+      
+      return matchesSearch && matchesCourseName && matchesLecturer;
+    });
+  }, [courses, searchTerm, filters]);
 
   useEffect(() => {
     fetchCourses();
@@ -52,7 +79,7 @@ const AdminCourseManager = () => {
   const getCurrentCourses = () => {
     const indexOfLastCourse = currentPage * itemsPerPage;
     const indexOfFirstCourse = indexOfLastCourse - itemsPerPage;
-    return courses.slice(indexOfFirstCourse, indexOfLastCourse);
+    return filteredCourses.slice(indexOfFirstCourse, indexOfLastCourse);
   };
 
   // Change page
@@ -67,7 +94,7 @@ const AdminCourseManager = () => {
   
   // Next page
   const nextPage = () => {
-    if (currentPage < Math.ceil(courses.length / itemsPerPage)) {
+    if (currentPage < Math.ceil(filteredCourses.length / itemsPerPage)) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -97,6 +124,15 @@ const AdminCourseManager = () => {
       ...formData,
       [name]: value
     });
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   const handleSubmit = async (e) => {
@@ -179,9 +215,39 @@ const AdminCourseManager = () => {
     setShowForm(false);
   };
 
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilters({
+      courseName: '',
+      lecturer: ''
+    });
+    setCurrentPage(1);
+  };
+
+  const removeFilter = (filterKey) => {
+    if (filterKey === 'search') {
+      setSearchTerm('');
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [filterKey]: ''
+      }));
+    }
+    setCurrentPage(1);
+  };
+
+  // Get active filters for display
+  const activeFilters = useMemo(() => {
+    const filtersList = [];
+    if (searchTerm) filtersList.push({ key: 'search', label: `Search: ${searchTerm}` });
+    if (filters.courseName) filtersList.push({ key: 'courseName', label: `Course: ${filters.courseName}` });
+    if (filters.lecturer) filtersList.push({ key: 'lecturer', label: `Lecturer: ${filters.lecturer}` });
+    return filtersList;
+  }, [searchTerm, filters]);
+
   // Get current courses
   const currentCourses = getCurrentCourses();
-  const totalPages = Math.ceil(courses.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
 
   if (loading) {
     return (
@@ -212,6 +278,88 @@ const AdminCourseManager = () => {
             {error}
           </div>
         )}
+
+        {/* Search and Filter Section */}
+        <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            {/* Search Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search by ID, Course or Lecturer..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+
+            {/* Filter Inputs */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <input
+                  type="text"
+                  name="courseName"
+                  placeholder="Filter by Course..."
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.courseName}
+                  onChange={handleFilterChange}
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  name="lecturer"
+                  placeholder="Filter by Lecturer..."
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.lecturer}
+                  onChange={handleFilterChange}
+                />
+              </div>
+            </div>
+
+            {/* Clear Filters Button */}
+            <div className="flex items-center">
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <Filter className="h-4 w-4 inline mr-1" />
+                Clear Filters
+              </button>
+            </div>
+          </div>
+
+          {/* Active Filters Display */}
+          {activeFilters.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm font-medium text-gray-700">Active Filters:</span>
+              {activeFilters.map((filter) => (
+                <span 
+                  key={filter.key} 
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                >
+                  {filter.label}
+                  <button
+                    type="button"
+                    className="flex-shrink-0 ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                    onClick={() => removeFilter(filter.key)}
+                  >
+                    <span className="sr-only">Remove filter</span>
+                    <svg className="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
+                      <path strokeLinecap="round" strokeWidth="1.5" d="M1 1l6 6m0-6L1 7" />
+                    </svg>
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Modal */}
         {showForm && (
@@ -373,6 +521,12 @@ const AdminCourseManager = () => {
           {(!Array.isArray(courses) || courses.length === 0) && (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <p className="text-gray-500 text-lg">No courses found</p>
+            </div>
+          )}
+          
+          {Array.isArray(filteredCourses) && filteredCourses.length === 0 && searchTerm && (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <p className="text-gray-500 text-lg">No courses match your search criteria</p>
             </div>
           )}
         </div>
