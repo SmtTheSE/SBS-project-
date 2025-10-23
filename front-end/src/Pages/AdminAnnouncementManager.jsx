@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Edit, Save, X, Eye, EyeOff, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Upload, Edit, Save, X, Eye, EyeOff, Plus, Trash2, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminAnnouncementManager = () => {
@@ -26,6 +26,10 @@ const AdminAnnouncementManager = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
+  
+  // Filter and search states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('All');
 
   const placeholderImage = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns%3D%22http%3A//www.w3.org/2000/svg%22 width%3D%22400%22 height%3D%22300%22 viewBox%3D%220 0 400 300%22%3E%3Crect width%3D%22400%22 height%3D%22300%22 fill%3D%22%23cccccc%22/%3E%3Ctext x%3D%22200%22 y%3D%22150%22 font-family%3D%22Arial%2Csans-serif%22 font-size%3D%2220%22 fill%3D%22%23666666%22 text-anchor%3D%22middle%22 dominant-baseline%3D%22middle%22%3EImage%20Placeholder%3C/text%3E%3C/svg%3E';
   const errorImage = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns%3D%22http%3A//www.w3.org/2000/svg%22 width%3D%22400%22 height%3D%22300%22 viewBox%3D%220 0 400 300%22%3E%3Crect width%3D%22400%22 height%3D%22300%22 fill%3D%22%23f8d7da%22/%3E%3Ctext x%3D%22200%22 y%3D%22150%22 font-family%3D%22Arial%2Csans-serif%22 font-size%3D%2220%22 fill%3D%22%23721c24%22 text-anchor%3D%22middle%22 dominant-baseline%3D%22middle%22%3EImage%20Error%3C/text%3E%3C/svg%3E';
@@ -44,11 +48,21 @@ const AdminAnnouncementManager = () => {
     }
   };
 
+  // Filter and search announcements
+  const getFilteredAnnouncements = () => {
+    return announcements.filter(announcement => {
+      const matchesSearch = announcement.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesFilter = filterType === 'All' || announcement.announcementType === filterType;
+      return matchesSearch && matchesFilter;
+    });
+  };
+
   // Get current announcements for pagination
   const getCurrentAnnouncements = () => {
+    const filteredAnnouncements = getFilteredAnnouncements();
     const indexOfLastAnnouncement = currentPage * itemsPerPage;
     const indexOfFirstAnnouncement = indexOfLastAnnouncement - itemsPerPage;
-    return announcements.slice(indexOfFirstAnnouncement, indexOfLastAnnouncement);
+    return filteredAnnouncements.slice(indexOfFirstAnnouncement, indexOfLastAnnouncement);
   };
 
   // Change page
@@ -63,9 +77,21 @@ const AdminAnnouncementManager = () => {
   
   // Next page
   const nextPage = () => {
-    if (currentPage < Math.ceil(announcements.length / itemsPerPage)) {
+    const filteredAnnouncements = getFilteredAnnouncements();
+    const totalPages = Math.ceil(filteredAnnouncements.length / itemsPerPage);
+    if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
+  };
+
+  const handleFilterChange = (type) => {
+    setFilterType(type);
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+    setCurrentPage(1); // Reset to first page when search changes
   };
 
   const createNewAnnouncement = async () => {
@@ -328,7 +354,8 @@ const AdminAnnouncementManager = () => {
       if (response.ok) {
         await fetchAnnouncements();
         // If we're on the last page and it becomes empty, go to previous page
-        const totalPages = Math.ceil((announcements.length - 1) / itemsPerPage);
+        const filteredAnnouncements = getFilteredAnnouncements();
+        const totalPages = Math.ceil((filteredAnnouncements.length - 1) / itemsPerPage);
         if (currentPage > totalPages && totalPages > 0) {
           setCurrentPage(totalPages);
         }
@@ -354,7 +381,8 @@ const AdminAnnouncementManager = () => {
 
   // Get current announcements
   const currentAnnouncements = getCurrentAnnouncements();
-  const totalPages = Math.ceil(announcements.length / itemsPerPage);
+  const filteredAnnouncements = getFilteredAnnouncements();
+  const totalPages = Math.ceil(filteredAnnouncements.length / itemsPerPage);
 
   return (
     <div className="max-w-7xl mx-auto p-4 bg-gray-50 min-h-screen">
@@ -377,6 +405,52 @@ const AdminAnnouncementManager = () => {
             <Plus size={16} />
             {showCreateForm ? 'Cancel' : 'Create New'}
           </button>
+        </div>
+
+        {/* Search and Filter Section */}
+        <div className="mb-4 flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              placeholder="Search announcements by title..."
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            />
+          </div>
+          
+          <div className="flex gap-2">
+            <select
+              value={filterType}
+              onChange={(e) => handleFilterChange(e.target.value)}
+              className="block w-full sm:w-40 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            >
+              <option value="All">All Types</option>
+              <option value="General">General</option>
+              <option value="Academic">Academic</option>
+              <option value="Event">Event</option>
+              <option value="Emergency">Emergency</option>
+              <option value="Sports">Sports</option>
+              <option value="System">System</option>
+              <option value="Finance">Finance</option>
+            </select>
+            
+            {(searchTerm || filterType !== 'All') && (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterType('All');
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Create New Announcement Form */}
@@ -407,10 +481,11 @@ const AdminAnnouncementManager = () => {
                   >
                     <option value="General">General</option>
                     <option value="Academic">Academic</option>
-                    <option value="Events">Events</option>
+                    <option value="Event">Event</option>
                     <option value="Emergency">Emergency</option>
                     <option value="Sports">Sports</option>
                     <option value="System">System</option>
+                    <option value="Finance">Finance</option>
                   </select>
                 </div>
 
@@ -532,13 +607,21 @@ const AdminAnnouncementManager = () => {
         {/* Existing Announcements Management */}
         <div className="space-y-3">
           <h2 className="text-lg font-semibold text-gray-700 border-b border-gray-200 pb-1">
-            Existing Announcements ({announcements.length})
+            Existing Announcements ({filteredAnnouncements.length})
           </h2>
 
-          {announcements.length === 0 ? (
+          {filteredAnnouncements.length === 0 ? (
             <div className="text-center py-8 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">No announcements yet</p>
-              <p className="text-gray-400 text-sm mt-1">Click "Create New" to add your first announcement</p>
+              <p className="text-gray-500">
+                {searchTerm || filterType !== 'All' 
+                  ? 'No announcements match your search/filter criteria' 
+                  : 'No announcements yet'}
+              </p>
+              <p className="text-gray-400 text-sm mt-1">
+                {searchTerm || filterType !== 'All'
+                  ? 'Try adjusting your search or filter criteria'
+                  : 'Click "Create New" to add your first announcement'}
+              </p>
             </div>
           ) : (
             <>
@@ -690,10 +773,11 @@ const AdminAnnouncementManager = () => {
                               >
                                 <option value="General">General</option>
                                 <option value="Academic">Academic</option>
-                                <option value="Events">Events</option>
+                                <option value="Event">Event</option>
                                 <option value="Emergency">Emergency</option>
                                 <option value="Sports">Sports</option>
                                 <option value="System">System</option>
+                                <option value="Finance">Finance</option>
                               </select>
                             </div>
                             <div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Save, Edit, X, Eye, EyeOff, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Save, Edit, X, Eye, EyeOff, Trash2, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import ModernDropdown from '../Components/ModernDropdown';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton, FormSection } from '../Components/ModernForm';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
@@ -41,6 +41,12 @@ const AdminStudentManager = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  
+  // Filter and search states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterNationality, setFilterNationality] = useState('All');
+  const [filterGender, setFilterGender] = useState('All');
+  const [filterStatus, setFilterStatus] = useState('All');
 
   // Convert cities to dropdown options
   const cityOptions = cities.map(city => ({
@@ -75,11 +81,36 @@ const AdminStudentManager = () => {
     }
   };
 
+  // Filter and search students
+  const getFilteredStudents = () => {
+    return students.filter(student => {
+      // Search filter - check multiple fields
+      const matchesSearch = 
+        student.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        `${student.firstName} ${student.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.studentEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (student.phone && student.phone.includes(searchTerm));
+      
+      // Nationality filter
+      const matchesNationality = filterNationality === 'All' || student.nationality === filterNationality;
+      
+      // Gender filter
+      const matchesGender = filterGender === 'All' || student.gender === parseInt(filterGender);
+      
+      // Status filter
+      const studentStatus = student.loginAccount ? student.loginAccount.accountStatus : 0;
+      const matchesStatus = filterStatus === 'All' || studentStatus === parseInt(filterStatus);
+      
+      return matchesSearch && matchesNationality && matchesGender && matchesStatus;
+    });
+  };
+
   // Get current students for pagination
   const getCurrentStudents = () => {
+    const filteredStudents = getFilteredStudents();
     const indexOfLastStudent = currentPage * itemsPerPage;
     const indexOfFirstStudent = indexOfLastStudent - itemsPerPage;
-    return students.slice(indexOfFirstStudent, indexOfLastStudent);
+    return filteredStudents.slice(indexOfFirstStudent, indexOfLastStudent);
   };
 
   // Change page
@@ -94,9 +125,39 @@ const AdminStudentManager = () => {
   
   // Next page
   const nextPage = () => {
-    if (currentPage < Math.ceil(students.length / itemsPerPage)) {
+    const filteredStudents = getFilteredStudents();
+    const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+    if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+    setCurrentPage(1); // Reset to first page when search changes
+  };
+
+  const handleNationalityFilterChange = (event) => {
+    setFilterNationality(event.target.value);
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const handleGenderFilterChange = (event) => {
+    setFilterGender(event.target.value);
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const handleStatusFilterChange = (event) => {
+    setFilterStatus(event.target.value);
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilterNationality('All');
+    setFilterGender('All');
+    setFilterStatus('All');
+    setCurrentPage(1);
   };
 
   const fetchCities = async () => {
@@ -274,7 +335,8 @@ const AdminStudentManager = () => {
       if(response.ok){
         alert('Student deleted successfully!');
         // If we're on the last page and it becomes empty, go to previous page
-        const totalPages = Math.ceil((students.length - 1) / itemsPerPage);
+        const filteredStudents = getFilteredStudents();
+        const totalPages = Math.ceil((filteredStudents.length - 1) / itemsPerPage);
         if (currentPage > totalPages && totalPages > 0) {
           setCurrentPage(totalPages);
         }
@@ -334,7 +396,8 @@ const AdminStudentManager = () => {
 
   // Get current students
   const currentStudents = getCurrentStudents();
-  const totalPages = Math.ceil(students.length / itemsPerPage);
+  const filteredStudents = getFilteredStudents();
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
 
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
@@ -357,6 +420,77 @@ const AdminStudentManager = () => {
             <Plus size={20} />
             {showCreateForm ? 'Cancel' : 'Create New Student'}
           </FormButton>
+        </div>
+
+        {/* Search and Filter Section */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* Search Input */}
+            <div className="lg:col-span-2 relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Search by ID, name, email or phone..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            
+            {/* Nationality Filter */}
+            <div>
+              <select
+                value={filterNationality}
+                onChange={handleNationalityFilterChange}
+                className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value="All">All Nationalities</option>
+                <option value="VN">Vietnam</option>
+                <option value="MM">Myanmar</option>
+              </select>
+            </div>
+            
+            {/* Gender Filter */}
+            <div>
+              <select
+                value={filterGender}
+                onChange={handleGenderFilterChange}
+                className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value="All">All Genders</option>
+                <option value="1">Male</option>
+                <option value="2">Female</option>
+                <option value="0">Other</option>
+              </select>
+            </div>
+            
+            {/* Status Filter */}
+            <div>
+              <select
+                value={filterStatus}
+                onChange={handleStatusFilterChange}
+                className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value="All">All Statuses</option>
+                <option value="1">Active</option>
+                <option value="0">Inactive</option>
+              </select>
+            </div>
+          </div>
+          
+          {/* Clear Filters Button */}
+          {(searchTerm || filterNationality !== 'All' || filterGender !== 'All' || filterStatus !== 'All') && (
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Clear All Filters
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Create New StudentForm */}
@@ -663,13 +797,21 @@ const AdminStudentManager = () => {
         {/* Existing Students Management */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-gray-700 border-b-2 border-gray-200 pb-2">
-            Existing Students ({students.length})
+            Existing Students ({filteredStudents.length})
           </h2>
 
-          {students.length === 0 ? (
+          {filteredStudents.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 text-lg">No students yet</p>
-              <p className="text-gray-400 text-sm mt-2">Click "Create New Student" to add your first student</p>
+              <p className="text-gray-500 text-lg">
+                {searchTerm || filterNationality !== 'All' || filterGender !== 'All' || filterStatus !== 'All'
+                  ? 'No students match your search/filter criteria'
+                  : 'No students yet'}
+              </p>
+              <p className="text-gray-400 text-sm mt-2">
+                {searchTerm || filterNationality !== 'All' || filterGender !== 'All' || filterStatus !== 'All'
+                  ? 'Try adjusting your search or filter criteria'
+                  : 'Click "Create New Student" to add your first student'}
+              </p>
             </div>
           ) : (
             <>
