@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import { ModernForm, FormGroup, FormRow, FormLabel, FormInput, FormSelect, FormButton } from '../Components/ModernForm';
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
+import { Search, Filter } from 'lucide-react';
 
 const AdminStudentEnglishPlacementTestManager = () => {
   const [tests, setTests] = useState([]);
@@ -19,9 +20,132 @@ const AdminStudentEnglishPlacementTestManager = () => {
     resultLevel: '',
     resultStatus: 0 // 0 = Fail, 1 = Pass
   });
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    student: '',
+    resultLevel: '',
+    resultStatus: ''
+  });
+
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+
+  // 获取学生姓名
+  const getStudentName = (studentId) => {
+    // 检查参数和学生列表是否有效
+    if (!studentId) return 'N/A';
+    if (!students || students.length === 0) return studentId;
+    
+    const student = students.find(s => s.studentId === studentId);
+    
+    if (student) {
+      if (student.firstName && student.lastName) {
+        return `${student.firstName} ${student.lastName}`;
+      } else if (student.firstName) {
+        return student.firstName;
+      } else if (student.lastName) {
+        return student.lastName;
+      } else {
+        return studentId;
+      }
+    } else {
+      return studentId;
+    }
+  };
+
+  // Filtered tests based on search and filters
+  const filteredTests = useMemo(() => {
+    return tests.filter(test => {
+      // Apply search term
+      const matchesSearch = !searchTerm || 
+        (test.testId && test.testId.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (test.studentId && test.studentId.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (getStudentName(test.studentId).toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (test.resultLevel && test.resultLevel.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      // Apply filters
+      const matchesStudent = !filters.student || 
+        (test.studentId && test.studentId.toLowerCase().includes(filters.student.toLowerCase())) ||
+        (getStudentName(test.studentId).toLowerCase().includes(filters.student.toLowerCase()));
+      
+      const matchesResultLevel = !filters.resultLevel || 
+        (test.resultLevel && test.resultLevel.toLowerCase().includes(filters.resultLevel.toLowerCase()));
+      
+      const matchesResultStatus = filters.resultStatus === '' || test.resultStatus == filters.resultStatus;
+      
+      return matchesSearch && matchesStudent && matchesResultLevel && matchesResultStatus;
+    });
+  }, [tests, searchTerm, filters, students]);
+
+  // 获取当前页面的测试数据
+  const getCurrentTests = () => {
+    const indexOfLastTest = currentPage * itemsPerPage;
+    const indexOfFirstTest = indexOfLastTest - itemsPerPage;
+    return filteredTests.slice(indexOfFirstTest, indexOfLastTest);
+  };
+
+  // 计算总页数
+  const totalPages = Math.ceil(filteredTests.length / itemsPerPage);
+
+  // 获取当前页面的数据
+  const currentTests = getCurrentTests();
+
+  // 分页控制函数
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const prevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const nextPage = () => {
+    if (currentPage < Math.ceil(filteredTests.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilters({
+      student: '',
+      resultLevel: '',
+      resultStatus: ''
+    });
+    setCurrentPage(1);
+  };
+
+  const removeFilter = (filterKey) => {
+    if (filterKey === 'search') {
+      setSearchTerm('');
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [filterKey]: ''
+      }));
+    }
+    setCurrentPage(1);
+  };
+
+  // Get active filters for display
+  const activeFilters = useMemo(() => {
+    const filtersList = [];
+    if (searchTerm) filtersList.push({ key: 'search', label: `Search: ${searchTerm}` });
+    if (filters.student) filtersList.push({ key: 'student', label: `Student: ${filters.student}` });
+    if (filters.resultLevel) filtersList.push({ key: 'resultLevel', label: `Level: ${filters.resultLevel}` });
+    if (filters.resultStatus !== '') filtersList.push({ key: 'resultStatus', label: `Status: ${filters.resultStatus == 1 ? 'Pass' : 'Fail'}` });
+    return filtersList;
+  }, [searchTerm, filters]);
 
   useEffect(() => {
     fetchStudentEnglishPlacementTests();
@@ -49,29 +173,6 @@ const AdminStudentEnglishPlacementTestManager = () => {
       setStudents(response.data);
     } catch (error) {
       console.error('Failed to fetch students:', error);
-    }
-  };
-
-  // 获取学生姓名
-  const getStudentName = (studentId) => {
-    // 检查参数和学生列表是否有效
-    if (!studentId) return 'N/A';
-    if (!students || students.length === 0) return studentId;
-    
-    const student = students.find(s => s.studentId === studentId);
-    
-    if (student) {
-      if (student.firstName && student.lastName) {
-        return `${student.firstName} ${student.lastName}`;
-      } else if (student.firstName) {
-        return student.firstName;
-      } else if (student.lastName) {
-        return student.lastName;
-      } else {
-        return studentId;
-      }
-    } else {
-      return studentId;
     }
   };
 
@@ -133,7 +234,7 @@ const AdminStudentEnglishPlacementTestManager = () => {
       await axiosInstance.delete(`/academic/student-english-placement-tests/${testToDelete}`);
       fetchStudentEnglishPlacementTests();
       // 删除记录后检查当前页是否为空
-      const totalItems = tests.length - 1; // 删除后的总数
+      const totalItems = filteredTests.length - 1; // 删除后的总数
       const totalPages = Math.ceil(totalItems / itemsPerPage);
       if (currentPage > totalPages && totalPages > 0) {
         setCurrentPage(totalPages);
@@ -168,32 +269,6 @@ const AdminStudentEnglishPlacementTestManager = () => {
     return status === 1 ? 'Pass' : 'Fail';
   };
 
-  // 获取当前页面的测试数据
-  const getCurrentTests = () => {
-    const indexOfLastTest = currentPage * itemsPerPage;
-    const indexOfFirstTest = indexOfLastTest - itemsPerPage;
-    return tests.slice(indexOfFirstTest, indexOfLastTest);
-  };
-
-  // 计算总页数
-  const totalPages = Math.ceil(tests.length / itemsPerPage);
-
-  // 获取当前页面的数据
-  const currentTests = getCurrentTests();
-
-  // 分页控制函数
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-  const prevPage = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
-  };
-
-  const nextPage = () => {
-    if (currentPage < Math.ceil(tests.length / itemsPerPage)) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
@@ -212,7 +287,7 @@ const AdminStudentEnglishPlacementTestManager = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Student English Placement Test Management</h1>
             <p className="text-gray-600">
-              Manage student english placement tests • Total: {tests.length}
+              Manage student english placement tests • Total: {filteredTests.length}
             </p>
           </div>
           <FormButton
@@ -228,6 +303,100 @@ const AdminStudentEnglishPlacementTestManager = () => {
             {error}
           </div>
         )}
+
+        {/* Search and Filter Section */}
+        <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            {/* Search Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search by ID, Student, or Level..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+
+            {/* Filter Inputs */}
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <input
+                  type="text"
+                  name="student"
+                  placeholder="Filter by Student"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.student}
+                  onChange={handleFilterChange}
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  name="resultLevel"
+                  placeholder="Filter by Level"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.resultLevel}
+                  onChange={handleFilterChange}
+                />
+              </div>
+              <div>
+                <select
+                  name="resultStatus"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.resultStatus}
+                  onChange={handleFilterChange}
+                >
+                  <option value="">All Statuses</option>
+                  <option value="1">Pass</option>
+                  <option value="0">Fail</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Clear Filters Button */}
+            <div className="flex items-center">
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <Filter className="h-4 w-4 inline mr-1" />
+                Clear Filters
+              </button>
+            </div>
+          </div>
+
+          {/* Active Filters Display */}
+          {activeFilters.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm font-medium text-gray-700">Active Filters:</span>
+              {activeFilters.map((filter) => (
+                <span 
+                  key={filter.key} 
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                >
+                  {filter.label}
+                  <button
+                    type="button"
+                    className="flex-shrink-0 ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                    onClick={() => removeFilter(filter.key)}
+                  >
+                    <span className="sr-only">Remove filter</span>
+                    <svg className="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
+                      <path strokeLinecap="round" strokeWidth="1.5" d="M1 1l6 6m0-6L1 7" />
+                    </svg>
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Modal */}
         {showForm && (
@@ -357,63 +526,69 @@ const AdminStudentEnglishPlacementTestManager = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentTests.map((test) => (
-                <tr key={test.testId} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {test.testId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {test.studentId ? `${test.studentId} - ${getStudentName(test.studentId)}` : 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {test.testDate}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {test.resultLevel}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      test.resultStatus === 1 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {getResultStatusText(test.resultStatus)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(test)}
-                      className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
-                      title="Edit"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(test.testId)}
-                      className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
-                      title="Delete"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+              {currentTests.length > 0 ? (
+                currentTests.map((test) => (
+                  <tr key={test.testId} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {test.testId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {test.studentId ? `${test.studentId} - ${getStudentName(test.studentId)}` : 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {test.testDate}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {test.resultLevel}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        test.resultStatus === 1 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {getResultStatusText(test.resultStatus)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => handleEdit(test)}
+                        className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
+                        title="Edit"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(test.testId)}
+                        className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                        title="Delete"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="text-center py-12 bg-gray-50">
+                    <p className="text-gray-500 text-lg">
+                      {searchTerm || filters.student || filters.resultLevel || filters.resultStatus 
+                        ? 'No student english placement tests match your search criteria' 
+                        : 'No student english placement tests found'}
+                    </p>
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
-          
-          {tests.length === 0 && (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 text-lg">No student english placement tests found</p>
-            </div>
-          )}
         </div>
 
         {/* Pagination Controls */}
-        {tests.length > itemsPerPage && (
+        {filteredTests.length > itemsPerPage && (
           <div className="flex justify-center items-center space-x-2 my-4">
             <button
               onClick={prevPage}

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "../api/axios";
-import { Edit, Trash2 } from 'lucide-react'; // Import icons
+import { Edit, Trash2, Search, Filter } from 'lucide-react'; // Import icons
 import CustomConfirmDialog from '../Components/CustomConfirmDialog';
 
 const AdminLecturerCourseManager = () => {
@@ -22,9 +22,61 @@ const AdminLecturerCourseManager = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    lecturer: '',
+    studyPlanCourse: '',
+    semester: ''
+  });
+
+  // 获取讲师姓名
+  const getLecturerName = (lecturerId) => {
+    if (!lecturerId) return 'N/A';
+    if (!lecturers || lecturers.length === 0) return lecturerId;
+    
+    const lecturer = lecturers.find(l => l.lecturerId === lecturerId);
+    
+    if (lecturer) {
+      if (lecturer.name) {
+        return lecturer.name;
+      } else {
+        return lecturerId;
+      }
+    } else {
+      return lecturerId;
+    }
+  };
+
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+
+  // Filtered lecturer courses based on search and filters
+  const filteredLecturerCourses = useMemo(() => {
+    return lecturerCourses.filter(lecturerCourse => {
+      // Apply search term
+      const matchesSearch = !searchTerm || 
+        (lecturerCourse.id && lecturerCourse.id.toString().includes(searchTerm)) ||
+        (lecturerCourse.lecturerId && lecturerCourse.lecturerId.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (getLecturerName(lecturerCourse.lecturerId).toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (lecturerCourse.studyPlanCourseId && lecturerCourse.studyPlanCourseId.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      // Apply filters
+      const matchesLecturer = !filters.lecturer || 
+        (lecturerCourse.lecturerId && lecturerCourse.lecturerId.toLowerCase().includes(filters.lecturer.toLowerCase())) ||
+        (getLecturerName(lecturerCourse.lecturerId).toLowerCase().includes(filters.lecturer.toLowerCase()));
+      
+      const matchesStudyPlanCourse = !filters.studyPlanCourse || 
+        (lecturerCourse.studyPlanCourseId && lecturerCourse.studyPlanCourseId.toLowerCase().includes(filters.studyPlanCourse.toLowerCase()));
+      
+      const matchesSemester = !filters.semester || 
+        (lecturerCourse.semesterId && lecturerCourse.semesterId.toLowerCase().includes(filters.semester.toLowerCase()));
+      
+      return matchesSearch && matchesLecturer && matchesStudyPlanCourse && matchesSemester;
+    });
+  }, [lecturerCourses, searchTerm, filters, lecturers]);
 
   useEffect(() => {
     fetchData();
@@ -63,33 +115,15 @@ const AdminLecturerCourseManager = () => {
     }
   };
 
-  // 获取讲师姓名
-  const getLecturerName = (lecturerId) => {
-    if (!lecturerId) return 'N/A';
-    if (!lecturers || lecturers.length === 0) return lecturerId;
-    
-    const lecturer = lecturers.find(l => l.lecturerId === lecturerId);
-    
-    if (lecturer) {
-      if (lecturer.name) {
-        return lecturer.name;
-      } else {
-        return lecturerId;
-      }
-    } else {
-      return lecturerId;
-    }
-  };
-
   // 获取当前页面的数据
   const getCurrentMappings = () => {
     const indexOfLastMapping = currentPage * itemsPerPage;
     const indexOfFirstMapping = indexOfLastMapping - itemsPerPage;
-    return lecturerCourses.slice(indexOfFirstMapping, indexOfLastMapping);
+    return filteredLecturerCourses.slice(indexOfFirstMapping, indexOfLastMapping);
   };
 
   // 计算总页数
-  const totalPages = Math.ceil(lecturerCourses.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredLecturerCourses.length / itemsPerPage);
 
   // 获取当前页面的数据
   const currentMappings = getCurrentMappings();
@@ -102,10 +136,51 @@ const AdminLecturerCourseManager = () => {
   };
 
   const nextPage = () => {
-    if (currentPage < Math.ceil(lecturerCourses.length / itemsPerPage)) {
+    if (currentPage < Math.ceil(filteredLecturerCourses.length / itemsPerPage)) {
       setCurrentPage(currentPage + 1);
     }
   };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilters({
+      lecturer: '',
+      studyPlanCourse: '',
+      semester: ''
+    });
+    setCurrentPage(1);
+  };
+
+  const removeFilter = (filterKey) => {
+    if (filterKey === 'search') {
+      setSearchTerm('');
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [filterKey]: ''
+      }));
+    }
+    setCurrentPage(1);
+  };
+
+  // Get active filters for display
+  const activeFilters = useMemo(() => {
+    const filtersList = [];
+    if (searchTerm) filtersList.push({ key: 'search', label: `Search: ${searchTerm}` });
+    if (filters.lecturer) filtersList.push({ key: 'lecturer', label: `Lecturer: ${filters.lecturer}` });
+    if (filters.studyPlanCourse) filtersList.push({ key: 'studyPlanCourse', label: `Course: ${filters.studyPlanCourse}` });
+    if (filters.semester) filtersList.push({ key: 'semester', label: `Semester: ${filters.semester}` });
+    return filtersList;
+  }, [searchTerm, filters]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -145,7 +220,7 @@ const AdminLecturerCourseManager = () => {
       await axios.delete(`/admin/lecturer-courses/${mappingToDelete}`);
       fetchData();
       // 删除记录后检查当前页是否为空
-      const totalItems = lecturerCourses.length - 1; // 删除后的总数
+      const totalItems = filteredLecturerCourses.length - 1; // 删除后的总数
       const totalPages = Math.ceil(totalItems / itemsPerPage);
       if (currentPage > totalPages && totalPages > 0) {
         setCurrentPage(totalPages);
@@ -200,9 +275,101 @@ const AdminLecturerCourseManager = () => {
         </button>
       </div>
 
+      {/* Search and Filter Section */}
+      <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {/* Search Input */}
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search by ID, Lecturer, or Course..."
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
+
+          {/* Filter Inputs */}
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <input
+                type="text"
+                name="lecturer"
+                placeholder="Filter by Lecturer"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                value={filters.lecturer}
+                onChange={handleFilterChange}
+              />
+            </div>
+            <div>
+              <input
+                type="text"
+                name="studyPlanCourse"
+                placeholder="Filter by Course"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                value={filters.studyPlanCourse}
+                onChange={handleFilterChange}
+              />
+            </div>
+            <div>
+              <input
+                type="text"
+                name="semester"
+                placeholder="Filter by Semester"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                value={filters.semester}
+                onChange={handleFilterChange}
+              />
+            </div>
+          </div>
+
+          {/* Clear Filters Button */}
+          <div className="flex items-center">
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <Filter className="h-4 w-4 inline mr-1" />
+              Clear Filters
+            </button>
+          </div>
+        </div>
+
+        {/* Active Filters Display */}
+        {activeFilters.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            <span className="text-sm font-medium text-gray-700">Active Filters:</span>
+            {activeFilters.map((filter) => (
+              <span 
+                key={filter.key} 
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+              >
+                {filter.label}
+                <button
+                  type="button"
+                  className="flex-shrink-0 ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                  onClick={() => removeFilter(filter.key)}
+                >
+                  <span className="sr-only">Remove filter</span>
+                  <svg className="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
+                    <path strokeLinecap="round" strokeWidth="1.5" d="M1 1l6 6m0-6L1 7" />
+                  </svg>
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Table to display lecturer-course mappings */}
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4">Existing Lecturer-Course Mappings</h2>
+        <h2 className="text-xl font-semibold mb-4">Existing Lecturer-Course Mappings • Total: {filteredLecturerCourses.length}</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -231,54 +398,66 @@ const AdminLecturerCourseManager = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentMappings.map((lecturerCourse) => (
-                <tr key={lecturerCourse.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {lecturerCourse.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {lecturerCourse.lecturerId ? `${lecturerCourse.lecturerId} - ${getLecturerName(lecturerCourse.lecturerId)}` : 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {lecturerCourse.studyPlanCourseId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {lecturerCourse.semesterId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {lecturerCourse.classScheduleId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {lecturerCourse.totalAssignedCourse}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => {
-                        setFormData(lecturerCourse);
-                        setIsEditing(true);
-                        setShowForm(true);
-                      }}
-                      className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
-                      title="Edit"
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(lecturerCourse.id)}
-                      className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
-                      title="Delete"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+              {currentMappings.length > 0 ? (
+                currentMappings.map((lecturerCourse) => (
+                  <tr key={lecturerCourse.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {lecturerCourse.id}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {lecturerCourse.lecturerId ? `${lecturerCourse.lecturerId} - ${getLecturerName(lecturerCourse.lecturerId)}` : 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {lecturerCourse.studyPlanCourseId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {lecturerCourse.semesterId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {lecturerCourse.classScheduleId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {lecturerCourse.totalAssignedCourse}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => {
+                          setFormData(lecturerCourse);
+                          setIsEditing(true);
+                          setShowForm(true);
+                        }}
+                        className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 mr-2"
+                        title="Edit"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(lecturerCourse.id)}
+                        className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="7" className="text-center py-12 bg-gray-50">
+                    <p className="text-gray-500 text-lg">
+                      {searchTerm || filters.lecturer || filters.studyPlanCourse || filters.semester
+                        ? 'No lecturer-course mappings match your search criteria'
+                        : 'No lecturer-course mappings found'}
+                    </p>
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
         
         {/* Pagination Controls */}
-        {lecturerCourses.length > itemsPerPage && (
+        {filteredLecturerCourses.length > itemsPerPage && (
           <div className="flex justify-center items-center space-x-2 my-4">
             <button
               onClick={prevPage}

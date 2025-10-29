@@ -1,20 +1,59 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { ModernForm, FormButton } from '../Components/ModernForm';
+import { Search, Filter } from 'lucide-react';
 
 const AdminTranscriptRequestManager = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    student: '',
+    status: '',
+    type: ''
+  });
+
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+
+  // Filtered requests based on search and filters
+  const filteredRequests = useMemo(() => {
+    return requests.filter(request => {
+      // Apply search term
+      const matchesSearch = !searchTerm || 
+        (request.request?.requestId && request.request.requestId.toString().includes(searchTerm)) ||
+        (request.student?.studentId && request.student.studentId.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (request.student?.firstName && request.student.firstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (request.student?.lastName && request.student.lastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (request.request?.optionalMessage && request.request.optionalMessage.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      // Apply filters
+      const matchesStudent = !filters.student || 
+        (request.student?.studentId && request.student.studentId.toLowerCase().includes(filters.student.toLowerCase())) ||
+        (request.student?.firstName && request.student.firstName.toLowerCase().includes(filters.student.toLowerCase())) ||
+        (request.student?.lastName && request.student.lastName.toLowerCase().includes(filters.student.toLowerCase()));
+      
+      const matchesStatus = !filters.status || 
+        (request.requestStatus && request.requestStatus.toLowerCase().includes(filters.status.toLowerCase()));
+      
+      const requestType = request.request?.transcriptType === 0 ? 'Unofficial' : 
+                         request.request?.transcriptType === 1 ? 'Official' : 'Unknown';
+      const matchesType = !filters.type || 
+        requestType.toLowerCase().includes(filters.type.toLowerCase());
+      
+      return matchesSearch && matchesStudent && matchesStatus && matchesType;
+    });
+  }, [requests, searchTerm, filters]);
 
   // 获取当前页面的请求数据
   const getCurrentRequests = () => {
     const indexOfLastRequest = currentPage * itemsPerPage;
     const indexOfFirstRequest = indexOfLastRequest - itemsPerPage;
-    return requests.slice(indexOfFirstRequest, indexOfLastRequest);
+    return filteredRequests.slice(indexOfFirstRequest, indexOfLastRequest);
   };
 
   // 分页控制函数
@@ -25,10 +64,51 @@ const AdminTranscriptRequestManager = () => {
   };
 
   const nextPage = () => {
-    if (currentPage < Math.ceil(requests.length / itemsPerPage)) {
+    if (currentPage < Math.ceil(filteredRequests.length / itemsPerPage)) {
       setCurrentPage(currentPage + 1);
     }
   };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilters({
+      student: '',
+      status: '',
+      type: ''
+    });
+    setCurrentPage(1);
+  };
+
+  const removeFilter = (filterKey) => {
+    if (filterKey === 'search') {
+      setSearchTerm('');
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [filterKey]: ''
+      }));
+    }
+    setCurrentPage(1);
+  };
+
+  // Get active filters for display
+  const activeFilters = useMemo(() => {
+    const filtersList = [];
+    if (searchTerm) filtersList.push({ key: 'search', label: `Search: ${searchTerm}` });
+    if (filters.student) filtersList.push({ key: 'student', label: `Student: ${filters.student}` });
+    if (filters.status) filtersList.push({ key: 'status', label: `Status: ${filters.status}` });
+    if (filters.type) filtersList.push({ key: 'type', label: `Type: ${filters.type}` });
+    return filtersList;
+  }, [searchTerm, filters]);
 
   useEffect(() => {
     fetchTranscriptRequests();
@@ -83,7 +163,7 @@ const AdminTranscriptRequestManager = () => {
   };
 
   // 计算总页数
-  const totalPages = Math.ceil(requests.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
 
   // 获取当前页面的数据
   const currentRequests = getCurrentRequests();
@@ -128,14 +208,114 @@ const AdminTranscriptRequestManager = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Transcript Request Management</h1>
             <p className="text-gray-600">
-              Manage student transcript requests • Total: {requests.length}
+              Manage student transcript requests • Total: {filteredRequests.length}
             </p>
           </div>
         </div>
         
-        {requests.length === 0 ? (
+        {/* Search and Filter Section */}
+        <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            {/* Search Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search by ID, Student, or Message..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+
+            {/* Filter Inputs */}
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <input
+                  type="text"
+                  name="student"
+                  placeholder="Filter by Student"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.student}
+                  onChange={handleFilterChange}
+                />
+              </div>
+              <div>
+                <select
+                  name="status"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.status}
+                  onChange={handleFilterChange}
+                >
+                  <option value="">All Statuses</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Issued">Issued</option>
+                </select>
+              </div>
+              <div>
+                <select
+                  name="type"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.type}
+                  onChange={handleFilterChange}
+                >
+                  <option value="">All Types</option>
+                  <option value="Official">Official</option>
+                  <option value="Unofficial">Unofficial</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Clear Filters Button */}
+            <div className="flex items-center">
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <Filter className="h-4 w-4 inline mr-1" />
+                Clear Filters
+              </button>
+            </div>
+          </div>
+
+          {/* Active Filters Display */}
+          {activeFilters.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm font-medium text-gray-700">Active Filters:</span>
+              {activeFilters.map((filter) => (
+                <span 
+                  key={filter.key} 
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                >
+                  {filter.label}
+                  <button
+                    type="button"
+                    className="flex-shrink-0 ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                    onClick={() => removeFilter(filter.key)}
+                  >
+                    <span className="sr-only">Remove filter</span>
+                    <svg className="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
+                      <path strokeLinecap="round" strokeWidth="1.5" d="M1 1l6 6m0-6L1 7" />
+                    </svg>
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        {filteredRequests.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <p className="text-gray-500 text-lg">No transcript requests found</p>
+            <p className="text-gray-500 text-lg">
+              {searchTerm || filters.student || filters.status || filters.type 
+                ? 'No transcript requests match your search criteria' 
+                : 'No transcript requests found'}
+            </p>
           </div>
         ) : (
           <>
@@ -236,7 +416,7 @@ const AdminTranscriptRequestManager = () => {
             </div>
             
             {/* Pagination Controls */}
-            {requests.length > itemsPerPage && (
+            {filteredRequests.length > itemsPerPage && (
               <div className="flex justify-center items-center space-x-2 my-4">
                 <button
                   onClick={prevPage}
