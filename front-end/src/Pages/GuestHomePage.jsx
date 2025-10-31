@@ -4,11 +4,11 @@ import Container from "../Components/Container";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const HomePage = () => {
-  const [allAnnouncements, setAllAnnouncements] = useState([]);
-  const [filteredAnnouncements, setFilteredAnnouncements] = useState([]);
+const GuestHomePage = () => {
   const [allNews, setAllNews] = useState([]);
   const [filteredNews, setFilteredNews] = useState([]);
+  const [allAnnouncements, setAllAnnouncements] = useState([]);
+  const [filteredAnnouncements, setFilteredAnnouncements] = useState([]);
   // 分页状态
   const [newsCurrentPage, setNewsCurrentPage] = useState(1);
   const [announcementsCurrentPage, setAnnouncementsCurrentPage] = useState(1);
@@ -39,24 +39,8 @@ const HomePage = () => {
   ]);
 
   useEffect(() => {
-    // Check if user is a guest
-    const isGuest = localStorage.getItem("isGuest") === "true";
-    if (isGuest) {
-      // Redirect guest users to guest home page
-      navigate("/guest");
-      return;
-    }
-    
-    // For logged-in users, check if they have a token
-    const token = localStorage.getItem("token");
-    if (!token) {
-      // If no token, redirect to login
-      navigate("/login");
-    } else {
-      // If token exists, fetch announcements
-      fetchAnnouncements();
-    }
-  }, [navigate]);
+    fetchAnnouncements();
+  }, []);
 
   const fetchAnnouncements = async () => {
     try {
@@ -169,15 +153,35 @@ const HomePage = () => {
     }
   };
 
-  // Get current page data
+  // 获取当前页面的数据
   const currentNews = getPaginatedData(filteredNews, newsCurrentPage);
   const currentAnnouncements = getPaginatedData(filteredAnnouncements, announcementsCurrentPage);
   const newsTotalPages = getTotalPages(filteredNews);
   const announcementsTotalPages = getTotalPages(filteredAnnouncements);
 
+  const handleLoginRedirect = () => {
+    // Clear guest flag
+    localStorage.removeItem("isGuest");
+    // Redirect to login
+    navigate("/login");
+  };
+
   return (
     <section className="p-10">
       <Container>
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">Welcome, Guest!</h1>
+          <p className="text-gray-600 mb-4">
+            You are currently viewing our public news and announcements.
+          </p>
+          <button 
+            onClick={handleLoginRedirect}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+          >
+            Login to Access Full Portal
+          </button>
+        </div>
+
         {/* News Section */}
         <div className="flex justify-between items-center mb-5">
           <h1 className="text-2xl text-font">News</h1>
@@ -371,4 +375,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default GuestHomePage;

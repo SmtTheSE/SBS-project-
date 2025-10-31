@@ -5,7 +5,7 @@ import sbsLogo from "../assets/images/sbs-logo.svg";
 import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-regular-svg-icons";
-import { useProfileImage } from "../utils/profileImageContext"; // Import the profile image context
+import { useProfileImage } from "../utils/profileImageContext"; // Import the profile image context"
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -38,6 +38,8 @@ const Login = () => {
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
       localStorage.setItem("accountId", accountId);
+      // Remove guest flag if it exists
+      localStorage.removeItem("isGuest");
 
       // Navigate based on role
       if (role === "admin") {
@@ -52,6 +54,13 @@ const Login = () => {
       setError("Invalid email or password");
       console.error("Login error:", err);
     }
+  };
+
+  const handleGuestAccess = () => {
+    // Set a guest flag in localStorage
+    localStorage.setItem("isGuest", "true");
+    // Navigate to guest home page
+    navigate("/guest");
   };
 
   return (
@@ -123,7 +132,10 @@ const Login = () => {
         {/* Guest Access */}
         <div>
           <h1 className="my-5">Some courses may allow guest access</h1>
-          <button className="rounded-normal border border-font px-4 py-2">
+          <button 
+            className="rounded-normal border border-font px-4 py-2"
+            onClick={handleGuestAccess}
+          >
             Access as a guest
           </button>
         </div>

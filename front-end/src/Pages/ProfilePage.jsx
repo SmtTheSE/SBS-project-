@@ -4,7 +4,7 @@ import defaultProfile from "../assets/profiles/profile.jpeg";
 import Container from "../Components/Container";
 import SubContainer from "../Components/SubContainer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight, faUpload, faCertificate, faCoins } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faUpload, faCertificate, faCoins, faCamera } from "@fortawesome/free-solid-svg-icons";
 import donePayment from "../assets/icons/done-payment.png";
 import failPayment from "../assets/icons/fail-payment.png";
 import payment from "../assets/icons/payment.png";
@@ -256,29 +256,37 @@ const getWeekRange = (date) => {
     <section>
       <Container>
         <div className="h-60 w-full overflow-hidden relative">
-<img src={defaultCoverPic} alt="Cover Photo" className="object-cover w-full h-full" />
+          <img src={defaultCoverPic} alt="Cover Photo" className="object-cover w-full h-full" />
         </div>
         <SubContainer>
-<div className="flex justify-start items-center gap-5 my-10">
-            <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden shadow-md relative group">
-              <img
-                src={profileImage}
-                alt="Profile Picture"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+          <div className="flex justify-start items-center gap-5 my-10">
+            <div className="relative group">
+              <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden shadow-xl relative">
+                <img
+                  src={profileImage}
+                  alt="Profile Picture"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div 
+                className="absolute bottom-2 right-2 bg-red-500 rounded-full p-2 shadow-lg cursor-pointer transform transition-transform group-hover:scale-110"
                 onClick={handleProfileImageClick}
               >
-                <span className="text-white text-sm font-bold">Change Photo</span>
+                <FontAwesomeIcon icon={faCamera} className="text-white text-sm" />
               </div>
               <input
                 type="file"
                 ref={fileInputRef}
-               className="hidden"
+                className="hidden"
                 accept="image/*"
                 onChange={handleFileChange}
                 disabled={isUploading}
               />
+              {isUploading && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full">
+                  <div className="w-6 h-6 border-t-2 border-white rounded-full animate-spin"></div>
+                </div>
+              )}
             </div>
             <div className="flex flex-col items-center justify-center">
               {profile&& (
@@ -294,7 +302,7 @@ const getWeekRange = (date) => {
                   <div className="px-6 border-r border-gray-300">
                     <h1 className="font-bold text-2xl">{profile.email}</h1>
                     <h3 className="text-gray-500">Email</h3>
-</div>
+                  </div>
                   <div className="px-6">
                     <h1 className="font-bold text-2xl">{profile.pathway}</h1>
                     <h3 className="text-gray-500">Pathway</h3>
@@ -448,7 +456,7 @@ const getWeekRange = (date) => {
             </div>
           </div>
         </SubContainer>
-</Container>
+      </Container>
     </section>
   );
 };

@@ -8,6 +8,7 @@ import Transcripts from "../Pages/Transcripts";
 import StudyPlan from "../Pages/StudyPlan";
 import Attendance from "../Pages/Attendance";
 import HomePage from "../Pages/HomePage";
+import GuestHomePage from "../Pages/GuestHomePage";
 import AdminAnnouncementManager from "../Pages/AdminAnnouncementManager";
 import AdminStudentManager from "../Pages/AdminStudentManager";
 import AdminLecturerManager from "../Pages/AdminLecturerManager";
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
       {
         path: "/",
         element: <HomePage />,
+      },
+      {
+        path: "guest",
+        element: <GuestHomePage />,
       },
       {
         path: "profile",

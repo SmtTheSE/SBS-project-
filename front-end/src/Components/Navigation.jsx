@@ -11,7 +11,9 @@ import {
   faAngleDown, 
   faSignOutAlt, 
   faCheckCircle,
-  faPassport
+  faPassport,
+  faUser,
+  faKey
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -27,6 +29,9 @@ const Navigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { profileImage, clearAllProfileImageCaches } = useProfileImage();
+
+  // Check if user is a guest
+  const isGuest = localStorage.getItem("isGuest") === "true";
 
   // Fetch pending requests for admin
   useEffect(() => {
@@ -56,19 +61,22 @@ const Navigation = () => {
       }
     };
 
-    fetchPendingRequests();
-    
-    // Set up polling every 30 seconds
-    const interval = setInterval(fetchPendingRequests, 30000);
-    
-    // Clean up interval on component unmount
-    return () => clearInterval(interval);
-  }, []);
+    // Only fetch pending requests for non-guest users
+    if (!isGuest) {
+      fetchPendingRequests();
+      
+      // Set up polling every 30 seconds
+      const interval = setInterval(fetchPendingRequests, 30000);
+      
+      // Clean up interval on component unmount
+      return () => clearInterval(interval);
+    }
+  }, [isGuest]);
 
   // Fetch student visa request status
   useEffect(() => {
     const fetchStudentVisaRequestStatus = async () => {
-      if (!isUserLoggedIn() || isUserAdmin()) return;
+      if (!isUserLoggedIn() || isUserAdmin() || isGuest) return;
       
       try {
         // Fetch student's visa request status
@@ -94,14 +102,17 @@ const Navigation = () => {
       }
     };
 
-    fetchStudentVisaRequestStatus();
-    
-    // Set up polling every 30 seconds for student visa status
-    const interval = setInterval(fetchStudentVisaRequestStatus, 30000);
-    
-    // Clean up interval on component unmount
-    return () => clearInterval(interval);
-  }, []);
+    // Only fetch visa status for non-guest users
+    if (!isGuest) {
+      fetchStudentVisaRequestStatus();
+      
+      // Set up polling every 30 seconds for student visa status
+      const interval = setInterval(fetchStudentVisaRequestStatus, 30000);
+      
+      // Clean up interval on component unmount
+      return () => clearInterval(interval);
+    }
+  }, [isGuest]);
 
   const getNotificationBadge = (count) => {
     if (count === 0) return null;
@@ -123,6 +134,7 @@ const Navigation = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("accountId");
+    localStorage.removeItem("isGuest");
     
     // Clear all profile image caches on logout
     clearAllProfileImageCaches();
@@ -152,12 +164,22 @@ const Navigation = () => {
     }
   };
 
+  const handleViewProfile = () => {
+    navigate("/profile");
+    setShowProfileMenu(false);
+  };
+
+  const handleChangePassword = () => {
+    navigate("/change-password");
+    setShowProfileMenu(false);
+  };
+
   return (
     <>
       <nav className="z-10 flex left-0 top-0 justify-between items-center px-10 py-3 bg-white fixed w-full">
         <img src={sbsLogo} alt="SBS Logo" />
         <div className="flex justify-between items-center gap-5">
-          {isUserLoggedIn() && (
+          {isUserLoggedIn() && !isGuest && (
             <>
               <div className="relative">
                 <FontAwesomeIcon 
@@ -189,40 +211,56 @@ const Navigation = () => {
               </div>
             </>
           )}
-          <div className="relative">
-            <div 
-              className="flex justify-between items-center gap-3 cursor-pointer"
-              onClick={() => isUserLoggedIn() && setShowProfileMenu(!showProfileMenu)}
-            >
-              <div className="w-12 h-12 overflow-hidden rounded-full flex items-center justify-center">
-                {isUserAdmin() ? (
-                  <FontAwesomeIcon 
-                    icon={faUserCircle} 
-                    className="text-3xl text-gray-400"
-                  />
-                ) : (
-                  <img
-                    src={profileImage}
-                    alt="Profile pic"
-                    className="w-full h-full object-cover"
-                  />
-                )}
+          {!isGuest && (
+            <div className="relative">
+              <div 
+                className="flex justify-between items-center gap-3 cursor-pointer"
+                onClick={() => isUserLoggedIn() && setShowProfileMenu(!showProfileMenu)}
+              >
+                <div className="w-12 h-12 overflow-hidden rounded-full flex items-center justify-center">
+                  {isUserAdmin() ? (
+                    <FontAwesomeIcon 
+                      icon={faUserCircle} 
+                      className="text-3xl text-gray-400"
+                    />
+                  ) : (
+                    <img
+                      src={profileImage}
+                      alt="Profile pic"
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </div>
+                <FontAwesomeIcon icon={faAngleDown} className="text-2xl" />
               </div>
-              <FontAwesomeIcon icon={faAngleDown} className="text-2xl" />
+              
+              {showProfileMenu && isUserLoggedIn() && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                  <button
+                    onClick={handleViewProfile}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <FontAwesomeIcon icon={faUser} className="mr-2" />
+                    View Profile
+                  </button>
+                  <button
+                    onClick={handleChangePassword}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <FontAwesomeIcon icon={faKey} className="mr-2" />
+                    Change Password
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
-            
-            {showProfileMenu && isUserLoggedIn() && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                <button
-                  onClick={handleLogout}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </nav>
       <br /><br /><br /><br/>
