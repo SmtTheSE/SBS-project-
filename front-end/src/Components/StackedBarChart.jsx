@@ -21,7 +21,7 @@ const StackedBarChart = ({ data }) => {
 
   return (
     // 调整图表尺寸以更好地显示数据
-    <div className="w-[500px] h-[500px]">
+    <div className="w-[500px] h-[500px] min-h-80">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}

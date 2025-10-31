@@ -8,9 +8,71 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import StackedBarChart from "../Components/StackedBarChart";
 
-// Dynamic Calendar Component
-const DynamicAttendanceCalendar = ({ attendanceLogs }) => {
+// Get course color based on course name
+const getCourseColor = (courseName) => {
+  // Define a set of colors to use
+  const colorPalette = [
+    "bg-red-500",
+    "bg-yellow-500",
+    "bg-blue-500",
+    "bg-green-500",
+    "bg-purple-500",
+    "bg-indigo-500",
+    "bg-pink-500",
+    "bg-teal-500",
+    "bg-orange-500",
+    "bg-cyan-500",
+    "bg-lime-500",
+    "bg-amber-500",
+    "bg-emerald-500",
+    "bg-violet-500",
+    "bg-fuchsia-500"
+  ];
+  
+  // Create a consistent hash from the course name to select a color
+  let hash = 0;
+  for (let i = 0; i < courseName.length; i++) {
+    const char = courseName.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  // Use the hash to select a color from the palette
+  const index = Math.abs(hash) % colorPalette.length;
+  return colorPalette[index];
+};
+
+// Calendar Event Popup Component
+const EventPopup = ({ event, onClose }) => {
+  if (!event) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-96">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">{event.courseName}</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="space-y-2">
+          <p><span className="font-medium">Date:</span> {event.classDate}</p>
+          <p><span className="font-medium">Time:</span> {event.startTime} - {event.endTime}</p>
+          <p><span className="font-medium">Room:</span> {event.room}</p>
+          <p><span className="font-medium">Lecturer:</span> {event.lecturerName}</p>
+          <p><span className="font-medium">Duration:</span> {event.durationMinutes} minutes</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Class Schedule Calendar Component
+const ClassScheduleCalendar = ({ classSchedules }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
   const today = new Date();
   const year = currentDate.getFullYear();
@@ -44,42 +106,30 @@ const DynamicAttendanceCalendar = ({ attendanceLogs }) => {
     setCurrentDate(new Date());
   };
 
-  // Get attendance status for a specific date
-  const getAttendanceStatus = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const dateStr = `${year}-${month}-${day}`;
-
-    const attendance = attendanceLogs.find(log => log.date === dateStr);
-    return attendance ? attendance.status : null;
-  };
-
-  // Get status circle styling
-  const getStatusCircleClass = (status, isToday) => {
-    if (isToday && status !== null) {
-      // Today with attendance status - combine blue background with colored border
-      switch (status) {
-        case 1: return "bg-blue-500 text-white ring-2 ring-green-600"; // Present
-        case 0: return "bg-blue-500 text-white ring-2 ring-red-600";   // Absent
-        case 2: return "bg-blue-500 text-white ring-2 ring-yellow-400"; // Absent with permission
-        default: return "bg-blue-500 text-white";
+  // Get class schedules for a specific date
+  const getSchedulesForDate = (date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return classSchedules.filter(schedule => {
+      // Check if the schedule has a valid classDate and matches the date
+      if (schedule.classDate) {
+        // Normalize the schedule date to string format for comparison
+        let scheduleDateStr = '';
+        
+        if (typeof schedule.classDate === 'string') {
+          // Already a string, use as is
+          scheduleDateStr = schedule.classDate;
+        } else if (schedule.classDate instanceof Object && schedule.classDate.year !== undefined) {
+          // LocalDate object format {year, month, day}
+          scheduleDateStr = `${schedule.classDate.year}-${String(schedule.classDate.month).padStart(2, '0')}-${String(schedule.classDate.day).padStart(2, '0')}`;
+        } else if (schedule.classDate instanceof Date) {
+          // Date object format
+          scheduleDateStr = schedule.classDate.toISOString().split('T')[0];
+        }
+        
+        return scheduleDateStr === dateStr;
       }
-    } else if (isToday) {
-      // Today without attendance
-      return "bg-blue-500 text-white";
-    } else if (status !== null) {
-      // Regular day with attendance status
-      switch (status) {
-        case 1: return "bg-green-600 text-white"; // Present
-        case 0: return "bg-red-600 text-white";   // Absent
-        case 2: return "bg-yellow-400 text-gray-800"; // Absent with permission
-        default: return "hover:bg-gray-100 text-gray-800";
-      }
-    } else {
-      // Regular day without attendance
-      return "hover:bg-gray-100 text-gray-800";
-    }
+      return false;
+    });
   };
 
   // Check if date is today
@@ -89,6 +139,16 @@ const DynamicAttendanceCalendar = ({ attendanceLogs }) => {
            date.getDate() === today.getDate();
   };
 
+  // Handle event click
+  const handleEventClick = (event) => {
+    setSelectedEvent(event);
+  };
+
+  // Close popup
+  const closePopup = () => {
+    setSelectedEvent(null);
+  };
+
   // Generate calendar days
   const generateCalendarDays = () => {
     const days = [];
@@ -96,10 +156,22 @@ const DynamicAttendanceCalendar = ({ attendanceLogs }) => {
     // Previous month's trailing days
     for (let i = firstDayWeekday - 1; i >= 0; i--) {
       const date = new Date(year, month, -i);
+      const schedules = getSchedulesForDate(date);
+      
       days.push(
-        <div key={`prev-${date.getDate()}`} className="p-2 text-center">
-          <div className="w-8 h-8 mx-auto flex items-center justify-center rounded-full text-sm text-gray-400">
-            {date.getDate()}
+        <div key={`prev-${date.getDate()}`} className="p-1 text-center h-24 border border-gray-100">
+          <div className="text-xs text-gray-400">{date.getDate()}</div>
+          <div className="flex flex-wrap justify-center gap-1 mt-1">
+            {schedules.slice(0, 3).map((schedule, idx) => (
+              <div 
+                key={idx} 
+                className={`w-2 h-2 rounded-full ${getCourseColor(schedule.courseName)}`}
+                title={`${schedule.courseName} - ${schedule.startTime}`}
+              ></div>
+            ))}
+            {schedules.length > 3 && (
+              <div className="text-xs text-gray-400">+{schedules.length - 3}</div>
+            )}
           </div>
         </div>
       );
@@ -109,13 +181,22 @@ const DynamicAttendanceCalendar = ({ attendanceLogs }) => {
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
       const todayFlag = isToday(date);
-      const status = getAttendanceStatus(date);
-      const circleClass = getStatusCircleClass(status, todayFlag);
-
+      const schedules = getSchedulesForDate(date);
+      
       days.push(
-        <div key={day} className="p-2 text-center">
-          <div className={`w-8 h-8 mx-auto flex items-center justify-center rounded-full text-sm font-medium cursor-pointer transition-all ${circleClass}`}>
+        <div key={day} className="p-1 text-center h-24 border border-gray-100">
+          <div className={`text-sm ${todayFlag ? 'bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center ml-auto mr-auto' : 'text-gray-700'}`}>
             {day}
+          </div>
+          <div className="flex flex-wrap justify-center gap-1 mt-1 max-h-16 overflow-y-auto">
+            {schedules.map((schedule, idx) => (
+              <div 
+                key={idx} 
+                className={`w-2 h-2 rounded-full ${getCourseColor(schedule.courseName)} cursor-pointer hover:opacity-75`}
+                title={`${schedule.courseName} - ${schedule.startTime}`}
+                onClick={() => handleEventClick(schedule)}
+              ></div>
+            ))}
           </div>
         </div>
       );
@@ -125,10 +206,22 @@ const DynamicAttendanceCalendar = ({ attendanceLogs }) => {
     const remainingDays = 42 - days.length;
     for (let day = 1; day <= remainingDays; day++) {
       const date = new Date(year, month + 1, day);
+      const schedules = getSchedulesForDate(date);
+      
       days.push(
-        <div key={`next-${day}`} className="p-2 text-center">
-          <div className="w-8 h-8 mx-auto flex items-center justify-center rounded-full text-sm text-gray-400">
-            {day}
+        <div key={`next-${day}`} className="p-1 text-center h-24 border border-gray-100">
+          <div className="text-xs text-gray-400">{date.getDate()}</div>
+          <div className="flex flex-wrap justify-center gap-1 mt-1">
+            {schedules.slice(0, 3).map((schedule, idx) => (
+              <div 
+                key={idx} 
+                className={`w-2 h-2 rounded-full ${getCourseColor(schedule.courseName)}`}
+                title={`${schedule.courseName} - ${schedule.startTime}`}
+              ></div>
+            ))}
+            {schedules.length > 3 && (
+              <div className="text-xs text-gray-400">+{schedules.length - 3}</div>
+            )}
           </div>
         </div>
       );
@@ -179,13 +272,16 @@ const DynamicAttendanceCalendar = ({ attendanceLogs }) => {
       <div className="grid grid-cols-7 gap-1">
         {generateCalendarDays()}
       </div>
+
+      {/* Event Popup */}
+      {selectedEvent && <EventPopup event={selectedEvent} onClose={closePopup} />}
     </div>
   );
 };
 
 const Attendance = () => {
   const [attendanceLogs, setAttendanceLogs] = useState([]);
-  const [filteredLogs, setFilteredLogs] = useState([]);
+  const [classSchedules, setClassSchedules] = useState([]);
   const [rates, setRates] = useState({
     studentRate: 0,
     teacherRate: 91, // Keep static or fetch from another API
@@ -193,9 +289,9 @@ const Attendance = () => {
   const [chartData, setChartData] = useState([]);
   const navigate = useNavigate();
   
-  // Pagination states
+  // Pagination states for class schedules
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 10; // Show 10 schedules per page
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -208,9 +304,15 @@ const Attendance = () => {
         const studentId = res.data.studentId;
         fetchAttendanceData(studentId, token);
         fetchAttendanceSummary(studentId, token);
+        fetchClassSchedules(studentId, token);
       })
       .catch(() => navigate("/login"));
   }, []);
+
+  // Reset to first page when classSchedules changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [classSchedules]);
 
   const fetchAttendanceData = async (studentId, token) => {
     try {
@@ -234,15 +336,57 @@ const Attendance = () => {
       }));
 
       setAttendanceLogs(logs);
-      setFilteredLogs(logs); // Initialize filtered logs with all data
-      setCurrentPage(1); // Reset to first page when data changes
       
       // Process data for the chart
       processChartData(logs);
     } catch (error) {
       console.error("Failed to fetch attendance data:", error);
       setAttendanceLogs([]);
-      setFilteredLogs([]);
+    }
+  };
+
+  const fetchClassSchedules = async (studentId, token) => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const response = await axios.get(
+        `http://localhost:8080/api/academic/class-timelines/${studentId}`,
+        { headers }
+      );
+
+      const scheduleData = Array.isArray(response.data) ? response.data : [];
+      
+      // Transform data for calendar - ensure proper date format
+      const schedules = scheduleData.map(schedule => {
+        // Ensure classDate is in the correct format
+        let classDate = schedule.classDate;
+        if (typeof classDate === 'object' && classDate !== null) {
+          if (classDate.year !== undefined) {
+            // Convert LocalDate object to string
+            classDate = `${classDate.year}-${String(classDate.month).padStart(2, '0')}-${String(classDate.day).padStart(2, '0')}`;
+          } else if (classDate instanceof Date) {
+            // Convert Date object to string
+            classDate = classDate.toISOString().split('T')[0];
+          }
+        }
+        
+        return {
+          classScheduleId: schedule.classScheduleId,
+          classDate: classDate,
+          dayOfWeek: schedule.dayOfWeek,
+          startTime: schedule.startTime,
+          endTime: schedule.endTime,
+          durationMinutes: schedule.durationMinutes,
+          room: schedule.room,
+          courseName: schedule.courseName,
+          lecturerName: schedule.lecturerName
+        };
+      });
+
+      setClassSchedules(schedules);
+      console.log("Class schedules loaded:", schedules);
+    } catch (error) {
+      console.error("Failed to fetch class schedules:", error);
+      setClassSchedules([]);
     }
   };
 
@@ -323,30 +467,32 @@ const Attendance = () => {
     }
   };
 
-  // Pagination functions
-  const getPaginatedData = (data) => {
+  // Pagination functions for class schedules
+  const getPaginatedSchedules = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return data.slice(startIndex, endIndex);
+    return classSchedules.slice(startIndex, endIndex);
   };
 
-  const getTotalPages = (data) => {
-    return Math.ceil(data.length / itemsPerPage);
+  const getTotalPages = () => {
+    return Math.ceil(classSchedules.length / itemsPerPage);
   };
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
 
-  // 处理筛选变化
-  const handleFilterChange = useCallback((filteredData) => {
-    setFilteredLogs(filteredData);
-    setCurrentPage(1); // Reset to first page when filter changes
-  }, []);
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
-  // Get current data based on pagination
-  const currentLogs = getPaginatedData(filteredLogs);
-  const totalPages = getTotalPages(filteredLogs);
+  const handleNextPage = () => {
+    if (currentPage < getTotalPages()) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   return (
     <section className="p-10">
@@ -378,72 +524,73 @@ const Attendance = () => {
             </div>
           </div>
 
-          {/* Daily attendance */}
+          {/* Class Schedule Information */}
           <div className="bg-white p-5 rounded-md">
             <h1 className="text-font text-3xl mb-5">
-              Daily Attendance Table (Detailed Log)
+              Class Schedule for the Semester
             </h1>
-
-            <div className="mb-5">
-              <AttendanceFilter
-                logs={attendanceLogs}
-                onFilterChange={handleFilterChange}
-              />
-            </div>
-
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="py-3 text-left">Date</th>
-                  <th className="py-3 text-left">Course</th>
-                  <th className="py-3 text-left">Status</th>
-                  <th className="py-3 text-left">Check-in</th>
-                  <th className="py-3 text-left">Check-out</th>
-                  <th className="py-3 text-left">Note</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentLogs.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="py-5 text-center text-gray-500">
-                      No attendance records found
-                    </td>
-                  </tr>
-                ) : (
-                  currentLogs.map((log, index) => (
-                    <tr key={`${log.date}-${index}`} className="border-b border-border">
-                      <td className="py-3">{log.date}</td>
-                      <td className="py-3">{log.courseName || "-"}</td>
-                      <td className="py-3">
-                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                          log.status === 1
-                            ? "bg-green-100 text-green-800"
-                            : log.status === 0
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}>
-                          {log.status === 1
-                            ? "Present"
-                            : log.status === 0
-                            ? "Absent"
-                            : "Absent with permission"}
-                        </span>
-                      </td>
-                      <td className="py-3">{log.checkIn || "-"}</td>
-                      <td className="py-3">{log.checkOut || "-"}</td>
-                      <td className="py-3">{log.note || "-"}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            <p className="mb-4">
+              This calendar shows all your scheduled classes for the entire semester.
+            </p>
             
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center mt-6">
+            {/* Course Schedule Table */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {getPaginatedSchedules()
+                    .sort((a, b) => {
+                      // Sort by day of week and then by start time
+                      const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+                      const dayComparison = dayOrder.indexOf(a.dayOfWeek) - dayOrder.indexOf(b.dayOfWeek);
+                      if (dayComparison !== 0) return dayComparison;
+                      
+                      // If same day, sort by start time
+                      return a.startTime.localeCompare(b.startTime);
+                    })
+                    .map((schedule, index) => (
+                      <tr key={`${schedule.classScheduleId}-${index}`} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <span className={`w-3 h-3 ${getCourseColor(schedule.courseName)} rounded-full mr-2`}></span>
+                            <div className="text-sm font-medium text-gray-900">{schedule.courseName}</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {schedule.dayOfWeek}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {schedule.startTime} - {schedule.endTime}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {schedule.room}
+                        </td>
+                      </tr>
+                    ))
+                  }
+                </tbody>
+              </table>
+              
+              {classSchedules.length === 0 && (
+                <div className="text-center py-4 text-gray-500">
+                  No class schedules found
+                </div>
+              )}
+            </div>
+            
+            {/* Pagination Controls */}
+            {classSchedules.length > itemsPerPage && (
+              <div className="flex justify-center mt-4">
                 <nav className="flex items-center gap-2">
                   <button
-                    onClick={() => handlePageChange(currentPage - 1)}
+                    onClick={handlePrevPage}
                     disabled={currentPage === 1}
                     className={`px-3 py-1 rounded-md ${
                       currentPage === 1 
@@ -454,13 +601,13 @@ const Attendance = () => {
                     Previous
                   </button>
                   
-                  {[...Array(totalPages)].map((_, index) => {
+                  {[...Array(getTotalPages())].map((_, index) => {
                     const pageNumber = index + 1;
                     return (
                       <button
                         key={pageNumber}
                         onClick={() => handlePageChange(pageNumber)}
-                        className={`w-10 h-10 rounded-full ${
+                        className={`w-8 h-8 rounded-full ${
                           currentPage === pageNumber
                             ? 'bg-blue-500 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -472,10 +619,10 @@ const Attendance = () => {
                   })}
                   
                   <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
+                    onClick={handleNextPage}
+                    disabled={currentPage === getTotalPages()}
                     className={`px-3 py-1 rounded-md ${
-                      currentPage === totalPages 
+                      currentPage === getTotalPages() 
                         ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
@@ -485,6 +632,10 @@ const Attendance = () => {
                 </nav>
               </div>
             )}
+            
+            <p className="mt-4 text-sm text-gray-500">
+              Click on any colored dot in the calendar to see detailed information about the class.
+            </p>
           </div>
         </div>
 
@@ -507,7 +658,7 @@ const Attendance = () => {
               <h1 className="text-font text-3xl mb-5">Calendar</h1>
               <FontAwesomeIcon icon={faEllipsis} />
             </div>
-            <DynamicAttendanceCalendar attendanceLogs={attendanceLogs} />
+            <ClassScheduleCalendar classSchedules={classSchedules} />
           </div>
         </div>
       </Container>
@@ -515,64 +666,4 @@ const Attendance = () => {
   );
 };
 
-// 新增的筛选组件
-const AttendanceFilter = ({ logs, onFilterChange }) => {
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [courseFilter, setCourseFilter] = useState('all');
-
-  // 获取所有唯一的课程名称
-  const courses = [...new Set(logs.map(log => log.courseName).filter(name => name))].sort();
-
-  // 获取状态选项
-  const statusOptions = [
-    { value: 'all', label: 'All Statuses' },
-    { value: '1', label: 'Present' },
-    { value: '0', label: 'Absent' },
-    { value: '2', label: 'Absent with permission' }
-  ];
-
-  // 处理筛选变化
-  useEffect(() => {
-    let result = logs;
-
-    // 按状态筛选
-    if (statusFilter !== 'all') {
-      result = result.filter(log => log.status === parseInt(statusFilter));
-    }
-
-    // 按课程筛选
-    if (courseFilter !== 'all') {
-      result = result.filter(log => log.courseName === courseFilter);
-    }
-
-    onFilterChange(result);
-  }, [statusFilter, courseFilter, logs, onFilterChange]);
-
-  return (
-    <div className="flex gap-2">
-      <select
-        value={statusFilter}
-        onChange={(e) => setStatusFilter(e.target.value)}
-        className="rounded-md border border-border px-3 py-2 bg-white text-font-light focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
-      >
-        {statusOptions.map(option => (
-          <option key={option.value} value={option.value}>{option.label}</option>
-        ))}
-      </select>
-
-      <select
-        value={courseFilter}
-        onChange={(e) => setCourseFilter(e.target.value)}
-        className="rounded-md border border-border px-3 py-2 bg-white text-font-light focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
-      >
-        <option value="all">All Courses</option>
-        {courses.map(course => (
-          <option key={course} value={course}>{course}</option>
-        ))}
-      </select>
-    </div>
-  );
-};
-
 export default Attendance;
-
