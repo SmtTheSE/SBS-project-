@@ -4,7 +4,7 @@ import defaultProfile from "../assets/profiles/profile.jpeg";
 import Container from "../Components/Container";
 import SubContainer from "../Components/SubContainer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faUpload, faCertificate, faCoins } from "@fortawesome/free-solid-svg-icons";
 import donePayment from "../assets/icons/done-payment.png";
 import failPayment from "../assets/icons/fail-payment.png";
 import payment from "../assets/icons/payment.png";
@@ -17,10 +17,12 @@ import { useProfileImage } from "../utils/profileImageContext";
 const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [generalInfo, setGeneralInfo] = useState({ paymentStatus: null, totalCredits: null });
-  const [classTimeline, setClassTimeline] = useState([]);
   const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [certificateFile, setCertificateFile] = useState(null);
+  const [isUploadingCertificate, setIsUploadingCertificate] = useState(false);
   const fileInputRef = useRef(null);
+  const certificateInputRef = useRef(null);
  const navigate = useNavigate();
   const { profileImage, updateProfileImage, clearProfileImageCache } = useProfileImage();
   
@@ -39,7 +41,6 @@ const ProfilePage = () => {
       .then((res) => {
         setProfile(res.data);
         fetchGeneralInfo(res.data.studentId);
-        fetchClassTimeline(res.data.studentId);
         fetchAssignmentDeadlines(res.data.studentId);
         // Fetch profile image when profile data is loaded
         fetchProfileImage(res.data.studentId);
@@ -104,6 +105,68 @@ const fetchProfileImage = (studentId) => {
       });
 };
 
+  const handleCertificateClick = () => {
+    certificateInputRef.current.click();
+  };
+
+  const handleCertificateChange = (event) => {
+    const file = event.target.files[0];
+    if (!file || !profile) return;
+
+    setCertificateFile(file);
+  };
+
+  const handleCertificateUpload = () => {
+    if (!certificateFile || !profile) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", certificateFile);
+    formData.append("studentId", profile.studentId);
+    formData.append("certificateType", "credit-exemption");
+
+    setIsUploadingCertificate(true);
+    // 修复：使用 axiosInstance 而不是 axios，并移除 /api 前缀
+    axiosInstance.post("/academic/certificates/upload", formData)
+      .then((res) => {
+        alert("Certificate uploaded successfully for credit exemption!");
+        // Reset file input
+        certificateInputRef.current.value = "";
+        setCertificateFile(null);
+      })
+      .catch((error) => {
+        console.error("Error uploading certificate:", error);
+        // 更详细的错误处理
+        if (error.response) {
+          // 服务器响应了错误状态码
+          if (error.response.status === 400) {
+            alert("Failed to upload certificate: Bad Request. The server may not have the upload endpoint implemented yet.");
+          } else if (error.response.status === 401) {
+            alert("Authentication required. Please log in again.");
+            navigate("/login");
+          } else if (error.response.status === 500) {
+            alert("Server error. Please try again later.");
+          } else {
+            alert(`Failed to upload certificate: ${error.response.status} - ${error.response.statusText}`);
+          }
+        } else if (error.request) {
+          // 请求已发出但没有收到响应
+          alert("Failed to upload certificate: No response from server. Please check your connection.");
+        } else {
+          // 其他错误
+          alert("Failed to upload certificate: " + error.message);
+        }
+      })
+      .finally(() => {
+        setIsUploadingCertificate(false);
+      });
+  };
+
 const getWeekRange = (date) => {
     const currentDate = new Date(date);
     const dayOfWeek = currentDate.getDay(); // 0 (Sunday) to 6 (Saturday)
@@ -144,58 +207,6 @@ const getWeekRange = (date) => {
     axiosInstance.get(`/academic/course-results/total-credits/${studentId}`)
       .then((res) => setGeneralInfo(prev => ({ ...prev, totalCredits: res.data })))
       .catch(() =>setGeneralInfo(prev => ({ ...prev, totalCredits: 0 })));
-  };
-
-  const fetchClassTimeline = (studentId) => {
-    // Get currentweek range (Monday to Saturday)
-    const { startDate, endDate } = getWeekRange(new Date());
-
-    axiosInstance.get(`/academic/class-timelines/${studentId}`)
-      .then((res) => {
-        // Filter classes within the current week
-        const classesInWeek =res.data.filter(classItem => {
-const classDate = new Date(classItem.classDate);
-          return classDate >= startDate && classDate <= endDate;
-        });
-
-        // Group by dayof week
-        const grouped = classesInWeek.reduce((acc, curr) => {
-          const classDate = new Date(curr.classDate);
-          const dayOfWeek =getDayOfWeek(classDate);
-
-          if (!acc[dayOfWeek]) acc[dayOfWeek] = [];
-          acc[dayOfWeek].push(curr);
-         return acc;
-        }, {});
-
-        // Create timeline for the current week (Monday to Saturday)
-        const weekdaysOrder = ["Monday","Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-        const formatted = weekdaysOrder.map((day, index) => {
-          const subjects = grouped[day] ||[];
-          const sortedSubjects = subjects.sort((a, b) => a.startTime.localeCompare(b.startTime));
-
-          // Find the actual datefor this day in the current week
-const dayDate = new Date(startDate);
-          dayDate.setDate(startDate.getDate() + index);
-
-          return {
-            id: index,
-            day,
-date: dayDate,
-            subjects: sortedSubjects.map((s, i) => ({
-              id: i,
-              subject: s.courseName,
-              lecturer: s.lecturerName || "TBD",
-              startTime: s.startTime,
-              endTime: s.endTime,
-            })),
-          };
-        });
-
-        setClassTimeline(formatted);
-      })
-      .catch(() => setClassTimeline([]));
   };
 
   const fetchAssignmentDeadlines = (studentId) => {
@@ -293,137 +304,145 @@ date: dayDate,
             </div>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 mb-5">
+          {/* Info Cards Section */}
+          <div className="grid gap-6 sm:grid-cols-2 mb-8">
             {otherInfos.map((otherInfo, index) => (
-              <div key={index}className="bg-white p-5 rounded-xl shadow-sm flex items-center gap-5">
-                <div className="bg-background rounded-full w-20 h-20 overflow-hidden flex items-center justify-center mb-4">
-                  <img src={otherInfo.icon} alt={otherInfo.name} className="w-12 h-12 object-contain" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold">{otherInfo.name}</h3>
-                  <p className={
-                    otherInfo.data === 0 ? "text-red-500" :
-                    otherInfo.data === 1 ? "text-green-500" :
-                    "text-font text-2xl"
-                 }>
-                    {otherInfo.data === 0 ? "Not yet" :
-                    otherInfo.data === 1 ? "Completed" :
-                    otherInfo.data}
-                  </p>
+              <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
+                <div className="p-6">
+                  <div className="flex items-center gap-5">
+                    <div className="bg-gradient-to-r from-red-100 to-red-200 rounded-full w-16 h-16 flex items-center justify-center">
+                      <img src={otherInfo.icon} alt={otherInfo.name} className="w-8 h-8 object-contain" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-700">{otherInfo.name}</h3>
+                      <p className={
+                        otherInfo.data === 0 ? "text-red-500 font-bold text-xl" :
+                        otherInfo.data === 1 ? "text-green-500 font-bold text-xl" :
+                        "text-gray-800 font-bold text-2xl"
+                      }>
+                        {otherInfo.data === 0 ? "Not yet" :
+                         otherInfo.data === 1 ? "Completed" :
+                         otherInfo.data}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-))}
+            ))}
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-           <div className="bg-white p-5 col-span-2 row-span-2 rounded-md">
-              <div className="flex justify-between items-center uppercase text-gray-500 text-xl border-b border-font-lightpb-5">
-<h1>Class Timeline</h1>
-                <p className="text-sm normal-case text-gray-500">{weekRangeText}</p>
-              </div>
-              <div>
-                {classTimeline.map((timeline) => (
-                  <div key={timeline.id} className="grid grid-cols-4 py-5 border-b border-border">
-                    <div className="col-span-1">
-                      <div className="flex items-center gap-2">
-                        <h1 className="text-font text-2xl">
-                          {formatDate(timeline.date) === todayFormatted ? "Today" : timeline.day}
-                        </h1>
-                      </div>
-                      <p className="text-font-light">{formatDate(timeline.date)}</p>
-                    </div>
-                    <div className="col-span-3">
-                      {!timeline.subjects?.length ? (
-                        <h1 className="text-2xl text-font">Noclasses - Enjoyyour day off!</h1>
-                      ) : (
-                        <div>
-                          {timeline.subjects.map((sub) => (
-                            <div key={sub.id}>
-                              <div className="flex justify-start items-center">
-                                <div className="w-25">
-                                  <h3>{sub.startTime}</h3>
-                                  <h3>{sub.endTime}</h3>
-                                </div>
-                                <div className="w-full p-5 border-l-5 border-border bg-background">
-                                  <div className="flex justify-between items-center w-full">
-                                    <h1 className="flex items-center gap-3">
-                                     <span className="block rounded-full bg-amber-600 w-2 h-2"></span>
-                                      {sub.subject}
-                                    </h1>
-                                    <h1>{sub.lecturer}</h1>
-                                  </div>
-                                </div>
-                              </div>
-                              <br />
-                            </div>
-                          ))}
-</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {/* Upcoming Deadlines Section */}
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8 transition-all duration-300 hover:shadow-xl">
+            <div className="bg-gradient-to-r from-red-500 to-red-600 p-5">
+              <h1 className="text-xl font-bold text-white">Upcoming Deadlines</h1>
             </div>
-
-            <div className="bg-white p-5 col-span-1 rounded-md">
-              <h1 className="uppercase text-gray-500 text-xl border-b border-font-light pb-5">Upcoming Deadlines</h1>
-              <div>
+            <div className="p-6">
+              <div className="space-y-4">
                 {currentDeadlines.map((el) => (
-                  <div key={el.id} className="flex justify-between items-center border-b border-font-light py-3">
-                    <h1 className="flex justify-start items-center gap-2">
-                      <span className="block rounded-full bg-amber-600 w-2 h-2"></span>
-                     {el.name}
+                  <div key={el.id} className="flex justify-between items-center border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+                    <h1 className="flex justify-start items-center gap-2 font-medium">
+                      <span className="block rounded-full bg-red-500 w-2 h-2"></span>
+                      {el.name}
                     </h1>
-                    <p>{el.deadline}</p>
+                    <p className="text-gray-600 font-medium">{el.deadline}</p>
                   </div>
                 ))}
+              </div>
+              
+              {/* Pagination for Upcoming Deadlines */}
+              {deadlinesTotalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <nav className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleDeadlinesPageChange(deadlinesCurrentPage - 1)}
+                      disabled={deadlinesCurrentPage === 1}
+                      className={`px-3 py-1 rounded-md ${
+                        deadlinesCurrentPage === 1 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Previous
+                    </button>
+                    
+                    {[...Array(deadlinesTotalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => handleDeadlinesPageChange(pageNumber)}
+                          className={`w-8 h-8 rounded-full ${
+                            deadlinesCurrentPage === pageNumber
+                              ? 'bg-gradient-to-r from-red-500 to-red-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    })}
+                    
+                    <button
+                      onClick={() => handleDeadlinesPageChange(deadlinesCurrentPage + 1)}
+                      disabled={deadlinesCurrentPage === deadlinesTotalPages}
+                      className={`px-3 py-1 rounded-md ${
+                        deadlinesCurrentPage === deadlinesTotalPages 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Next
+                    </button>
+                  </nav>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Certificate Upload Section */}
+          <div className="mb-8 bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
+            <div className="bg-gradient-to-r from-red-500 to-red-600 p-5">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <FontAwesomeIcon icon={faCertificate} />
+                Credit Exemption Certificate
+              </h2>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-600 mb-5">Upload your previous certificates for credit exemption consideration.</p>
+              
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <input
+                  type="file"
+                  ref={certificateInputRef}
+                  className="hidden"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={handleCertificateChange}
+                />
                 
-                {/* Pagination for Upcoming Deadlines */}
-                {deadlinesTotalPages > 1 && (
-                  <div className="flex justify-center mt-4">
-                    <nav className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleDeadlinesPageChange(deadlinesCurrentPage - 1)}
-                        disabled={deadlinesCurrentPage === 1}
-                        className={`px-2 py-1 text-sm rounded ${
-                          deadlinesCurrentPage === 1 
-                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        Previous
-                      </button>
-                      
-                      {[...Array(deadlinesTotalPages)].map((_, index) => {
-                        const pageNumber = index + 1;
-                        return (
-                          <button
-                            key={pageNumber}
-                            onClick={() => handleDeadlinesPageChange(pageNumber)}
-                            className={`w-8 h-8 text-sm rounded-full ${
-                              deadlinesCurrentPage === pageNumber
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                          >
-                            {pageNumber}
-                          </button>
-                        );
-                      })}
-                      
-                      <button
-                        onClick={() => handleDeadlinesPageChange(deadlinesCurrentPage + 1)}
-                        disabled={deadlinesCurrentPage === deadlinesTotalPages}
-                        className={`px-2 py-1 text-sm rounded ${
-                          deadlinesCurrentPage === deadlinesTotalPages 
-                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        Next
-                      </button>
-                    </nav>
+                <button
+                  onClick={handleCertificateClick}
+                  className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-md hover:from-red-600 hover:to-red-700 transition-all duration-300 flex items-center gap-2 shadow-md"
+                  disabled={isUploadingCertificate}
+                >
+                  <FontAwesomeIcon icon={faUpload} />
+                  {certificateFile ? "File Selected" : "Choose Certificate File"}
+                </button>
+                
+                {certificateFile && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm text-gray-700 truncate max-w-xs bg-gray-100 px-3 py-1 rounded-md">{certificateFile.name}</span>
+                    <button
+                      onClick={handleCertificateUpload}
+                      className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-md hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md"
+                      disabled={isUploadingCertificate}
+                    >
+                      {isUploadingCertificate ? "Uploading..." : "Upload Certificate"}
+                    </button>
                   </div>
+                )}
+                
+                {!certificateFile && (
+                  <span className="text-sm text-gray-500 italic">No file chosen</span>
                 )}
               </div>
             </div>

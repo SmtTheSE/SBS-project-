@@ -5,8 +5,7 @@ import {
   faHome,
   faListCheck,
   faListOl,
-  faRoute,
-  faPassport
+  faRoute
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState, useEffect } from "react";
@@ -49,13 +48,6 @@ const SideBar = () => {
           name: "Attendances",
           icon: faListCheck,
           link: "/attendence",
-          isCurrent: false,
-        },
-        {
-          id: 4,
-          name: "Visa/Passport",
-          icon: faPassport,
-          link: "/visa-passport",
           isCurrent: false,
         },
       ],
