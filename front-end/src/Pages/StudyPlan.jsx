@@ -12,11 +12,12 @@ import {
   faCircleXmark,
   faClock,
 } from "@fortawesome/free-regular-svg-icons";
+import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 // FilterByDropDown styled like previous, **without** the manual arrow
-const FilterByDropDown = ({ filter, setFilter, subjPlans }) => {
+const FilterByDropDown = ({ filter, setFilter, subjPlans, onFilterChange }) => {
   // 获取所有唯一的年份和学期组合
   const uniqueYearSemOptions = [...new Set(subjPlans.map(plan => `Year ${plan.year} - Sem ${plan.sem}`))]
     .sort((a, b) => {
@@ -26,16 +27,34 @@ const FilterByDropDown = ({ filter, setFilter, subjPlans }) => {
     });
 
   return (
-    <select
-      value={filter.filterBy}
-      onChange={e => setFilter(prev => ({ ...prev, filterBy: e.target.value }))}
-      className="w-40 rounded-md border border-border px-3 py-2 bg-white text-font-light focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
-    >
-      <option value="none" className="text-font-light">All Years/Sems</option>
-      {uniqueYearSemOptions.map(option => (
-        <option key={option} value={option} className="text-font-light">{option}</option>
-      ))}
-    </select>
+    <div className="flex items-center space-x-2">
+      <select
+        value={filter.filterBy}
+        onChange={e => {
+          setFilter(prev => ({ ...prev, filterBy: e.target.value }));
+          onFilterChange(e.target.value);
+        }}
+        className="w-48 rounded-lg border border-border px-4 py-2 bg-white text-font-light focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 shadow-sm hover:shadow-md focus:shadow-lg"
+      >
+        <option value="none" className="text-font-light">All Years/Sems</option>
+        {uniqueYearSemOptions.map(option => (
+          <option key={option} value={option} className="text-font-light">{option}</option>
+        ))}
+      </select>
+      
+      {filter.filterBy !== "none" && (
+        <button
+          onClick={() => {
+            setFilter(prev => ({ ...prev, filterBy: "none" }));
+            onFilterChange("none");
+          }}
+          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-all duration-200"
+          title="Clear filter"
+        >
+          <FontAwesomeIcon icon={faTimes} />
+        </button>
+      )}
+    </div>
   );
 };
 
@@ -215,9 +234,18 @@ const StudyPlan = () => {
     return Math.ceil(data.length / itemsPerPage);
   };
 
+  // 添加动画状态
+  const [isAnimating, setIsAnimating] = useState(false);
+  
   // 处理页面切换
   const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
+    if (pageNumber !== currentPage && pageNumber >= 1 && pageNumber <= totalPages) {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentPage(pageNumber);
+        setIsAnimating(false);
+      }, 150); // 与CSS动画持续时间匹配
+    }
   };
 
   const getGroupedPlans = () => {
@@ -254,26 +282,53 @@ const StudyPlan = () => {
   // 获取总页数
   const totalPages = getTotalPages(filteredPlans);
 
+  const [activeFilters, setActiveFilters] = useState({
+    yearSem: "none"
+  });
+
+  // 处理筛选逻辑
+  const handleFilterChange = (value) => {
+    setIsAnimating(true);
+    setTimeout(() => {
+      setActiveFilters({
+        yearSem: value
+      });
+      setIsAnimating(false);
+    }, 150);
+  };
+
+  // 清除筛选器
+  const clearFilters = () => {
+    setIsAnimating(true);
+    setTimeout(() => {
+      setFilter(prev => ({ ...prev, filterBy: "none" }));
+      setActiveFilters({
+        yearSem: "none"
+      });
+      setIsAnimating(false);
+    }, 150);
+  };
+
   return (
     <section className="p-10">
       <Container>
-        <div className="flex justify-between items-center gap-5 mb-5">
+        <div className="flex flex-wrap justify-between items-center gap-5 mb-5">
           {academicInfos.map((info) => (
             <div
               key={info.detail}
-              className="w-500 rounded-md  px-5 py-3 bg-white flex items-center gap-5"
+              className="flex-1 min-w-[200px] max-w-md rounded-xl px-6 py-4 bg-white flex items-center gap-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
             >
-              <div className="relative w-20 h-20 bg-background overflow-hidden rounded-full">
+              <div className="relative w-16 h-16 bg-background overflow-hidden rounded-full flex items-center justify-center">
                 <img
                   src={info.icon}
                   alt={info.detail}
-                  className="w-15 object-cover absolute top-[50%] left-[50%] -translate-[50%] "
+                  className="w-10 h-10 object-contain"
                 />
               </div>
               <div>
-                <h5 className="font-light text-font-light">{info.detail}</h5>
+                <h5 className="font-light text-font-light text-sm uppercase tracking-wider">{info.detail}</h5>
                 <h1
-                  className={`text-2xl font-bold`}
+                  className={`text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent`}
                 >
                   {info.detail === "Credits"
                     ? info.content + " / 100"
@@ -284,29 +339,67 @@ const StudyPlan = () => {
           ))}
         </div>
 
+        {/* Active Filters Display */}
+        {activeFilters.yearSem !== "none" && (
+          <div className="flex flex-wrap gap-2 mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 transition-all duration-300 ease-in-out shadow-sm">
+            <span className="font-semibold text-blue-800 mr-2 flex items-center">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+              </svg>
+              Active Filters:
+            </span>
+            {activeFilters.yearSem !== "none" && (
+              <span className="px-4 py-2 bg-white text-blue-800 rounded-full text-sm flex items-center shadow-sm transition-all duration-200 hover:shadow-md">
+                Year/Sem: {activeFilters.yearSem}
+                <button 
+                  onClick={() => {
+                    setFilter(prev => ({ ...prev, filterBy: "none" }));
+                    handleFilterChange("none");
+                  }}
+                  className="ml-2 text-blue-600 hover:text-blue-900 hover:bg-blue-100 rounded-full p-1"
+                >
+                  <FontAwesomeIcon icon={faTimes} size="sm" />
+                </button>
+              </span>
+            )}
+            <button 
+              onClick={clearFilters}
+              className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full text-sm flex items-center transition-all duration-200 hover:from-red-600 hover:to-red-700 shadow-md hover:shadow-lg"
+            >
+              Clear All
+              <FontAwesomeIcon icon={faTimes} className="ml-2" size="sm" />
+            </button>
+          </div>
+        )}
+
         <div className="flex justify-between items-start gap-5">
-          <div className="bg-white p-5 rounded-md w-2/3">
+          <div className="bg-white p-5 rounded-md w-2/3 shadow-md hover:shadow-lg transition-all duration-300">
             <div className="flex items-center justify-between border-b border-border pb-5">
               <h1 className="text-2xl text-font-light uppercase">
                 Study Plan Timeline/Roadmap
               </h1>
               {/* Previous design for filter by dropdown, no arrow */}
-              <FilterByDropDown filter={filter} setFilter={setFilter} subjPlans={subjPlans} />
+              <FilterByDropDown 
+                filter={filter} 
+                setFilter={setFilter} 
+                subjPlans={subjPlans} 
+                onFilterChange={handleFilterChange} 
+              />
             </div>
 
-            <table className="w-full border-separate border-spacing-y-2">
+            <table className={`w-full border-separate border-spacing-y-2 transition-opacity duration-150 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
               <tbody>
                 {getGroupedPlans().length > 0 ? (
                   <>
                     {getGroupedPlans().map(({ group, groupItems }) => (
                       <React.Fragment key={group}>
                         <tr>
-                          <td colSpan="2" className="bg-gray-200 font-bold p-2">
+                          <td colSpan="2" className="bg-gray-200 font-bold p-2 rounded-t-lg">
                             {group}
                           </td>
                         </tr>
                         {groupItems.map((plan) => (
-                          <tr key={plan.id}>
+                          <tr key={plan.id} className="hover:bg-gray-50 transition-colors duration-150">
                             <td className="w-1/4 text-sm text-gray-500">
                               {plan.status === 1
                                 ? "Completed"
@@ -314,7 +407,7 @@ const StudyPlan = () => {
                                 ? "In Progress"
                                 : "Coming"}
                             </td>
-                            <td className="flex justify-between items-center border-l-5 border-border p-3 bg-blue-50">
+                            <td className="flex justify-between items-center border-l-5 border-border p-3 bg-blue-50 rounded-lg">
                               <h1>
                                 <span className="font-bold">{plan.subject || "Unknown Subject"}</span> by {plan.lecturer || "Unknown Lecturer"}
                               </h1>
@@ -342,11 +435,11 @@ const StudyPlan = () => {
                               <button
                                 onClick={() => handlePageChange(currentPage - 1)}
                                 disabled={currentPage === 1}
-                                className={`px-3 py-1 rounded-md ${
+                                className={`px-4 py-2 rounded-lg ${
                                   currentPage === 1 
                                     ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
+                                } transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5`}
                               >
                                 Previous
                               </button>
@@ -359,9 +452,9 @@ const StudyPlan = () => {
                                     onClick={() => handlePageChange(pageNumber)}
                                     className={`w-10 h-10 rounded-full ${
                                       currentPage === pageNumber
-                                        ? 'bg-blue-500 text-white'
+                                        ? 'bg-blue-500 text-white shadow-md transform scale-105'
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
+                                    } transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5`}
                                   >
                                     {pageNumber}
                                   </button>
@@ -371,11 +464,11 @@ const StudyPlan = () => {
                               <button
                                 onClick={() => handlePageChange(currentPage + 1)}
                                 disabled={currentPage === totalPages}
-                                className={`px-3 py-1 rounded-md ${
+                                className={`px-4 py-2 rounded-lg ${
                                   currentPage === totalPages 
                                     ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
+                                } transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5`}
                               >
                                 Next
                               </button>
@@ -396,7 +489,7 @@ const StudyPlan = () => {
             </table>
           </div>
 
-          <div className="bg-white p-5 w-1/3 rounded-md">
+          <div className="bg-white p-5 w-1/3 rounded-md shadow-md hover:shadow-lg transition-all duration-300">
             <h1 className="text-2xl text-font-light uppercase pb-5 border-b border-border mb-5">
               Course History
             </h1>
@@ -405,7 +498,7 @@ const StudyPlan = () => {
                 filteredPlans
                   .filter((subj) => subj.status === 1)
                   .map((subj) => (
-                    <div key={subj.id} className="flex items-center bg-blue-50 border-l-5 border-border p-3 mb-3">
+                    <div key={subj.id} className="flex items-center bg-blue-50 border-l-5 border-border p-3 mb-3 rounded-lg hover:bg-blue-100 transition-colors duration-150">
                       <h1 className="flex-grow mr-2">{subj.subject || "Unknown Subject"}</h1>
                       <p className="flex items-center whitespace-nowrap">
                         <FontAwesomeIcon icon={faCircleCheck} className="text-green-600 mr-2" />
