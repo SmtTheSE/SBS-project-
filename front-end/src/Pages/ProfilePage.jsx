@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import defaultCoverPic from "../assets/cover-photos/cover-pic.jpg";
+import defaultCoverPic from "../assets/cover-photos/sbs-pic-neGu5492.png";
 import defaultProfile from "../assets/profiles/profile.jpeg";
 import Container from "../Components/Container";
 import SubContainer from "../Components/SubContainer";
@@ -255,13 +255,23 @@ const getWeekRange = (date) => {
  return (
     <section>
       <Container>
-        <div className="h-60 w-full overflow-hidden relative">
+        {/* Modernized cover section with gradient overlay */}
+        <div className="h-80 w-full overflow-hidden relative rounded-b-2xl">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-800 to-red-900 opacity-80"></div>
           <img src={defaultCoverPic} alt="Cover Photo" className="object-cover w-full h-full" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-white mb-2">Student Profile</h1>
+              <p className="text-xl text-red-200">SBS Student Serving System</p>
+            </div>
+          </div>
         </div>
+        
         <SubContainer>
-          <div className="flex justify-start items-center gap-5 my-10">
+          {/* Modernized profile section with better layout and styling */}
+          <div className="flex flex-col lg:flex-row justify-start items-center gap-8 my-10 p-6 bg-white rounded-2xl shadow-lg">
             <div className="relative group">
-              <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden shadow-xl relative">
+              <div className="w-40 h-40 rounded-2xl border-4 border-white overflow-hidden shadow-2xl relative">
                 <img
                   src={profileImage}
                   alt="Profile Picture"
@@ -269,10 +279,10 @@ const getWeekRange = (date) => {
                 />
               </div>
               <div 
-                className="absolute bottom-2 right-2 bg-red-500 rounded-full p-2 shadow-lg cursor-pointer transform transition-transform group-hover:scale-110"
+                className="absolute bottom-3 right-3 bg-red-600 rounded-full p-3 shadow-lg cursor-pointer transform transition-transform group-hover:scale-110 border-4 border-white"
                 onClick={handleProfileImageClick}
               >
-                <FontAwesomeIcon icon={faCamera} className="text-white text-sm" />
+                <FontAwesomeIcon icon={faCamera} className="text-white text-base" />
               </div>
               <input
                 type="file"
@@ -283,29 +293,30 @@ const getWeekRange = (date) => {
                 disabled={isUploading}
               />
               {isUploading && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full">
-                  <div className="w-6 h-6 border-t-2 border-white rounded-full animate-spin"></div>
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-2xl">
+                  <div className="w-10 h-10 border-t-2 border-white rounded-full animate-spin"></div>
                 </div>
               )}
             </div>
-            <div className="flex flex-col items-center justify-center">
+            
+            <div className="flex-grow w-full">
               {profile&& (
-                <div key={profile.studentId} className="bg-white px-8 py-6 rounded-md shadow flex flex-wrap justify-center items-center gap-6 text-center">
-                  <div className="px-6 border-r border-gray-300">
-                    <h1 className="font-bold text-2xl">{profile.name}</h1>
-                    <h3 className="text-gray-500">{profile.nativeCountry}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                  <div className="pb-4 md:pb-0 border-b md:border-b-0 md:border-r border-gray-200">
+                    <h3 className="text-sm uppercase text-gray-500 font-semibold tracking-wider">Full Name</h3>
+                    <p className="font-bold text-xl mt-1">{profile.name}</p>
                   </div>
-                  <div className="px-6 border-r border-gray-300">
-                    <h1 className="font-bold text-2xl">SBS{profile.studentId}</h1>
-                    <h3 className="text-gray-500">Student ID</h3>
+                  <div className="pb-4 md:pb-0 border-b md:border-b-0 md:border-r border-gray-200">
+                    <h3 className="text-sm uppercase text-gray-500 font-semibold tracking-wider">Student ID</h3>
+                    <p className="font-bold text-xl mt-1">{profile.studentId}</p>
                   </div>
-                  <div className="px-6 border-r border-gray-300">
-                    <h1 className="font-bold text-2xl">{profile.email}</h1>
-                    <h3 className="text-gray-500">Email</h3>
+                  <div className="pb-4 md:pb-0 border-b md:border-b-0 md:border-r border-gray-200">
+                    <h3 className="text-sm uppercase text-gray-500 font-semibold tracking-wider">Email</h3>
+                    <p className="font-bold text-xl mt-1 truncate" title={profile.email}>{profile.email}</p>
                   </div>
-                  <div className="px-6">
-                    <h1 className="font-bold text-2xl">{profile.pathway}</h1>
-                    <h3 className="text-gray-500">Pathway</h3>
+                  <div>
+                    <h3 className="text-sm uppercase text-gray-500 font-semibold tracking-wider">Pathway</h3>
+                    <p className="font-bold text-xl mt-1">{profile.pathway}</p>
                   </div>
                 </div>
               )}

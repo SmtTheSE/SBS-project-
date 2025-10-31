@@ -14,6 +14,10 @@ const HomePage = () => {
   const [announcementsCurrentPage, setAnnouncementsCurrentPage] = useState(1);
   const itemsPerPage = 5; // 每页显示的项目数
   const navigate = useNavigate();
+  
+  // 弹窗状态
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [sampleNews] = useState([
     {
@@ -175,12 +179,24 @@ const HomePage = () => {
   const newsTotalPages = getTotalPages(filteredNews);
   const announcementsTotalPages = getTotalPages(filteredAnnouncements);
 
+  // 打开弹窗
+  const openModal = (item) => {
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  };
+
+  // 关闭弹窗
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedItem(null);
+  };
+
   return (
     <section className="p-10">
       <Container>
         {/* News Section */}
         <div className="flex justify-between items-center mb-5">
-          <h1 className="text-2xl text-font">News</h1>
+          <h1 className="text-2xl text-font font-bold">News</h1>
           <DropDowns onFilterChange={handleFilterChange} />
         </div>
         <div className="mb-10">
@@ -191,48 +207,63 @@ const HomePage = () => {
                   key={el.id}
                   className={`${
                     idx % 2 === 0 ? "flex-row" : "flex-row-reverse"
-                  } flex items-start p-5 bg-white rounded-xl shadow-md mb-5 gap-5`}
+                  } flex items-start p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 mb-6 gap-6 border border-gray-100`}
                 >
                   {/* Image */}
-                  <div className="w-64 h-40 flex-shrink-0 overflow-hidden rounded-lg">
+                  <div className="w-64 h-40 flex-shrink-0 overflow-hidden rounded-xl">
                     <img
                       src={el.image}
                       alt={el.title}
                       loading="lazy"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                     />
                   </div>
 
                   {/* Content */}
                   <div className="flex flex-col flex-1">
-                    <h1 className="text-xl font-semibold text-gray-800">
+                    <h1 
+                      className="text-xl font-bold text-gray-800 cursor-pointer hover:text-red-600 transition-colors duration-200"
+                      onClick={() => openModal(el)}
+                    >
                       {el.title}
                     </h1>
 
-                    <div className="flex items-center gap-3 mt-1">
-                      <p className="text-sm text-gray-600">{el.detail}</p>
-                      <p className="text-xs text-gray-400">({el.duration})</p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="px-3 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">
+                        {el.detail}
+                      </span>
+                      <p className="text-xs text-gray-500">({el.duration})</p>
                     </div>
 
-                    <p className="text-sm text-gray-700 text-justify mt-5">
+                    <p className="text-gray-600 text-justify mt-4 line-clamp-3">
                       {el.description}
                     </p>
+                    
+                    <button
+                      onClick={() => openModal(el)}
+                      className="mt-4 text-red-600 hover:text-red-800 font-semibold self-start flex items-center group"
+                    >
+                      See more
+                      <svg className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                      </svg>
+                    </button>
                   </div>
                 </div>
               ))}
               
               {/* News Pagination */}
               {newsTotalPages > 1 && (
-                <div className="flex justify-center mt-6">
+                <div className="flex justify-center mt-8">
                   <nav className="flex items-center gap-2">
                     <button
                       onClick={() => handlePageChange(newsCurrentPage - 1, 'news')}
                       disabled={newsCurrentPage === 1}
-                      className={`px-3 py-1 rounded-md ${
+                      className={`px-4 py-2 rounded-lg ${
                         newsCurrentPage === 1 
                           ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
+                      } transition-all duration-200`}
                     >
                       Previous
                     </button>
@@ -245,9 +276,9 @@ const HomePage = () => {
                           onClick={() => handlePageChange(pageNumber, 'news')}
                           className={`w-10 h-10 rounded-full ${
                             newsCurrentPage === pageNumber
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
+                              ? 'bg-red-600 text-white shadow-md'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
+                          } transition-all duration-200`}
                         >
                           {pageNumber}
                         </button>
@@ -257,11 +288,11 @@ const HomePage = () => {
                     <button
                       onClick={() => handlePageChange(newsCurrentPage + 1, 'news')}
                       disabled={newsCurrentPage === newsTotalPages}
-                      className={`px-3 py-1 rounded-md ${
+                      className={`px-4 py-2 rounded-lg ${
                         newsCurrentPage === newsTotalPages 
                           ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
+                      } transition-all duration-200`}
                     >
                       Next
                     </button>
@@ -270,7 +301,7 @@ const HomePage = () => {
               )}
             </>
           ) : (
-            <div className="bg-white p-5 rounded-xl shadow-md mb-5">
+            <div className="bg-white p-8 rounded-2xl shadow-lg mb-6 border border-gray-100">
               <p className="text-gray-500 text-center py-5">No news available at this time</p>
             </div>
           )}
@@ -278,35 +309,51 @@ const HomePage = () => {
 
         {/* Announcements Section */}
         <div>
-          <div className="flex justify-between items-center my-5">
-            <h1 className="text-2xl text-font">Announcements</h1>
+          <div className="flex justify-between items-center my-6">
+            <h1 className="text-2xl text-font font-bold">Announcements</h1>
           </div>
           {Array.isArray(currentAnnouncements) && currentAnnouncements.length > 0 ? (
             <>
-              <div className="flex justify-between gap-5 flex-wrap">
+              <div className="flex justify-between gap-6 flex-wrap">
                 {currentAnnouncements.map((announcement) => (
                   <div
                     key={announcement.id}
-                    className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 p-4 w-80 flex-shrink-0"
+                    className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-5 w-80 flex-shrink-0 border border-gray-100 hover:border-gray-200"
                   >
                     {/* Image */}
-                    <div className="h-40 w-full overflow-hidden rounded-md">
+                    <div className="h-40 w-full overflow-hidden rounded-lg">
                       <img
                         src={announcement.image}
                         alt={announcement.title}
                         loading="lazy"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                       />
                     </div>
 
                     {/* Content */}
-                    <div className="mt-3">
-                      <p className="text-sm font-semibold text-gray-800 line-clamp-2">
+                    <div className="mt-4">
+                      <p 
+                        className="text-sm font-bold text-gray-800 line-clamp-2 cursor-pointer hover:text-red-600 transition-colors duration-200"
+                        onClick={() => openModal(announcement)}
+                      >
                         {announcement.title}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {announcement.detail} ({announcement.duration})
-                      </p>
+                      <div className="flex items-center mt-2 gap-2">
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+                          {announcement.detail}
+                        </span>
+                        <p className="text-xs text-gray-500 truncate">({announcement.duration})</p>
+                      </div>
+                      
+                      <button
+                        onClick={() => openModal(announcement)}
+                        className="mt-4 text-red-600 hover:text-red-800 text-sm font-semibold flex items-center group"
+                      >
+                        See more
+                        <svg className="w-3 h-3 ml-1 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -314,16 +361,16 @@ const HomePage = () => {
               
               {/* Announcements Pagination */}
               {announcementsTotalPages > 1 && (
-                <div className="flex justify-center mt-6">
+                <div className="flex justify-center mt-8">
                   <nav className="flex items-center gap-2">
                     <button
                       onClick={() => handlePageChange(announcementsCurrentPage - 1, 'announcements')}
                       disabled={announcementsCurrentPage === 1}
-                      className={`px-3 py-1 rounded-md ${
+                      className={`px-4 py-2 rounded-lg ${
                         announcementsCurrentPage === 1 
                           ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
+                      } transition-all duration-200`}
                     >
                       Previous
                     </button>
@@ -336,9 +383,9 @@ const HomePage = () => {
                           onClick={() => handlePageChange(pageNumber, 'announcements')}
                           className={`w-10 h-10 rounded-full ${
                             announcementsCurrentPage === pageNumber
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
+                              ? 'bg-red-600 text-white shadow-md'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
+                          } transition-all duration-200`}
                         >
                           {pageNumber}
                         </button>
@@ -348,11 +395,11 @@ const HomePage = () => {
                     <button
                       onClick={() => handlePageChange(announcementsCurrentPage + 1, 'announcements')}
                       disabled={announcementsCurrentPage === announcementsTotalPages}
-                      className={`px-3 py-1 rounded-md ${
+                      className={`px-4 py-2 rounded-lg ${
                         announcementsCurrentPage === announcementsTotalPages 
                           ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
+                      } transition-all duration-200`}
                     >
                       Next
                     </button>
@@ -361,12 +408,61 @@ const HomePage = () => {
               )}
             </>
           ) : (
-            <div className="bg-white p-5 rounded-xl shadow-md">
+            <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
               <p className="text-gray-500 text-center py-5">No announcements available</p>
             </div>
           )}
         </div>
       </Container>
+      
+      {/* Modal for displaying full content */}
+      {isModalOpen && selectedItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-start">
+                <h2 className="text-3xl font-bold text-gray-800">{selectedItem.title}</h2>
+                <button 
+                  onClick={closeModal}
+                  className="text-gray-500 hover:text-gray-700 text-3xl font-light transition-colors duration-200"
+                >
+                  &times;
+                </button>
+              </div>
+              
+              <div className="flex items-center gap-3 mt-3">
+                <span className="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded-full">
+                  {selectedItem.detail}
+                </span>
+                <p className="text-sm text-gray-500">({selectedItem.duration})</p>
+              </div>
+              
+              <div className="mt-8">
+                <div className="h-96 w-full overflow-hidden rounded-xl">
+                  <img
+                    src={selectedItem.image}
+                    alt={selectedItem.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="mt-8">
+                  <p className="text-gray-700 text-lg whitespace-pre-line leading-relaxed">{selectedItem.description}</p>
+                </div>
+              </div>
+              
+              <div className="mt-10 flex justify-end">
+                <button
+                  onClick={closeModal}
+                  className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-semibold shadow-md hover:shadow-lg"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

@@ -19,6 +19,11 @@
   --radius-normal: 5px;
 }
 
+/* Set default font for the entire project */
+body {
+  font-family: 'Instrument Sans', sans-serif;
+}
+
 /* src/Pages/AnnouncementForm.css */
 .announcement-page {
   display: flex;
@@ -157,4 +162,3 @@
     padding: 10px;
   }
 }
-
