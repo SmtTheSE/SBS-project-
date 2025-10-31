@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faEllipsis, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import StackedBarChart from "../Components/StackedBarChart";
 
 // Dynamic Calendar Component
 const DynamicAttendanceCalendar = ({ attendanceLogs }) => {
@@ -189,6 +190,7 @@ const Attendance = () => {
     studentRate: 0,
     teacherRate: 91, // Keep static or fetch from another API
   });
+  const [chartData, setChartData] = useState([]);
   const navigate = useNavigate();
   
   // Pagination states
@@ -234,11 +236,72 @@ const Attendance = () => {
       setAttendanceLogs(logs);
       setFilteredLogs(logs); // Initialize filtered logs with all data
       setCurrentPage(1); // Reset to first page when data changes
+      
+      // Process data for the chart
+      processChartData(logs);
     } catch (error) {
       console.error("Failed to fetch attendance data:", error);
       setAttendanceLogs([]);
       setFilteredLogs([]);
     }
+  };
+
+  // Process attendance data for the stacked bar chart
+  const processChartData = (logs) => {
+    // Group by course name
+    const courseData = {};
+    
+    logs.forEach(log => {
+      const courseName = log.courseName || "Unknown Course";
+      if (!courseData[courseName]) {
+        courseData[courseName] = {
+          present: 0,
+          absent: 0,
+          absentWithPermission: 0
+        };
+      }
+      
+      // Calculate actual hours based on check-in/check-out times
+      let hours = 0;
+      if (log.checkIn && log.checkOut) {
+        const checkInTime = new Date(`1970-01-01T${log.checkIn}`);
+        const checkOutTime = new Date(`1970-01-01T${log.checkOut}`);
+        
+        // Handle case where checkout is next day (e.g. checkIn: 23:00, checkOut: 01:00)
+        if (checkOutTime < checkInTime) {
+          checkOutTime.setDate(checkOutTime.getDate() + 1);
+        }
+        
+        const timeDiff = checkOutTime - checkInTime;
+        hours = timeDiff / (1000 * 60 * 60); // Convert milliseconds to hours
+        
+        // Use actual calculated hours without rounding to specific decimal points
+        // This will preserve the real numbers as they are calculated
+      } else {
+        // If no check-in/check-out times, default to 1 hour
+        hours = 1;
+      }
+      
+      // Add hours to appropriate category
+      if (log.status === 1) {
+        courseData[courseName].present += hours;
+      } else if (log.status === 0) {
+        courseData[courseName].absent += hours;
+      } else if (log.status === 2) {
+        courseData[courseName].absentWithPermission += hours;
+      }
+    });
+    
+    // Convert to array format for the chart, keeping actual calculated values
+    const chartData = Object.entries(courseData).map(([course, data]) => ({
+      course,
+      present: data.present, // Keep actual calculated values
+      absent: data.absent,   // Keep actual calculated values
+      absentWithPermission: data.absentWithPermission, // Keep actual calculated values
+      total: data.present + data.absent + data.absentWithPermission
+    }));
+    
+    setChartData(chartData);
   };
 
   const fetchAttendanceSummary = async (studentId, token) => {
@@ -430,34 +493,11 @@ const Attendance = () => {
           {/* Chart */}
           <div className="bg-white p-5 rounded-md mb-5">
             <div className="flex justify-between items-center">
-              <h1 className="text-font text-3xl mb-5">Attendances</h1>
+              <h1 className="text-font text-3xl mb-5">Attendance Hours</h1>
               <FontAwesomeIcon icon={faEllipsis} />
             </div>
-            <DualCircularProgress
-              studentRate={rates.studentRate}
-              teacherRate={rates.teacherRate}
-              className="my-5"
-            />
-            <div className="flex justify-between items-center">
-              {/* Student Rate */}
-              <div>
-                <h5 className="font-light text-font-light text-center">
-                  Students
-                </h5>
-                <h1 className="text-[#1E3A8A] text-2xl text-center">
-                  {rates.studentRate}%
-                </h1>
-              </div>
-
-              {/* Teacher Rate */}
-              <div>
-                <h5 className="font-light text-font-light text-center">
-                  Teachers
-                </h5>
-                <h1 className="text-[#F59E0B] text-2xl text-center">
-                  {rates.teacherRate}%
-                </h1>
-              </div>
+            <div className="w-full overflow-x-auto">
+              <StackedBarChart data={chartData} />
             </div>
           </div>
 
@@ -535,3 +575,4 @@ const AttendanceFilter = ({ logs, onFilterChange }) => {
 };
 
 export default Attendance;
+

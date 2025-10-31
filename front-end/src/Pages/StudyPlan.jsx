@@ -400,7 +400,7 @@ const StudyPlan = () => {
             <h1 className="text-2xl text-font-light uppercase pb-5 border-b border-border mb-5">
               Course History
             </h1>
-            <div>
+            <div className="max-h-96 overflow-y-auto">
               {Array.isArray(filteredPlans) && filteredPlans.filter((subj) => subj.status === 1).length > 0 ? (
                 filteredPlans
                   .filter((subj) => subj.status === 1)

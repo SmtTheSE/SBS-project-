@@ -259,6 +259,38 @@ const Transcripts = () => {
     return itemsToShow;
   };
 
+  // 根据成绩获取颜色类名
+  const getGradeColorClass = (grade) => {
+    if (!grade || grade === "-") return "";
+    
+    // 提取成绩字母 (例如从 "A (Excellent)" 提取 "A")
+    const gradeLetter = grade.split(" ")[0].toUpperCase();
+    
+    switch (gradeLetter) {
+      case "A":
+      case "A+":
+      case "A-":
+        return "text-green-600 font-bold";
+      case "B":
+      case "B+":
+      case "B-":
+        return "text-blue-600 font-bold";
+      case "C":
+      case "C+":
+      case "C-":
+        return "text-yellow-600 font-bold";
+      case "D":
+      case "D+":
+      case "D-":
+        return "text-orange-600 font-bold";
+      case "F":
+      case "FAIL":
+        return "text-red-600 font-bold";
+      default:
+        return "";
+    }
+  };
+
   const paginatedRecords = getPaginatedRecords();
 
   return (
@@ -287,7 +319,7 @@ const Transcripts = () => {
                     <td className="py-5">{record.semester || ""}</td>
                     <td className="py-5">{record.course || "-"}</td>
                     <td className="py-5">{record.course_name || "-"}</td>
-                    <td className="py-5">{record.grade || "-"}</td>
+                    <td className={`py-5 ${getGradeColorClass(record.grade)}`}>{record.grade || "-"}</td>
                   </tr>
                 ))
               ) : (
@@ -347,25 +379,16 @@ const Transcripts = () => {
               </nav>
             </div>
           )}
-          
-          <div className="flex gap-3 items-center">
-            <button className="bg-iconic text-background py-3 px-8 rounded-md">
-              Download Transcript
-            </button>
-            <button className="bg-[var(--light-gray--)] text-background py-3 px-8 rounded-md">
-              Preview
-            </button>
-          </div>
         </div>
 
         {/* Request */}
-        <div className="shadow-md rounded-md w-[30%] p-5 flex flex-col justify-between items-center h-50 bg-white">
-          <h1 className="text-2xl text-font">Transcript Request</h1>
+        <div className="shadow-md rounded-md w-[30%] p-5 flex flex-col justify-between items-center bg-white">
+          <h1 className="text-2xl text-font mb-5">Transcript Request</h1>
           
           {showRequestForm ? (
-            <form onSubmit={handleRequestSubmit} className="w-full">
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2">
+            <form onSubmit={handleRequestSubmit} className="w-full space-y-4">
+              <div className="space-y-2">
+                <label className="block text-gray-700 text-sm font-bold">
                   Transcript Type
                 </label>
                 <div className="flex space-x-4">
@@ -392,44 +415,54 @@ const Transcripts = () => {
                     Official
                   </label>
                 </div>
+                {requestType === 1 && (
+                  <div className="mt-2 p-3 bg-blue-50 rounded-md text-sm text-blue-800 border border-blue-200">
+                    <p className="font-semibold">Official Transcript Process:</p>
+                    <ol className="list-decimal list-inside mt-1 space-y-1">
+                      <li>Your request will be reviewed by administration</li>
+                      <li>Upon approval, the transcript will be issued with official seal</li>
+                      <li>You will be notified when it's ready for pickup or mailing</li>
+                    </ol>
+                  </div>
+                )}
               </div>
               
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2">
+              <div className="space-y-2">
+                <label className="block text-gray-700 text-sm font-bold">
                   Optional Message
                 </label>
                 <textarea
                   value={optionalMessage || ""}
                   onChange={(e) => setOptionalMessage(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-iconic"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                   rows="3"
                   placeholder="Enter any additional information..."
                 />
               </div>
               
               {requestStatus === "success" && (
-                <div className="mb-4 text-green-600">
+                <div className="p-3 bg-green-50 text-green-700 rounded-md border border-green-200">
                   Transcript request submitted successfully!
                 </div>
               )}
               
               {requestStatus === "error" && (
-                <div className="mb-4 text-red-600">
+                <div className="p-3 bg-red-50 text-red-700 rounded-md border border-red-200">
                   Error submitting request. Please try again.
                 </div>
               )}
               
-              <div className="flex justify-between">
+              <div className="flex justify-between pt-2">
                 <button
                   type="button"
                   onClick={() => setShowRequestForm(false)}
-                  className="bg-gray-500 text-white px-4 py-2 rounded-md"
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-font text-white px-4 py-2 rounded-md"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
                 >
                   Submit Request
                 </button>
@@ -437,7 +470,7 @@ const Transcripts = () => {
             </form>
           ) : (
             <button 
-              className="bg-font text-background px-5 py-3 rounded-md"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-md w-full transition-colors"
               onClick={() => setShowRequestForm(true)}
             >
               Request Now
