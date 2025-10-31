@@ -69,10 +69,77 @@ const EventPopup = ({ event, onClose }) => {
   );
 };
 
+// Day Detail Popup Component
+const DayDetailPopup = ({ date, schedules, onClose }) => {
+  if (!schedules || schedules.length === 0) return null;
+
+  const formattedDate = date.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-semibold">Schedule for {formattedDate}</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lecturer</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {schedules.map((schedule, index) => (
+                <tr key={index} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <span className={`w-3 h-3 ${getCourseColor(schedule.courseName)} rounded-full mr-2`}></span>
+                      <div className="text-sm font-medium text-gray-900">{schedule.courseName}</div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {schedule.startTime} - {schedule.endTime}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {schedule.room}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {schedule.lecturerName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {schedule.durationMinutes} minutes
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Class Schedule Calendar Component
 const ClassScheduleCalendar = ({ classSchedules }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [daySchedules, setDaySchedules] = useState([]);
 
   const today = new Date();
   const year = currentDate.getFullYear();
@@ -144,9 +211,23 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
     setSelectedEvent(event);
   };
 
-  // Close popup
-  const closePopup = () => {
+  // Handle day click
+  const handleDayClick = (date) => {
+    const schedules = getSchedulesForDate(date);
+    if (schedules.length > 0) {
+      setSelectedDay(date);
+      setDaySchedules(schedules);
+    }
+  };
+
+  // Close popups
+  const closeEventPopup = () => {
     setSelectedEvent(null);
+  };
+
+  const closeDayPopup = () => {
+    setSelectedDay(null);
+    setDaySchedules([]);
   };
 
   // Generate calendar days
@@ -159,7 +240,11 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
       const schedules = getSchedulesForDate(date);
       
       days.push(
-        <div key={`prev-${date.getDate()}`} className="p-1 text-center h-24 border border-gray-100">
+        <div 
+          key={`prev-${date.getDate()}`} 
+          className="p-1 text-center h-24 border border-gray-100 cursor-pointer hover:bg-gray-50"
+          onClick={() => handleDayClick(date)}
+        >
           <div className="text-xs text-gray-400">{date.getDate()}</div>
           <div className="flex flex-wrap justify-center gap-1 mt-1">
             {schedules.slice(0, 3).map((schedule, idx) => (
@@ -167,6 +252,10 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
                 key={idx} 
                 className={`w-2 h-2 rounded-full ${getCourseColor(schedule.courseName)}`}
                 title={`${schedule.courseName} - ${schedule.startTime}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEventClick(schedule);
+                }}
               ></div>
             ))}
             {schedules.length > 3 && (
@@ -184,7 +273,11 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
       const schedules = getSchedulesForDate(date);
       
       days.push(
-        <div key={day} className="p-1 text-center h-24 border border-gray-100">
+        <div 
+          key={day} 
+          className="p-1 text-center h-24 border border-gray-100 cursor-pointer hover:bg-gray-50"
+          onClick={() => handleDayClick(date)}
+        >
           <div className={`text-sm ${todayFlag ? 'bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center ml-auto mr-auto' : 'text-gray-700'}`}>
             {day}
           </div>
@@ -194,7 +287,10 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
                 key={idx} 
                 className={`w-2 h-2 rounded-full ${getCourseColor(schedule.courseName)} cursor-pointer hover:opacity-75`}
                 title={`${schedule.courseName} - ${schedule.startTime}`}
-                onClick={() => handleEventClick(schedule)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEventClick(schedule);
+                }}
               ></div>
             ))}
           </div>
@@ -209,7 +305,11 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
       const schedules = getSchedulesForDate(date);
       
       days.push(
-        <div key={`next-${day}`} className="p-1 text-center h-24 border border-gray-100">
+        <div 
+          key={`next-${day}`} 
+          className="p-1 text-center h-24 border border-gray-100 cursor-pointer hover:bg-gray-50"
+          onClick={() => handleDayClick(date)}
+        >
           <div className="text-xs text-gray-400">{date.getDate()}</div>
           <div className="flex flex-wrap justify-center gap-1 mt-1">
             {schedules.slice(0, 3).map((schedule, idx) => (
@@ -217,6 +317,10 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
                 key={idx} 
                 className={`w-2 h-2 rounded-full ${getCourseColor(schedule.courseName)}`}
                 title={`${schedule.courseName} - ${schedule.startTime}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEventClick(schedule);
+                }}
               ></div>
             ))}
             {schedules.length > 3 && (
@@ -274,7 +378,10 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
       </div>
 
       {/* Event Popup */}
-      {selectedEvent && <EventPopup event={selectedEvent} onClose={closePopup} />}
+      {selectedEvent && <EventPopup event={selectedEvent} onClose={closeEventPopup} />}
+      
+      {/* Day Detail Popup */}
+      {selectedDay && <DayDetailPopup date={selectedDay} schedules={daySchedules} onClose={closeDayPopup} />}
     </div>
   );
 };
