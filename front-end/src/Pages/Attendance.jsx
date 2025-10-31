@@ -634,162 +634,139 @@ const Attendance = () => {
 
   return (
     <section className="p-10">
-      <Container className="flex justify-between items-stretch gap-5">
-        {/* Left Side */}
-        <div className="w-2/3">
-          {/* Explanation */}
-          <div className="bg-white p-5 rounded-md mb-5">
-            <h1 className="text-font text-3xl mb-5">Attendances</h1>
-            <p className="mb-10 text-justify">
-              Every class you attend adds value to your learning journey. Being
-              present shows dedication and builds habits that lead to strong
-              academic performance. Try your best to stay consistent - your
-              future self will thank you!
-            </p>
-            <div className="flex justify-between items-center">
-              <h3 className="flex items-center gap-2">
-                <span className="bg-green-600 w-5 h-5 rounded-full inline-block"></span>{" "}
-                Present Days
-              </h3>
-              <h3 className="flex items-center gap-2">
-                <span className="bg-red-600 w-5 h-5 rounded-full inline-block"></span>{" "}
-                Absent Days
-              </h3>
-              <h3 className="flex items-center gap-2">
-                <span className="bg-yellow-400 w-5 h-5 rounded-full inline-block"></span>{" "}
-                Absent with permission
-              </h3>
-            </div>
+sh      <Container className="flex flex-col gap-5">
+        {/* Calendar Section - Moved to top */}
+        <div className="bg-white p-5 rounded-xl shadow-md w-full">
+          <div className="flex justify-between items-center">
+            <h1 className="text-font text-3xl mb-5">Calendar</h1>
+            <FontAwesomeIcon icon={faEllipsis} />
           </div>
-
-          {/* Class Schedule Information */}
-          <div className="bg-white p-5 rounded-md">
-            <h1 className="text-font text-3xl mb-5">
-              Class Schedule for the Semester
-            </h1>
-            <p className="mb-4">
-              This calendar shows all your scheduled classes for the entire semester.
-            </p>
-            
-            {/* Course Schedule Table */}
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {getPaginatedSchedules()
-                    .sort((a, b) => {
-                      // Sort by day of week and then by start time
-                      const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-                      const dayComparison = dayOrder.indexOf(a.dayOfWeek) - dayOrder.indexOf(b.dayOfWeek);
-                      if (dayComparison !== 0) return dayComparison;
-                      
-                      // If same day, sort by start time
-                      return a.startTime.localeCompare(b.startTime);
-                    })
-                    .map((schedule, index) => (
-                      <tr key={`${schedule.classScheduleId}-${index}`} className="hover:bg-gray-50">
-                        <td className="px-4 py-2 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <span className={`w-3 h-3 ${getCourseColor(schedule.courseName)} rounded-full mr-2`}></span>
-                            <div className="text-sm font-medium text-gray-900">{schedule.courseName}</div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                          {schedule.dayOfWeek}
-                        </td>
-                      </tr>
-                    ))
-                  }
-                </tbody>
-              </table>
-              
-              {classSchedules.length === 0 && (
-                <div className="text-center py-4 text-gray-500">
-                  No class schedules found
-                </div>
-              )}
-            </div>
-            
-            {/* Pagination Controls */}
-            {classSchedules.length > itemsPerPage && (
-              <div className="flex justify-center mt-4">
-                <nav className="flex items-center gap-1">
-                  <button
-                    onClick={handlePrevPage}
-                    disabled={currentPage === 1}
-                    className={`px-2 py-1 rounded text-sm ${
-                      currentPage === 1 
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Previous
-                  </button>
-                  
-                  {[...Array(getTotalPages())].map((_, index) => {
-                    const pageNumber = index + 1;
-                    return (
-                      <button
-                        key={pageNumber}
-                        onClick={() => handlePageChange(pageNumber)}
-                        className={`w-6 h-6 text-xs rounded-full ${
-                          currentPage === pageNumber
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        {pageNumber}
-                      </button>
-                    );
-                  })}
-                  
-                  <button
-                    onClick={handleNextPage}
-                    disabled={currentPage === getTotalPages()}
-                    className={`px-2 py-1 rounded text-sm ${
-                      currentPage === getTotalPages() 
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Next
-                  </button>
-                </nav>
-              </div>
-            )}
-            
-            <p className="mt-4 text-sm text-gray-500">
-              Click on any colored dot in the calendar to see detailed information about the class.
-            </p>
+          <div className="min-h-[500px]">
+            <ClassScheduleCalendar classSchedules={classSchedules} />
           </div>
         </div>
 
-        {/* Right Side */}
-        <div className="w-1/3">
-          {/* Chart */}
-          <div className="bg-white p-5 rounded-md mb-5">
-            <div className="flex justify-between items-center">
-              <h1 className="text-font text-3xl mb-5">Attendance Hours</h1>
-              <FontAwesomeIcon icon={faEllipsis} />
-            </div>
-            <div className="w-full overflow-x-auto">
-              <StackedBarChart data={chartData} />
+        {/* Class Schedule Information and Attendance Hours - Moved below calendar */}
+        <div className="flex justify-between items-stretch gap-5">
+          {/* Left Side - Class Schedule Information */}
+          <div className="w-2/3">
+            {/* Class Schedule Information */}
+            <div className="bg-white p-5 rounded-md">
+              <h1 className="text-font text-3xl mb-5">
+                Class Schedule for the Semester
+              </h1>
+              <p className="mb-4">
+                This calendar shows all your scheduled classes for the entire semester.
+              </p>
+              
+              {/* Course Schedule Table */}
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {getPaginatedSchedules()
+                      .sort((a, b) => {
+                        // Sort by day of week and then by start time
+                        const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+                        const dayComparison = dayOrder.indexOf(a.dayOfWeek) - dayOrder.indexOf(b.dayOfWeek);
+                        if (dayComparison !== 0) return dayComparison;
+                        
+                        // If same day, sort by start time
+                        return a.startTime.localeCompare(b.startTime);
+                      })
+                      .map((schedule, index) => (
+                        <tr key={`${schedule.classScheduleId}-${index}`} className="hover:bg-gray-50">
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <span className={`w-3 h-3 ${getCourseColor(schedule.courseName)} rounded-full mr-2`}></span>
+                              <div className="text-sm font-medium text-gray-900">{schedule.courseName}</div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                            {schedule.dayOfWeek}
+                          </td>
+                        </tr>
+                      ))
+                    }
+                  </tbody>
+                </table>
+                
+                {classSchedules.length === 0 && (
+                  <div className="text-center py-4 text-gray-500">
+                    No class schedules found
+                  </div>
+                )}
+              </div>
+              
+              {/* Pagination Controls */}
+              {classSchedules.length > itemsPerPage && (
+                <div className="flex justify-center mt-4">
+                  <nav className="flex items-center gap-1">
+                    <button
+                      onClick={handlePrevPage}
+                      disabled={currentPage === 1}
+                      className={`px-2 py-1 rounded text-sm ${
+                        currentPage === 1 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Previous
+                    </button>
+                    
+                    {[...Array(getTotalPages())].map((_, index) => {
+                      const pageNumber = index + 1;
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => handlePageChange(pageNumber)}
+                          className={`w-6 h-6 text-xs rounded-full ${
+                            currentPage === pageNumber
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    })}
+                    
+                    <button
+                      onClick={handleNextPage}
+                      disabled={currentPage === getTotalPages()}
+                      className={`px-2 py-1 rounded text-sm ${
+                        currentPage === getTotalPages() 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Next
+                    </button>
+                  </nav>
+                </div>
+              )}
+              
+              <p className="mt-4 text-sm text-gray-500">
+                Click on any colored dot in the calendar to see detailed information about the class.
+              </p>
             </div>
           </div>
 
-          {/* Dynamic Calendar */}
-          <div className="p-5 bg-white rounded-xl shadow-md w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-font text-3xl mb-5">Calendar</h1>
-              <FontAwesomeIcon icon={faEllipsis} />
-            </div>
-            <div className="min-h-[500px]">
-              <ClassScheduleCalendar classSchedules={classSchedules} />
+          {/* Right Side - Attendance Hours Chart */}
+          <div className="w-1/3">
+            <div className="bg-white p-5 rounded-md">
+              <div className="flex justify-between items-center">
+                <h1 className="text-font text-3xl mb-5">Attendance Hours</h1>
+                <FontAwesomeIcon icon={faEllipsis} />
+              </div>
+              <div className="w-full overflow-x-auto">
+                <StackedBarChart data={chartData} />
+              </div>
             </div>
           </div>
         </div>
