@@ -47,22 +47,40 @@ const EventPopup = ({ event, onClose }) => {
   if (!event) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-96">
+    <div className="fixed inset-0 bg-opacity-0 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl p-6 w-96 border border-gray-200">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">{event.courseName}</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <h3 className="text-lg font-semibold text-gray-800">{event.courseName}</h3>
+          <button 
+            onClick={onClose} 
+            className="text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-1 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        <div className="space-y-2">
-          <p><span className="font-medium">Date:</span> {event.classDate}</p>
-          <p><span className="font-medium">Time:</span> {event.startTime} - {event.endTime}</p>
-          <p><span className="font-medium">Room:</span> {event.room}</p>
-          <p><span className="font-medium">Lecturer:</span> {event.lecturerName}</p>
-          <p><span className="font-medium">Duration:</span> {event.durationMinutes} minutes</p>
+        <div className="space-y-3">
+          <div className="flex items-center">
+            <span className="font-medium text-gray-700 w-20">Date:</span>
+            <span className="text-gray-900">{event.classDate}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="font-medium text-gray-700 w-20">Time:</span>
+            <span className="text-gray-900">{event.startTime} - {event.endTime}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="font-medium text-gray-700 w-20">Room:</span>
+            <span className="text-gray-900">{event.room}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="font-medium text-gray-700 w-20">Lecturer:</span>
+            <span className="text-gray-900">{event.lecturerName}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="font-medium text-gray-700 w-20">Duration:</span>
+            <span className="text-gray-900">{event.durationMinutes} minutes</span>
+          </div>
         </div>
       </div>
     </div>
@@ -71,8 +89,6 @@ const EventPopup = ({ event, onClose }) => {
 
 // Day Detail Popup Component
 const DayDetailPopup = ({ date, schedules, onClose }) => {
-  if (!schedules || schedules.length === 0) return null;
-
   const formattedDate = date.toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
@@ -81,54 +97,71 @@ const DayDetailPopup = ({ date, schedules, onClose }) => {
   });
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold">Schedule for {formattedDate}</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="fixed inset-0 bg-opacity-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-gray-200">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200">
+          <h3 className="text-xl font-semibold text-gray-800">Schedule for {formattedDate}</h3>
+          <button 
+            onClick={onClose} 
+            className="text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-1 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
         
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lecturer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {schedules.map((schedule, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <span className={`w-3 h-3 ${getCourseColor(schedule.courseName)} rounded-full mr-2`}></span>
-                      <div className="text-sm font-medium text-gray-900">{schedule.courseName}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {schedule.startTime} - {schedule.endTime}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {schedule.room}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {schedule.lecturerName}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {schedule.durationMinutes} minutes
-                  </td>
+        <div className="overflow-y-auto flex-grow">
+          {schedules && schedules.length > 0 ? (
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50 sticky top-0">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lecturer</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {schedules.map((schedule, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <span className={`w-3 h-3 ${getCourseColor(schedule.courseName)} rounded-full mr-2`}></span>
+                        <div className="text-sm font-medium text-gray-900">{schedule.courseName}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {schedule.startTime} - {schedule.endTime}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {schedule.room}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {schedule.lecturerName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {schedule.durationMinutes} minutes
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-gray-500 mb-4">No classes scheduled for this day</div>
+            </div>
+          )}
         </div>
+        
+        {(schedules && schedules.length > 0) && (
+          <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <div className="text-sm text-gray-500">
+              Total classes: {schedules.length}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -214,10 +247,8 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
   // Handle day click
   const handleDayClick = (date) => {
     const schedules = getSchedulesForDate(date);
-    if (schedules.length > 0) {
-      setSelectedDay(date);
-      setDaySchedules(schedules);
-    }
+    setSelectedDay(date);
+    setDaySchedules(schedules);
   };
 
   // Close popups
@@ -242,15 +273,15 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
       days.push(
         <div 
           key={`prev-${date.getDate()}`} 
-          className="p-1 text-center h-24 border border-gray-100 cursor-pointer hover:bg-gray-50"
+          className="p-2 text-center h-32 border border-gray-100 cursor-pointer hover:bg-gray-50"
           onClick={() => handleDayClick(date)}
         >
           <div className="text-xs text-gray-400">{date.getDate()}</div>
-          <div className="flex flex-wrap justify-center gap-1 mt-1">
-            {schedules.slice(0, 3).map((schedule, idx) => (
+          <div className="flex flex-wrap justify-center gap-1 mt-2">
+            {schedules.slice(0, 4).map((schedule, idx) => (
               <div 
                 key={idx} 
-                className={`w-2 h-2 rounded-full ${getCourseColor(schedule.courseName)}`}
+                className={`w-3 h-3 rounded-full ${getCourseColor(schedule.courseName)}`}
                 title={`${schedule.courseName} - ${schedule.startTime}`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -258,8 +289,8 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
                 }}
               ></div>
             ))}
-            {schedules.length > 3 && (
-              <div className="text-xs text-gray-400">+{schedules.length - 3}</div>
+            {schedules.length > 4 && (
+              <div className="text-xs text-gray-400">+{schedules.length - 4}</div>
             )}
           </div>
         </div>
@@ -275,17 +306,17 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
       days.push(
         <div 
           key={day} 
-          className="p-1 text-center h-24 border border-gray-100 cursor-pointer hover:bg-gray-50"
+          className="p-2 text-center h-32 border border-gray-100 cursor-pointer hover:bg-gray-50"
           onClick={() => handleDayClick(date)}
         >
-          <div className={`text-sm ${todayFlag ? 'bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center ml-auto mr-auto' : 'text-gray-700'}`}>
+          <div className={`text-base font-medium ${todayFlag ? 'bg-blue-500 text-white rounded-full w-7 h-7 flex items-center justify-center ml-auto mr-auto' : 'text-gray-700'}`}>
             {day}
           </div>
-          <div className="flex flex-wrap justify-center gap-1 mt-1 max-h-16 overflow-y-auto">
+          <div className="flex flex-wrap justify-center gap-1 mt-2 max-h-20 overflow-y-auto">
             {schedules.map((schedule, idx) => (
               <div 
                 key={idx} 
-                className={`w-2 h-2 rounded-full ${getCourseColor(schedule.courseName)} cursor-pointer hover:opacity-75`}
+                className={`w-3 h-3 rounded-full ${getCourseColor(schedule.courseName)} cursor-pointer hover:opacity-75`}
                 title={`${schedule.courseName} - ${schedule.startTime}`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -307,15 +338,15 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
       days.push(
         <div 
           key={`next-${day}`} 
-          className="p-1 text-center h-24 border border-gray-100 cursor-pointer hover:bg-gray-50"
+          className="p-2 text-center h-32 border border-gray-100 cursor-pointer hover:bg-gray-50"
           onClick={() => handleDayClick(date)}
         >
           <div className="text-xs text-gray-400">{date.getDate()}</div>
-          <div className="flex flex-wrap justify-center gap-1 mt-1">
-            {schedules.slice(0, 3).map((schedule, idx) => (
+          <div className="flex flex-wrap justify-center gap-1 mt-2">
+            {schedules.slice(0, 4).map((schedule, idx) => (
               <div 
                 key={idx} 
-                className={`w-2 h-2 rounded-full ${getCourseColor(schedule.courseName)}`}
+                className={`w-3 h-3 rounded-full ${getCourseColor(schedule.courseName)}`}
                 title={`${schedule.courseName} - ${schedule.startTime}`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -323,8 +354,8 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
                 }}
               ></div>
             ))}
-            {schedules.length > 3 && (
-              <div className="text-xs text-gray-400">+{schedules.length - 3}</div>
+            {schedules.length > 4 && (
+              <div className="text-xs text-gray-400">+{schedules.length - 4}</div>
             )}
           </div>
         </div>
@@ -645,10 +676,8 @@ const Attendance = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -664,20 +693,14 @@ const Attendance = () => {
                     })
                     .map((schedule, index) => (
                       <tr key={`${schedule.classScheduleId}-${index}`} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-2 whitespace-nowrap">
                           <div className="flex items-center">
                             <span className={`w-3 h-3 ${getCourseColor(schedule.courseName)} rounded-full mr-2`}></span>
                             <div className="text-sm font-medium text-gray-900">{schedule.courseName}</div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                           {schedule.dayOfWeek}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {schedule.startTime} - {schedule.endTime}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {schedule.room}
                         </td>
                       </tr>
                     ))
@@ -695,11 +718,11 @@ const Attendance = () => {
             {/* Pagination Controls */}
             {classSchedules.length > itemsPerPage && (
               <div className="flex justify-center mt-4">
-                <nav className="flex items-center gap-2">
+                <nav className="flex items-center gap-1">
                   <button
                     onClick={handlePrevPage}
                     disabled={currentPage === 1}
-                    className={`px-3 py-1 rounded-md ${
+                    className={`px-2 py-1 rounded text-sm ${
                       currentPage === 1 
                         ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -714,7 +737,7 @@ const Attendance = () => {
                       <button
                         key={pageNumber}
                         onClick={() => handlePageChange(pageNumber)}
-                        className={`w-8 h-8 rounded-full ${
+                        className={`w-6 h-6 text-xs rounded-full ${
                           currentPage === pageNumber
                             ? 'bg-blue-500 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -728,7 +751,7 @@ const Attendance = () => {
                   <button
                     onClick={handleNextPage}
                     disabled={currentPage === getTotalPages()}
-                    className={`px-3 py-1 rounded-md ${
+                    className={`px-2 py-1 rounded text-sm ${
                       currentPage === getTotalPages() 
                         ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -761,11 +784,13 @@ const Attendance = () => {
 
           {/* Dynamic Calendar */}
           <div className="p-5 bg-white rounded-xl shadow-md w-full">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-4">
               <h1 className="text-font text-3xl mb-5">Calendar</h1>
               <FontAwesomeIcon icon={faEllipsis} />
             </div>
-            <ClassScheduleCalendar classSchedules={classSchedules} />
+            <div className="min-h-[500px]">
+              <ClassScheduleCalendar classSchedules={classSchedules} />
+            </div>
           </div>
         </div>
       </Container>
