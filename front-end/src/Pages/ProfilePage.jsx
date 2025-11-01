@@ -262,7 +262,7 @@ const getWeekRange = (date) => {
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
               <h1 className="text-4xl font-bold text-white mb-2">Student Profile</h1>
-              <p className="text-xl text-red-200">SBS Student Serving System</p>
+              <p className="text-xl text-red-200">SBS Student Portal</p>
             </div>
           </div>
         </div>
