@@ -235,10 +235,8 @@ const HomePage = () => {
                       <p className="text-xs text-gray-500">({el.duration})</p>
                     </div>
 
-                    <p className="text-gray-600 text-justify mt-4 line-clamp-3">
-                      {el.description}
-                    </p>
-                    
+                    {/* 移除了预览中的描述文字 */}
+
                     <button
                       onClick={() => openModal(el)}
                       className="mt-4 text-red-600 hover:text-red-800 font-semibold self-start flex items-center group"
@@ -345,6 +343,8 @@ const HomePage = () => {
                         <p className="text-xs text-gray-500 truncate">({announcement.duration})</p>
                       </div>
                       
+                      {/* 移除了预览中的描述文字 */}
+
                       <button
                         onClick={() => openModal(announcement)}
                         className="mt-4 text-red-600 hover:text-red-800 text-sm font-semibold flex items-center group"
