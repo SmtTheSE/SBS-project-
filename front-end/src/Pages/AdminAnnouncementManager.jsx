@@ -43,14 +43,26 @@ const AdminAnnouncementManager = () => {
     try {
       const response = await fetch('http://localhost:8080/api/announcements');
       const data = await response.json();
-      setAnnouncements(data);
+      // Ensure data is an array before setting it
+      if (Array.isArray(data)) {
+        setAnnouncements(data);
+      } else {
+        console.error('Received non-array data from API:', data);
+        setAnnouncements([]); // Set to empty array to prevent errors
+      }
     } catch (error) {
       console.error('Failed to fetch announcements:', error);
+      setAnnouncements([]); // Set to empty array on error
     }
   };
 
   // Filter and search announcements
   const getFilteredAnnouncements = () => {
+    // Ensure announcements is an array before filtering
+    if (!Array.isArray(announcements)) {
+      return [];
+    }
+    
     return announcements.filter(announcement => {
       const matchesSearch = announcement.title.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesFilter = filterType === 'All' || announcement.announcementType === filterType;
