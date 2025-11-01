@@ -14,6 +14,10 @@ const GuestHomePage = () => {
   const [announcementsCurrentPage, setAnnouncementsCurrentPage] = useState(1);
   const itemsPerPage = 5; // 每页显示的项目数
   const navigate = useNavigate();
+  
+  // 弹窗状态
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [sampleNews] = useState([
     {
@@ -165,6 +169,18 @@ const GuestHomePage = () => {
     // Redirect to login
     navigate("/login");
   };
+  
+  // 打开弹窗
+  const openModal = (item) => {
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  };
+
+  // 关闭弹窗
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedItem(null);
+  };
 
   return (
     <section className="p-10">
@@ -209,7 +225,10 @@ const GuestHomePage = () => {
 
                   {/* Content */}
                   <div className="flex flex-col flex-1">
-                    <h1 className="text-xl font-semibold text-gray-800">
+                    <h1 
+                      className="text-xl font-semibold text-gray-800 cursor-pointer hover:text-blue-600 transition-colors duration-200"
+                      onClick={() => openModal(el)}
+                    >
                       {el.title}
                     </h1>
 
@@ -218,9 +237,19 @@ const GuestHomePage = () => {
                       <p className="text-xs text-gray-400">({el.duration})</p>
                     </div>
 
-                    <p className="text-sm text-gray-700 text-justify mt-5">
+                    <p className="text-sm text-gray-700 text-justify mt-5 line-clamp-3">
                       {el.description}
                     </p>
+                    
+                    <button
+                      onClick={() => openModal(el)}
+                      className="mt-4 text-blue-600 hover:text-blue-800 font-semibold self-start flex items-center group"
+                    >
+                      See more
+                      <svg className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                      </svg>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -305,12 +334,25 @@ const GuestHomePage = () => {
 
                     {/* Content */}
                     <div className="mt-3">
-                      <p className="text-sm font-semibold text-gray-800 line-clamp-2">
+                      <p 
+                        className="text-sm font-semibold text-gray-800 line-clamp-2 cursor-pointer hover:text-blue-600 transition-colors duration-200"
+                        onClick={() => openModal(announcement)}
+                      >
                         {announcement.title}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         {announcement.detail} ({announcement.duration})
                       </p>
+                      
+                      <button
+                        onClick={() => openModal(announcement)}
+                        className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-semibold flex items-center group"
+                      >
+                        See more
+                        <svg className="w-3 h-3 ml-1 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -371,6 +413,55 @@ const GuestHomePage = () => {
           )}
         </div>
       </Container>
+      
+      {/* Modal for displaying full content */}
+      {isModalOpen && selectedItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-start">
+                <h2 className="text-3xl font-bold text-gray-800">{selectedItem.title}</h2>
+                <button 
+                  onClick={closeModal}
+                  className="text-gray-500 hover:text-gray-700 text-3xl font-light transition-colors duration-200"
+                >
+                  &times;
+                </button>
+              </div>
+              
+              <div className="flex items-center gap-3 mt-3">
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">
+                  {selectedItem.detail}
+                </span>
+                <p className="text-sm text-gray-500">({selectedItem.duration})</p>
+              </div>
+              
+              <div className="mt-8">
+                <div className="h-96 w-full overflow-hidden rounded-xl">
+                  <img
+                    src={selectedItem.image}
+                    alt={selectedItem.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="mt-8">
+                  <p className="text-gray-700 text-lg whitespace-pre-line leading-relaxed">{selectedItem.description}</p>
+                </div>
+              </div>
+              
+              <div className="mt-10 flex justify-end">
+                <button
+                  onClick={closeModal}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold shadow-md hover:shadow-lg"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

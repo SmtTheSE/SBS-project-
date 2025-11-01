@@ -17,6 +17,7 @@ const AdminAnnouncementManager = () => {
     endDate: '',
     imageUrl: '',
     active: true,
+    description: ''
   });
   const [createImageFile, setCreateImageFile] = useState(null);
   const [creating, setCreating] = useState(false);
@@ -95,8 +96,8 @@ const AdminAnnouncementManager = () => {
   };
 
   const createNewAnnouncement = async () => {
-    if (!createData.title || !createData.startDate || !createData.endDate) {
-      alert('Please fill in title, start date, and end date');
+    if (!createData.title || !createData.startDate || !createData.endDate || !createData.description) {
+      alert('Please fill in title, start date, end date, and description');
       return;
     }
 
@@ -155,7 +156,8 @@ const AdminAnnouncementManager = () => {
         imageUrl: imageUrl,
         active: true,
         createdAt: null,
-        updatedAt: null
+        updatedAt: null,
+        description: createData.description
       };
 
       console.log('Sending data to backend:', announcementData);
@@ -520,6 +522,17 @@ const AdminAnnouncementManager = () => {
                     placeholder="Leave empty for auto-generation or enter custom ID"
                   />
                   <p className="text-xs text-gray-500 mt-1">Optional: Will auto-generate if empty</p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Description *</label>
+                  <textarea
+                    value={createData.description}
+                    onChange={(e) => setCreateData({...createData, description: e.target.value})}
+                    className="w-full p-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                    placeholder="Enter detailed description for the announcement..."
+                    rows="4"
+                  />
                 </div>
               </div>
 

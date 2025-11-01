@@ -148,6 +148,7 @@ public class AnnouncementService {
         announcement.setTitle(announcementDTO.getTitle());
         announcement.setImageUrl(announcementDTO.getImageUrl());
         announcement.setActive(announcementDTO.getActive());
+        announcement.setDescription(announcementDTO.getDescription());
 
         if (announcementDTO.getAdminId() != null) {
             Admin admin = adminRepository.findById(announcementDTO.getAdminId())

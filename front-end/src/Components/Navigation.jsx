@@ -261,13 +261,15 @@ const Navigation = () => {
                   <div className="px-4 py-3 border-b border-gray-100">
                     <p className="text-sm font-medium text-gray-900">Account Options</p>
                   </div>
-                  <button
-                    onClick={handleViewProfile}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 ease-in-out"
-                  >
-                    <FontAwesomeIcon icon={faUser} className="mr-3 text-blue-500" />
-                    <span>View Profile</span>
-                  </button>
+                  {!isUserAdmin() && (
+                    <button
+                      onClick={handleViewProfile}
+                      className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 ease-in-out"
+                    >
+                      <FontAwesomeIcon icon={faUser} className="mr-3 text-blue-500" />
+                      <span>View Profile</span>
+                    </button>
+                  )}
                   <button
                     onClick={handleChangePassword}
                     className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 ease-in-out"

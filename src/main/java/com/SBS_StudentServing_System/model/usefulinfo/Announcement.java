@@ -46,6 +46,9 @@ public class Announcement {
 
     @Column(name = "is_active" , nullable = false)
     private Boolean active = true;
+    
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
 
 
 }

@@ -19,7 +19,7 @@ const AdminSideBar = () => {
   const location = useLocation();
   const [adminInfo, setAdminInfo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [allMenus, setAllMenus] = useState([
+  const [sideBarMenus, setSideBarMenus] = useState([
    {
       id: 1,
       name: "Management",
@@ -272,12 +272,12 @@ name: "Course Results",
   const getFilteredMenus = () => {
     // If still loading or no admin info, return all menus
     if (loading || !adminInfo) {
-      return allMenus;
+      return sideBarMenus;
     }
     
     // ADM001 can see all sections
     if (adminInfo.adminId === "ADM001") {
-      return allMenus;
+      return sideBarMenus;
     }
     
     // Get department ID
@@ -286,13 +286,13 @@ name: "Course Results",
     // If no department rules defined, return only profile section
     if (!departmentAccessRules[departmentId]) {
       // Return only the Profile section for departments without specific rules
-      return allMenus.filter(menu => menu.id === 3);
+      return sideBarMenus.filter(menu => menu.id === 3);
     }
     
     // Filter menus based on department rules
     const { allowedMenus } = departmentAccessRules[departmentId];
     
-    const filteredMenus = allMenus.map(menu => {
+    const filteredMenus = sideBarMenus.map(menu => {
       // Always include Profile section for all admins
       if (menu.id === 3) {
         return menu;
@@ -325,20 +325,52 @@ name: "Course Results",
 
   const filteredMenus = getFilteredMenus();
 
-  // Handle Management menu clicks
+  // 根据当前路径更新菜单状态
+  useEffect(() => {
+    // 检查顶级菜单
+    const updatedMenus = filteredMenus.map(menu => {
+      // 检查是否是顶级菜单项
+      if (location.pathname === menu.link) {
+        return { ...menu, isCurrent: true };
+      }
+      
+      // 检查子菜单项
+      if (menu.children) {
+        // 检查是否有子菜单项匹配当前路径
+        const hasActiveChild = menu.children.some(child => location.pathname === child.link);
+        const updatedChildren = menu.children.map(child => ({
+          ...child,
+          isCurrent: location.pathname === child.link
+        }));
+        
+        return { 
+          ...menu, 
+          isCurrent: hasActiveChild, 
+          children: updatedChildren 
+        };
+      }
+      
+      // 默认情况保持原状态
+      return { ...menu, isCurrent: location.pathname === menu.link };
+    });
+    
+    setSideBarMenus(updatedMenus);
+  }, [location.pathname]);
+
+  // Handle top-level menu clicks
   const handleMenus = (id) => {
-    setAllMenus((prevMenus) =>
+    setSideBarMenus((prevMenus) =>
       prevMenus.map((menu) =>
         menu.id === id
-          ? { ...menu, isCurrent: true }
+          ? { ...menu, isCurrent: !menu.isCurrent }
           : { ...menu, isCurrent: false }
-     )
+      )
     );
   };
 
-  // Handle Management child menu clicks
+  // Handle Management child menu clicks without affecting top-level menus
   const managementMenuHandler = (id) => {
-    setAllMenus((prevMenus) =>
+    setSideBarMenus((prevMenus) =>
       prevMenus.map((menu) =>
         menu.id === 1 // Management menu
           ? {
@@ -354,9 +386,9 @@ name: "Course Results",
     );
   };
 
-  // Handle Academic child menu clicks
+  // Handle Academic child menu clicks without affecting top-level menus
   const academicMenuHandler = (id) => {
-setAllMenus((prevMenus) =>
+    setSideBarMenus((prevMenus) =>
       prevMenus.map((menu) =>
         menu.id === 2 // Academic menu
           ? {
@@ -364,7 +396,25 @@ setAllMenus((prevMenus) =>
               children: menu.children.map((child) =>
                 child.id === id
                   ? { ...child, isCurrent: true }
-                  : {...child, isCurrent: false }
+                  : { ...child, isCurrent: false }
+              ),
+            }
+          : menu
+      )
+    );
+  };
+  
+  // Handle Profile child menu clicks without affecting top-level menus
+  const profileMenuHandler = (id) => {
+    setSideBarMenus((prevMenus) =>
+      prevMenus.map((menu) =>
+        menu.id === 3 // Profile menu
+          ? {
+              ...menu,
+              children: menu.children.map((child) =>
+                child.id === id
+                  ? { ...child, isCurrent: true }
+                  : { ...child, isCurrent: false }
               ),
             }
           : menu
@@ -372,50 +422,16 @@ setAllMenus((prevMenus) =>
     );
   };
 
-  // Set current menu based on location
-  useEffect(() => {
-    // Find the matching menu item and set it as current
-    const path = location.pathname;
-    
-    setAllMenus(prevMenus => 
-      prevMenus.map(menu => {
-        // Check if this is a top-level menu item
-        if (menu.link === path) {
-          return { ...menu, isCurrent: true };
-        }
-        
-        // Check children
-        if (menu.children) {
-          const childrenWithCurrent = menu.children.map(child => ({
-            ...child,
-            isCurrent: child.link === path
-          }));
-          
-          // Check if any child is current
-          const hasCurrentChild = childrenWithCurrent.some(child => child.isCurrent);
-          
-          return {
-            ...menu,
-            isCurrent: hasCurrentChild,
-            children: childrenWithCurrent
-          };
-        }
-        
-        return { ...menu, isCurrent: false };
-      })
-    );
-  }, [location.pathname]);
-
-  return(
-    <nav className="fixed bg-iconic w-80 h-screen flex flex-col justify-start items-start gap-3 p-5 overflow-y-auto">
-      {filteredMenus.map((menu) =>
-        menu.children == null || menu.children.length === 0 ? (
+  return (
+    <nav className="fixed bg-iconic w-80 h-screen flex flex-col justify-start items-start gap-2 p-5 shadow-2xl">
+      {sideBarMenus.map((menu) =>
+        menu.children == null ? (
           <Link
             key={menu.id}
             to={menu.link}
             className={`text-2xl p-5 ${
-              menu.isCurrent ? "bg-white text-iconic" : "text-white"
-            } w-full rounded-md flex items-center`}
+              menu.isCurrent ? "bg-white text-iconic" : "text-white hover:bg-red-700"
+            } w-full rounded-xl flex items-center transition-all duration-300 transform hover:scale-[1.02] shadow-md hover:shadow-lg`}
             onClick={() => handleMenus(menu.id)}
           >
             <FontAwesomeIcon icon={menu.icon} className="w-6 h-6 mr-3" />
@@ -424,10 +440,10 @@ setAllMenus((prevMenus) =>
         ) : (
           <div
             key={menu.id}
-            className={`text-2xl p-5 w-full rounded-md flex flex-col cursor-pointer transition-all duration-200 ${
+            className={`text-2xl p-5 w-full rounded-xl flex flex-col cursor-pointer transition-all duration-300 transform hover:scale-[1.02] shadow-md hover:shadow-lg ${
               menu.isCurrent
                 ? "bg-white text-iconic"
-                : "text-white hover:bg-white/10"
+                : "text-white hover:bg-red-700"
             }`}
           >
             <div 
@@ -440,30 +456,34 @@ setAllMenus((prevMenus) =>
               </div>
               <FontAwesomeIcon
                 icon={faAngleDown}
-                className={`transform transition-transform duration-200 ${
+                className={`transform transition-transform duration-300 ${
                   menu.isCurrent ? "rotate-180" : "rotate-0"
                 }`}
               />
             </div>
 
             {/* Child Menu */}
-            {menu.isCurrent && (
-              <div className="mt-4 ml-8 flex flex-col gap-2 text-base text-gray-700 overflow-y-auto max-h-96">
-                {menu.children.map((child)=> (
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              menu.isCurrent ? "max-h-96 opacity-100 mt-4" : "max-h-0 opacity-0"
+            }`}>
+              <div className="ml-8 flex flex-col gap-2 text-base text-gray-700">
+                {menu.children.map((child) => (
                   <Link
                     key={child.id}
                     to={child.link}
-                    className={`transition-colors duration-200 text-xl py-3 ${
+                    className={`transition-all duration-200 text-xl py-3 px-4 rounded-lg flex items-center ${
                       child.isCurrent
-                        ? "text-iconic font-bold"
-                        : "hover:text-iconic"
+                        ? "text-iconic font-bold bg-red-50"
+                        : "hover:text-iconic hover:bg-red-50"
                     }`}
-                    onClick={(e)=> {
+                    onClick={(e) => {
                       e.stopPropagation(); // prevent parent click
                       if (menu.id === 1) {
                         managementMenuHandler(child.id);
                       } else if (menu.id === 2) {
                         academicMenuHandler(child.id);
+                      } else if (menu.id === 3) {
+                        profileMenuHandler(child.id);
                       }
                     }}
                   >
@@ -472,7 +492,7 @@ setAllMenus((prevMenus) =>
                   </Link>
                 ))}
               </div>
-            )}
+            </div>
           </div>
         )
       )}
