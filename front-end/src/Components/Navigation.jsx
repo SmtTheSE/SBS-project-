@@ -176,7 +176,20 @@ const Navigation = () => {
 
   return (
     <>
-      <nav className="z-10 flex left-0 top-0 justify-between items-center px-10 py-3 bg-white fixed w-full">
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          
+          @keyframes slideIn {
+            from { transform: translateY(-10px) scale(0.95); }
+            to { transform: translateY(0) scale(1); }
+          }
+        `}
+      </style>
+      <nav className="z-10 flex left-0 top-0 justify-between items-center px-10 py-3 bg-white fixed w-full shadow-sm">
         <img src={sbsLogo} alt="SBS Logo" />
         <div className="flex justify-between items-center gap-5">
           {isUserLoggedIn() && !isGuest && (
@@ -214,14 +227,14 @@ const Navigation = () => {
           {!isGuest && (
             <div className="relative">
               <div 
-                className="flex justify-between items-center gap-3 cursor-pointer"
+                className="flex justify-between items-center gap-3 cursor-pointer group"
                 onClick={() => isUserLoggedIn() && setShowProfileMenu(!showProfileMenu)}
               >
-                <div className="w-12 h-12 overflow-hidden rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 overflow-hidden rounded-full flex items-center justify-center ring-2 ring-gray-200 group-hover:ring-blue-400 transition-all duration-300 ease-in-out">
                   {isUserAdmin() ? (
                     <FontAwesomeIcon 
                       icon={faUserCircle} 
-                      className="text-3xl text-gray-400"
+                      className="text-3xl text-gray-400 group-hover:text-blue-500 transition-colors duration-300"
                     />
                   ) : (
                     <img
@@ -231,31 +244,43 @@ const Navigation = () => {
                     />
                   )}
                 </div>
-                <FontAwesomeIcon icon={faAngleDown} className="text-2xl" />
+                <FontAwesomeIcon 
+                  icon={faAngleDown} 
+                  className={`text-2xl text-gray-500 group-hover:text-blue-500 transition-all duration-300 ease-in-out ${
+                    showProfileMenu ? 'transform rotate-180' : ''
+                  }`} 
+                />
               </div>
               
               {showProfileMenu && isUserLoggedIn() && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl py-2 z-20 border border-gray-100 transform transition-all duration-300 ease-out origin-top-right scale-100 opacity-100"
+                     style={{ 
+                       animation: 'fadeIn 0.3s ease-out, slideIn 0.3s ease-out',
+                       boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+                     }}>
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <p className="text-sm font-medium text-gray-900">Account Options</p>
+                  </div>
                   <button
                     onClick={handleViewProfile}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 ease-in-out"
                   >
-                    <FontAwesomeIcon icon={faUser} className="mr-2" />
-                    View Profile
+                    <FontAwesomeIcon icon={faUser} className="mr-3 text-blue-500" />
+                    <span>View Profile</span>
                   </button>
                   <button
                     onClick={handleChangePassword}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 ease-in-out"
                   >
-                    <FontAwesomeIcon icon={faKey} className="mr-2" />
-                    Change Password
+                    <FontAwesomeIcon icon={faKey} className="mr-3 text-blue-500" />
+                    <span>Change Password</span>
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 ease-in-out"
                   >
-                    <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
-                    Logout
+                    <FontAwesomeIcon icon={faSignOutAlt} className="mr-3 text-red-500" />
+                    <span>Logout</span>
                   </button>
                 </div>
               )}

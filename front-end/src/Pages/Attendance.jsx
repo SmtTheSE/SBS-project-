@@ -3,7 +3,7 @@ import Container from "../Components/Container";
 import DropDowns from "../Components/DropDown";
 import DualCircularProgress from "../Components/DualCircularProgress";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBars, faEllipsis, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { faBars, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import StackedBarChart from "../Components/StackedBarChart";
@@ -174,6 +174,7 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
   const [selectedDay, setSelectedDay] = useState(null);
   const [daySchedules, setDaySchedules] = useState([]);
   const [isCalendarAnimating, setIsCalendarAnimating] = useState(false);
+  const [calendarTheme, setCalendarTheme] = useState('light'); // Add theme state
 
   const today = new Date();
   const year = currentDate.getFullYear();
@@ -286,15 +287,15 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
       days.push(
         <div 
           key={`prev-${date.getDate()}`} 
-          className="p-2 text-center h-36 border border-gray-100 cursor-pointer hover:bg-gray-50 transition-all duration-200 rounded-lg shadow-sm hover:shadow-md"
+          className={`p-2 text-center h-36 border cursor-pointer transition-all duration-200 rounded-lg shadow-sm hover:shadow-md ${calendarTheme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-50'}`}
           onClick={() => handleDayClick(date)}
         >
-          <div className="text-xs text-gray-400">{date.getDate()}</div>
+          <div className={`text-xs ${calendarTheme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>{date.getDate()}</div>
           <div className="flex flex-wrap justify-center gap-2 mt-3">
             {schedules.slice(0, 3).map((schedule, idx) => (
               <div 
                 key={idx} 
-                className={`w-6 h-6 rounded-full ${getCourseColor(schedule.courseName)} transition-all duration-200 hover:scale-110 flex items-center justify-center shadow-sm hover:shadow-md border-2 border-white`}
+                className={`w-6 h-6 rounded-full ${getCourseColor(schedule.courseName)} transition-all duration-200 hover:scale-110 flex items-center justify-center shadow-sm hover:shadow-md border-2 ${calendarTheme === 'dark' ? 'border-gray-800' : 'border-white'}`}
                 title={`${schedule.courseName} - ${schedule.startTime}`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -307,7 +308,7 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
               </div>
             ))}
             {schedules.length > 3 && (
-              <div className="text-xs text-gray-500 font-semibold">+{schedules.length - 3}</div>
+              <div className={`text-xs font-semibold ${calendarTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>+{schedules.length - 3}</div>
             )}
           </div>
         </div>
@@ -323,17 +324,17 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
       days.push(
         <div 
           key={day} 
-          className="p-2 text-center h-36 border border-gray-100 cursor-pointer hover:bg-gray-50 transition-all duration-200 rounded-lg shadow-sm hover:shadow-md"
+          className={`p-2 text-center h-36 border cursor-pointer transition-all duration-200 rounded-lg shadow-sm hover:shadow-md ${calendarTheme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-50'}`}
           onClick={() => handleDayClick(date)}
         >
-          <div className={`text-base font-bold ${todayFlag ? 'bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center ml-auto mr-auto transition-all duration-300 shadow-md' : 'text-gray-700'}`}>
+          <div className={`text-base font-bold ${todayFlag ? 'bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center ml-auto mr-auto transition-all duration-300 shadow-md' : calendarTheme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
             {day}
           </div>
           <div className="flex flex-wrap justify-center gap-2 mt-3">
             {schedules.slice(0, 3).map((schedule, idx) => (
               <div 
                 key={idx} 
-                className={`w-6 h-6 rounded-full ${getCourseColor(schedule.courseName)} cursor-pointer transition-all duration-200 hover:scale-110 flex items-center justify-center shadow-sm hover:shadow-md border-2 border-white`}
+                className={`w-6 h-6 rounded-full ${getCourseColor(schedule.courseName)} cursor-pointer transition-all duration-200 hover:scale-110 flex items-center justify-center shadow-sm hover:shadow-md border-2 ${calendarTheme === 'dark' ? 'border-gray-800' : 'border-white'}`}
                 title={`${schedule.courseName} - ${schedule.startTime}`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -346,10 +347,10 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
               </div>
             ))}
             {schedules.length > 3 && schedules.length <= 6 && (
-              <div className="text-xs text-gray-500 font-semibold">+{schedules.length - 3}</div>
+              <div className={`text-xs font-semibold ${calendarTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>+{schedules.length - 3}</div>
             )}
             {schedules.length > 6 && (
-              <div className="text-xs text-gray-500 font-semibold">+{schedules.length - 6}</div>
+              <div className={`text-xs font-semibold ${calendarTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>+{schedules.length - 6}</div>
             )}
           </div>
         </div>
@@ -365,15 +366,15 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
       days.push(
         <div 
           key={`next-${day}`} 
-          className="p-2 text-center h-36 border border-gray-100 cursor-pointer hover:bg-gray-50 transition-all duration-200 rounded-lg shadow-sm hover:shadow-md"
+          className={`p-2 text-center h-36 border cursor-pointer transition-all duration-200 rounded-lg shadow-sm hover:shadow-md ${calendarTheme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-50'}`}
           onClick={() => handleDayClick(date)}
         >
-          <div className="text-xs text-gray-400">{date.getDate()}</div>
+          <div className={`text-xs ${calendarTheme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>{date.getDate()}</div>
           <div className="flex flex-wrap justify-center gap-2 mt-3">
             {schedules.slice(0, 3).map((schedule, idx) => (
               <div 
                 key={idx} 
-                className={`w-6 h-6 rounded-full ${getCourseColor(schedule.courseName)} transition-all duration-200 hover:scale-110 flex items-center justify-center shadow-sm hover:shadow-md border-2 border-white`}
+                className={`w-6 h-6 rounded-full ${getCourseColor(schedule.courseName)} transition-all duration-200 hover:scale-110 flex items-center justify-center shadow-sm hover:shadow-md border-2 ${calendarTheme === 'dark' ? 'border-gray-800' : 'border-white'}`}
                 title={`${schedule.courseName} - ${schedule.startTime}`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -386,7 +387,7 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
               </div>
             ))}
             {schedules.length > 3 && (
-              <div className="text-xs text-gray-500 font-semibold">+{schedules.length - 3}</div>
+              <div className={`text-xs font-semibold ${calendarTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>+{schedules.length - 3}</div>
             )}
           </div>
         </div>
@@ -396,13 +397,18 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
     return days;
   };
 
+  // Toggle calendar theme
+  const toggleCalendarTheme = () => {
+    setCalendarTheme(calendarTheme === 'light' ? 'dark' : 'light');
+  };
+
   return (
-    <div className="w-full">
+    <div className={`w-full ${calendarTheme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}>
       {/* Calendar Header */}
       <div className="flex justify-between items-center mb-4">
         <button
           onClick={goToPreviousMonth}
-          className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200 hover:shadow-md"
+          className={`p-2 rounded-full transition-all duration-200 hover:shadow-md ${calendarTheme === 'dark' ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-700'}`}
         >
           <FontAwesomeIcon icon={faChevronLeft} />
         </button>
@@ -411,24 +417,46 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
           <h3 className="text-lg font-semibold">{monthNames[month]} {year}</h3>
           <button
             onClick={goToToday}
-            className="text-sm text-blue-600 hover:underline transition-all duration-200"
+            className={`text-sm ${calendarTheme === 'dark' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'} hover:underline transition-all duration-200`}
           >
             Today
           </button>
         </div>
 
+        {/* Theme toggle button with ball switch design */}
         <button
-          onClick={goToNextMonth}
-          className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200 hover:shadow-md"
+          onClick={toggleCalendarTheme}
+          className="relative rounded-full w-14 h-7 flex items-center transition-colors duration-300 ease-in-out p-1 focus:outline-none"
+          style={{ backgroundColor: calendarTheme === 'dark' ? '#4B5563' : '#D1D5DB' }}
+          title="Toggle calendar theme"
         >
-          <FontAwesomeIcon icon={faChevronRight} />
+          <div className="flex justify-between items-center w-full relative">
+            {/* Sun icon for light theme */}
+            <span className={`${calendarTheme === 'dark' ? 'text-gray-400' : 'text-yellow-500'} text-sm transition-colors duration-300`}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707a1 1 0 011.414 0zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+              </svg>
+            </span>
+            
+            {/* Moon icon for dark theme */}
+            <span className={`${calendarTheme === 'dark' ? 'text-yellow-300' : 'text-gray-400'} text-sm transition-colors duration-300`}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+              </svg>
+            </span>
+          </div>
+          
+          {/* Moving ball */}
+          <div 
+            className={`absolute bg-white rounded-full w-5 h-5 shadow-md transform transition-transform duration-300 ease-in-out ${calendarTheme === 'dark' ? 'translate-x-7' : 'translate-x-0'}`}
+          />
         </button>
       </div>
 
       {/* Day headers */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {dayNames.map(day => (
-          <div key={day} className="p-2 text-center text-sm font-medium text-gray-600">
+          <div key={day} className={`p-2 text-center text-sm font-medium ${calendarTheme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
             {day}
           </div>
         ))}
@@ -464,6 +492,14 @@ const Attendance = () => {
   
   // 添加动画状态
   const [isAnimating, setIsAnimating] = useState(false);
+  
+  // Theme state for Attendance Hours section
+  const [attendanceHoursTheme, setAttendanceHoursTheme] = useState('light');
+
+  // Toggle theme for Attendance Hours section
+  const toggleAttendanceHoursTheme = () => {
+    setAttendanceHoursTheme(attendanceHoursTheme === 'dark' ? 'light' : 'dark');
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -687,7 +723,6 @@ const Attendance = () => {
         <div className="bg-white p-5 rounded-xl shadow-lg w-full transition-all duration-300 hover:shadow-xl">
           <div className="flex justify-between items-center">
             <h1 className="text-font text-3xl mb-5">Calendar</h1>
-            <FontAwesomeIcon icon={faEllipsis} className="text-gray-400 hover:text-gray-600 transition-colors duration-200" />
           </div>
           <div className="min-h-[500px]">
             <ClassScheduleCalendar classSchedules={classSchedules} />
@@ -700,9 +735,7 @@ const Attendance = () => {
           <div className="w-2/3">
             {/* Class Schedule Information */}
             <div className="bg-white p-5 rounded-md shadow-lg transition-all duration-300 hover:shadow-xl">
-              <h1 className="text-font text-3xl mb-5">
-                Class Schedule for the Semester
-              </h1>
+              <h1 className="text-font text-3xl mb-5">Class Schedule for the Semester</h1>
               <p className="mb-4 text-gray-600">
                 This calendar shows all your scheduled classes for the entire semester.
               </p>
@@ -807,10 +840,37 @@ const Attendance = () => {
 
           {/* Right Side - Attendance Hours Chart */}
           <div className="w-1/3">
-            <div className="bg-white p-5 rounded-md shadow-lg transition-all duration-300 hover:shadow-xl">
+            <div className={`p-5 rounded-md shadow-lg transition-all duration-300 hover:shadow-xl ${attendanceHoursTheme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
               <div className="flex justify-between items-center">
-                <h1 className="text-font text-3xl mb-5">Attendance Hours</h1>
-                <FontAwesomeIcon icon={faEllipsis} className="text-gray-400 hover:text-gray-600 transition-colors duration-200" />
+                <h1 className={`text-3xl mb-5 ${attendanceHoursTheme === 'dark' ? 'text-white' : 'text-font'}`}>Attendance Hours</h1>
+                {/* Theme switcher using ball switch design */}
+                <button
+                  onClick={toggleAttendanceHoursTheme}
+                  className="relative rounded-full w-14 h-7 flex items-center transition-colors duration-300 ease-in-out p-1 focus:outline-none"
+                  style={{ backgroundColor: attendanceHoursTheme === 'dark' ? '#4B5563' : '#D1D5DB' }}
+                  title="Toggle attendance hours theme"
+                >
+                  <div className="flex justify-between items-center w-full relative">
+                    {/* Sun icon for light theme */}
+                    <span className={`${attendanceHoursTheme === 'dark' ? 'text-gray-400' : 'text-yellow-500'} text-sm transition-colors duration-300`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707a1 1 0 011.414 0zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                    
+                    {/* Moon icon for dark theme */}
+                    <span className={`${attendanceHoursTheme === 'dark' ? 'text-yellow-300' : 'text-gray-400'} text-sm transition-colors duration-300`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                      </svg>
+                    </span>
+                  </div>
+                  
+                  {/* Moving ball */}
+                  <div 
+                    className={`absolute bg-white rounded-full w-5 h-5 shadow-md transform transition-transform duration-300 ease-in-out ${attendanceHoursTheme === 'dark' ? 'translate-x-7' : 'translate-x-0'}`}
+                  />
+                </button>
               </div>
               <div className="w-full overflow-x-auto">
                 <StackedBarChart data={chartData} />
