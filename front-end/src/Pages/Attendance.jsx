@@ -408,9 +408,11 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
       <div className="flex justify-between items-center mb-4">
         <button
           onClick={goToPreviousMonth}
-          className={`p-2 rounded-full transition-all duration-200 hover:shadow-md ${calendarTheme === 'dark' ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-700'}`}
+          className={`flex items-center p-2 rounded-lg transition-all duration-200 hover:shadow-md ${calendarTheme === 'dark' ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-700'}`}
+          title="Previous month"
         >
-          <FontAwesomeIcon icon={faChevronLeft} />
+          <FontAwesomeIcon icon={faChevronLeft} className="mr-1" />
+          <span className="text-sm font-medium">Prev</span>
         </button>
 
         <div className="text-center">
@@ -423,33 +425,13 @@ const ClassScheduleCalendar = ({ classSchedules }) => {
           </button>
         </div>
 
-        {/* Theme toggle button with ball switch design */}
         <button
-          onClick={toggleCalendarTheme}
-          className="relative rounded-full w-14 h-7 flex items-center transition-colors duration-300 ease-in-out p-1 focus:outline-none"
-          style={{ backgroundColor: calendarTheme === 'dark' ? '#4B5563' : '#D1D5DB' }}
-          title="Toggle calendar theme"
+          onClick={goToNextMonth}
+          className={`flex items-center p-2 rounded-lg transition-all duration-200 hover:shadow-md ${calendarTheme === 'dark' ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-700'}`}
+          title="Next month"
         >
-          <div className="flex justify-between items-center w-full relative">
-            {/* Sun icon for light theme */}
-            <span className={`${calendarTheme === 'dark' ? 'text-gray-400' : 'text-yellow-500'} text-sm transition-colors duration-300`}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707a1 1 0 011.414 0zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
-              </svg>
-            </span>
-            
-            {/* Moon icon for dark theme */}
-            <span className={`${calendarTheme === 'dark' ? 'text-yellow-300' : 'text-gray-400'} text-sm transition-colors duration-300`}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-              </svg>
-            </span>
-          </div>
-          
-          {/* Moving ball */}
-          <div 
-            className={`absolute bg-white rounded-full w-5 h-5 shadow-md transform transition-transform duration-300 ease-in-out ${calendarTheme === 'dark' ? 'translate-x-7' : 'translate-x-0'}`}
-          />
+          <span className="text-sm font-medium">Next</span>
+          <FontAwesomeIcon icon={faChevronRight} className="ml-1" />
         </button>
       </div>
 
@@ -495,11 +477,6 @@ const Attendance = () => {
   
   // Theme state for Attendance Hours section
   const [attendanceHoursTheme, setAttendanceHoursTheme] = useState('light');
-
-  // Toggle theme for Attendance Hours section
-  const toggleAttendanceHoursTheme = () => {
-    setAttendanceHoursTheme(attendanceHoursTheme === 'dark' ? 'light' : 'dark');
-  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -843,40 +820,13 @@ const Attendance = () => {
             <div className={`p-5 rounded-md shadow-lg transition-all duration-300 hover:shadow-xl ${attendanceHoursTheme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
               <div className="flex justify-between items-center">
                 <h1 className={`text-3xl mb-5 ${attendanceHoursTheme === 'dark' ? 'text-white' : 'text-font'}`}>Attendance Hours</h1>
-                {/* Theme switcher using ball switch design */}
-                <button
-                  onClick={toggleAttendanceHoursTheme}
-                  className="relative rounded-full w-14 h-7 flex items-center transition-colors duration-300 ease-in-out p-1 focus:outline-none"
-                  style={{ backgroundColor: attendanceHoursTheme === 'dark' ? '#4B5563' : '#D1D5DB' }}
-                  title="Toggle attendance hours theme"
-                >
-                  <div className="flex justify-between items-center w-full relative">
-                    {/* Sun icon for light theme */}
-                    <span className={`${attendanceHoursTheme === 'dark' ? 'text-gray-400' : 'text-yellow-500'} text-sm transition-colors duration-300`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707a1 1 0 011.414 0zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                    
-                    {/* Moon icon for dark theme */}
-                    <span className={`${attendanceHoursTheme === 'dark' ? 'text-yellow-300' : 'text-gray-400'} text-sm transition-colors duration-300`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                      </svg>
-                    </span>
-                  </div>
-                  
-                  {/* Moving ball */}
-                  <div 
-                    className={`absolute bg-white rounded-full w-5 h-5 shadow-md transform transition-transform duration-300 ease-in-out ${attendanceHoursTheme === 'dark' ? 'translate-x-7' : 'translate-x-0'}`}
-                  />
-                </button>
               </div>
               <div className="w-full overflow-x-auto">
                 <StackedBarChart data={chartData} />
               </div>
             </div>
           </div>
+
         </div>
       </Container>
     </section>

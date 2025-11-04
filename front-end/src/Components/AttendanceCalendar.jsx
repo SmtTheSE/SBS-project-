@@ -9,17 +9,16 @@ import {
   isSameMonth,
   isSameDay,
   parseISO,
+  subMonths,
+  addMonths
 } from "date-fns";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 
 const AttendanceCalendar = ({ attendanceLogs }) => {
-  const date = new Date();
-  const formattedDate =
-    date.getFullYear() +
-    "-" +
-    String(date.getMonth()).padStart(2, "0") +
-    "-01";
-
-  const monthStart = startOfMonth(parseISO(formattedDate));
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  
+  const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
   const startDate = startOfWeek(monthStart);
   const endDate = endOfWeek(monthEnd);
@@ -35,6 +34,14 @@ const AttendanceCalendar = ({ attendanceLogs }) => {
     return "";
   };
 
+  const goToPreviousMonth = () => {
+    setCurrentMonth(subMonths(currentMonth, 1));
+  };
+
+  const goToNextMonth = () => {
+    setCurrentMonth(addMonths(currentMonth, 1));
+  };
+
   let days = [];
   let day = startDate;
   while (day <= endDate) {
@@ -44,17 +51,38 @@ const AttendanceCalendar = ({ attendanceLogs }) => {
 
   return (
     <div className="">
-      <div className="text-center font-medium mb-4">
-        {format(monthStart, "MMMM yyyy")}
+      <div className="flex justify-between items-center mb-4">
+        <button 
+          onClick={goToPreviousMonth}
+          className="flex items-center p-2 rounded-lg hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
+          aria-label="Previous month"
+        >
+          <FontAwesomeIcon icon={faChevronLeft} className="text-gray-700 mr-1" />
+          <span className="text-sm font-medium text-gray-700">Prev</span>
+        </button>
+        
+        <div className="text-center font-medium text-gray-800">
+          {format(monthStart, "MMMM yyyy")}
+        </div>
+        
+        <button 
+          onClick={goToNextMonth}
+          className="flex items-center p-2 rounded-lg hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
+          aria-label="Next month"
+        >
+          <span className="text-sm font-medium text-gray-700">Next</span>
+          <FontAwesomeIcon icon={faChevronRight} className="text-gray-700 ml-1" />
+        </button>
       </div>
+      
       <div className="grid grid-cols-7 text-sm text-gray-500 mb-2">
-        <div>Sun</div>
-        <div>Mon</div>
-        <div>Tue</div>
-        <div>Wed</div>
-        <div>Thu</div>
-        <div>Fri</div>
-        <div>Sat</div>
+        <div className="text-center">Sun</div>
+        <div className="text-center">Mon</div>
+        <div className="text-center">Tue</div>
+        <div className="text-center">Wed</div>
+        <div className="text-center">Thu</div>
+        <div className="text-center">Fri</div>
+        <div className="text-center">Sat</div>
       </div>
       <div className="grid grid-cols-7 gap-2">
         {days.map((day, idx) => (

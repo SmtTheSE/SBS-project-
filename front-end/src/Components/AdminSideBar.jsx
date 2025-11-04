@@ -423,40 +423,40 @@ name: "Course Results",
   };
 
   return (
-    <nav className="fixed bg-iconic w-80 h-screen flex flex-col justify-start items-start gap-2 p-5 shadow-2xl">
-      {sideBarMenus.map((menu) =>
+    <nav className="fixed bg-iconic w-64 h-screen flex flex-col justify-start items-start gap-8 p-3 shadow-xl">
+      {sideBarMenus.map((menu, index) =>
         menu.children == null ? (
           <Link
             key={menu.id}
             to={menu.link}
-            className={`text-2xl p-5 ${
+            className={`text-lg p-3 ${
               menu.isCurrent ? "bg-white text-iconic" : "text-white hover:bg-red-700"
-            } w-full rounded-xl flex items-center transition-all duration-300 transform hover:scale-[1.02] shadow-md hover:shadow-lg`}
+            } w-full rounded-lg flex items-center transition-all duration-300 transform hover:scale-[1.02] shadow hover:shadow-md ${index === 0 ? 'mt-4' : ''}`}
             onClick={() => handleMenus(menu.id)}
           >
-            <FontAwesomeIcon icon={menu.icon} className="w-6 h-6 mr-3" />
+            <FontAwesomeIcon icon={menu.icon} className="w-5 h-5 mr-2" />
             {menu.name}
           </Link>
         ) : (
           <div
             key={menu.id}
-            className={`text-2xl p-5 w-full rounded-xl flex flex-col cursor-pointer transition-all duration-300 transform hover:scale-[1.02] shadow-md hover:shadow-lg ${
+            className={`text-lg p-3 w-full rounded-lg flex flex-col cursor-pointer transition-all duration-300 transform hover:scale-[1.02] shadow hover:shadow-md ${
               menu.isCurrent
                 ? "bg-white text-iconic"
                 : "text-white hover:bg-red-700"
-            }`}
+            } ${index === 0 ? 'mt-4' : ''}`}
           >
             <div 
               className="flex justify-between items-center w-full"
               onClick={() => handleMenus(menu.id)}
             >
-              <div className="flex items-center gap-3">
-                <FontAwesomeIcon icon={menu.icon} className="w-6 h-6" />
+              <div className="flex items-center gap-2">
+                <FontAwesomeIcon icon={menu.icon} className="w-5 h-5" />
                 <span>{menu.name}</span>
               </div>
               <FontAwesomeIcon
                 icon={faAngleDown}
-                className={`transform transition-transform duration-300 ${
+                className={`transform transition-transform duration-300 w-4 h-4 ${
                   menu.isCurrent ? "rotate-180" : "rotate-0"
                 }`}
               />
@@ -464,14 +464,14 @@ name: "Course Results",
 
             {/* Child Menu */}
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-              menu.isCurrent ? "max-h-96 opacity-100 mt-4" : "max-h-0 opacity-0"
+              menu.isCurrent ? "max-h-96 opacity-100 mt-2" : "max-h-0 opacity-0"
             }`}>
-              <div className="ml-8 flex flex-col gap-2 text-base text-gray-700">
+              <div className="ml-6 flex flex-col gap-1 text-sm text-gray-700">
                 {menu.children.map((child) => (
                   <Link
                     key={child.id}
                     to={child.link}
-                    className={`transition-all duration-200 text-xl py-3 px-4 rounded-lg flex items-center ${
+                    className={`transition-all duration-200 text-base py-2 px-3 rounded flex items-center ${
                       child.isCurrent
                         ? "text-iconic font-bold bg-red-50"
                         : "hover:text-iconic hover:bg-red-50"
@@ -487,7 +487,7 @@ name: "Course Results",
                       }
                     }}
                   >
-                    <FontAwesomeIcon icon={child.icon} className="w-4 h-4 mr-2" />
+                    <FontAwesomeIcon icon={child.icon} className="w-3 h-3 mr-2" />
                     {child.name}
                   </Link>
                 ))}
