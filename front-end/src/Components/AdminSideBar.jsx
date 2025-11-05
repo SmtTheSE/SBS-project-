@@ -1,4 +1,4 @@
-import{ faUser } from "@fortawesome/free-regular-svg-icons";
+import{ faUser, faBuilding } from "@fortawesome/free-regular-svg-icons";
 import {
   faAngleDown,
   faListCheck,
@@ -32,7 +32,14 @@ const AdminSideBar = () => {
           name: "Announcements",
           icon: faUser,
           link: "/admin/announcements",
-isCurrent: false,
+          isCurrent: false,
+        },
+        {
+          id: 2,
+          name: "Partner Institutions",
+          icon: faBuilding,
+          link: "/admin/partner-institutions",
+          isCurrent: false,
         },
         {
           id: 3,
@@ -82,14 +89,7 @@ isCurrent: false,
           icon: faGraduationCap,
           link: "/admin/transfer-programs",
           isCurrent: false,
-        },
-        {
-          id: 10,
-          name: "Partner Institutions",
-          icon: faUser,
-          link: "/admin/partner-institutions",
-          isCurrent: false,
-        },
+        }
       ],
     },
     {
@@ -228,7 +228,7 @@ name: "Course Results",
   const departmentAccessRules = {
     "DEPT001": { // Student Services
       allowedMenus: [
-        { parentId: 1, childIds: [5, 8] }, // Visa/Passport, Visa Extensions
+        { parentId: 1, childIds: [2, 5, 8] }, // Partner Institutions, Visa/Passport, Visa Extensions
         { parentId: 2, childIds: [9, 10, 11, 14] } // Transcript Requests, Student Backgrounds, Placement Tests, Student Progress Summaries
       ]
     },
@@ -239,7 +239,7 @@ name: "Course Results",
     },
     "DEPT003": { // Finance
       allowedMenus: [
-        { parentId: 1, childIds: [6, 7, 9] } // Scholarships, Tuition Payments, Transfer Programs
+        { parentId: 1, childIds: [2, 6, 7, 9] } // Partner Institutions, Scholarships, Tuition Payments, Transfer Programs
       ]
     }
   };
