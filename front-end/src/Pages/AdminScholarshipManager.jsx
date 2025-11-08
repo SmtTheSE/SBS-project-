@@ -388,7 +388,7 @@ const AdminScholarshipManager = () => {
   const hasActiveStudentFilters = studentSearchTerm || studentFilters.student;
 
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">

@@ -17,6 +17,7 @@
 
 
   --radius-normal: 5px;
+  --breakpoint-xs: 300px;
 }
 
 /* Set default font for the entire project */

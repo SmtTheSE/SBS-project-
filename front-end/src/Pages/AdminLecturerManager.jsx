@@ -281,7 +281,7 @@ const AdminLecturerManager = () => {
   const totalPages = Math.ceil(filteredLecturers.length / itemsPerPage);
 
   return (
-    <div className="max-w-7xl mx-autop-6 bg-gray-50 min-h-screen">
+    <div className="mx-autop-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">

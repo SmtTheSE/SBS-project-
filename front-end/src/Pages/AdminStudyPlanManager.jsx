@@ -225,7 +225,7 @@ const AdminStudyPlanManager = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
+      <div className="p-6 bg-gray-50 min-h-screen">
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h1 className="text-3xl font-bold text-gray-800 mb-6">Study Plan Management</h1>
           <div className="text-center py-12 bg-gray-50 rounded-lg">
@@ -237,7 +237,7 @@ const AdminStudyPlanManager = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
           <div>

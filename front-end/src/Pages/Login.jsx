@@ -64,7 +64,7 @@ const Login = () => {
   };
 
   return (
-    <section className="grid grid-cols-2">
+    <section className="lg:grid lg:grid-cols-2">
       {/* SBS PIC */}
       <div className="w-full h-full overflow-hidden">
         <img src={sbsPic} alt="SBS Pic" className="h-screen object-cover" />
@@ -89,7 +89,7 @@ const Login = () => {
             <input
               type="email"
               id="email"
-              className="w-full p-3 bg-[#F3F3F3] text-font rounded-normal my-3"
+              className="w-full p-3 bg-[#F3F3F3] text-font rounded-normal my-3 border border-border"
               placeholder="yourexample@sbsedu.uni.vn"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -103,7 +103,7 @@ const Login = () => {
               <input
                 type={showPassword ? "text" : "password"}
                 id="password"
-                className="w-full p-3 bg-[#F3F3F3] text-font rounded-normal my-3 pr-10"
+                className="w-full p-3 bg-[#F3F3F3] text-font rounded-normal my-3 pr-10 border border-border"
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
