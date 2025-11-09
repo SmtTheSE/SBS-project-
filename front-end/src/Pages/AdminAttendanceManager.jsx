@@ -268,17 +268,18 @@ const AdminAttendanceManager = () => {
     }
   };
 
+  // 在组件挂载时获取所有数据
   useEffect(() => {
-    if (activeTab === 'summary') {
-      fetchAttendanceSummaries();
-    } else {
-      fetchDailyAttendances();
-    }
-    fetchStudents();
-    fetchStudyPlanCourses();
-    fetchClassSchedules();
-  }, [activeTab]);
-
+    Promise.all([
+      fetchAttendanceSummaries(),
+      fetchDailyAttendances(),
+      fetchStudents(),
+      fetchStudyPlanCourses(),
+      fetchClassSchedules()
+    ]).finally(() => {
+      setLoading(false);
+    });
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
