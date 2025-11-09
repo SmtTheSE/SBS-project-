@@ -13,7 +13,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/academic/transcript-requests")
-@CrossOrigin(origins = "http://localhost:5173")
 public class TranscriptRequestController {
 
     @Autowired

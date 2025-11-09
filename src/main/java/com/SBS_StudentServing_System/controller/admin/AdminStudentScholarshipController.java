@@ -10,7 +10,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/student-scholarships")
-@CrossOrigin(origins = "http://localhost:5173")
 public class AdminStudentScholarshipController {
 
     @Autowired

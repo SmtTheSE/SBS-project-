@@ -13,7 +13,6 @@ import java.util.stream.StreamSupport;
 
 @RestController
 @RequestMapping("/api/admin/accounts")
-@CrossOrigin(origins = "http://localhost:5173")
 public class AdminLoginAccountController {
 
     private final LoginAccountService accountService;

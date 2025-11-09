@@ -8,7 +8,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/lecturer-courses")
-@CrossOrigin(origins = "http://localhost:5173")
 public class LecturerCourseController {
 
     private final LecturerCourseService lecturerCourseService;

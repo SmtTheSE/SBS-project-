@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin/accounts")
-@CrossOrigin(origins = "http://localhost:5173")
 public class AdminChangePasswordController {
 
     private final LoginAccountService accountService;

@@ -23,14 +23,13 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/academic/certificates")
-@CrossOrigin(origins = "http://localhost:5173")
 public class CertificateController {
 
     // 证书文件存储目录
     private static final String CERTIFICATE_UPLOAD_DIR = "uploads/certificates/";
 
     public CertificateController() {
-        // 确保证书目录存在
+
         File directory = new File(CERTIFICATE_UPLOAD_DIR);
         if (!directory.exists()) {
             directory.mkdirs();

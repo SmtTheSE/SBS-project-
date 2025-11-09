@@ -2,6 +2,7 @@ package com.SBS_StudentServing_System.service.account;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -9,8 +10,11 @@ import java.util.Date;
 
 @Component
 public class JwtUtil {
-    private final String SECRET = "change_this_very_secret_key_which_is_long_enough_1234567890";
-    private final long EXPIRATION = 24 * 60 * 60 * 1000; // 1 day
+    @Value("${jwt.secret:change_this_very_secret_key_which_is_long_enough_1234567890}")
+    private String SECRET;
+    
+    @Value("${jwt.expiration:86400000}")
+    private long EXPIRATION;
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(SECRET.getBytes());

@@ -8,7 +8,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/transfer-programs")
-@CrossOrigin(origins = "http://localhost:5173")
 public class TransferProgramController {
 
     private final TransferProgramService transferProgramService;
