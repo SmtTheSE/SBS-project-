@@ -66,7 +66,7 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(Arrays.asList("*"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("*"));
-        config.setAllowCredentials(false);
+        config.setAllowCredentials(true);
         // 允许携带认证信息
         config.setExposedHeaders(Arrays.asList("Authorization"));
 

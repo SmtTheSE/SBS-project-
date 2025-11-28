@@ -193,8 +193,8 @@ const AdminStudentManager = () => {
       setWards(data);
     } catch (error) {
       console.error('Failed to fetch wards:', error);
-      // Fallback to mockdataif API fails
-      constmockWards =[
+      // Fallback to mock data if API fails
+      const mockWards = [
         { wardId: 'WARD001', wardName: 'District 1' },
         { wardId: 'WARD002', wardName: 'District 2' }
       ];
