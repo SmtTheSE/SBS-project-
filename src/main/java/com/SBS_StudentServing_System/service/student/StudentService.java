@@ -19,6 +19,8 @@ import com.SBS_StudentServing_System.repository.academic.StudentAcademicBackgrou
 import com.SBS_StudentServing_System.repository.academic.StudentEnglishPlacementTestRepository;
 import com.SBS_StudentServing_System.repository.academic.StudentProgressSummaryRepository;
 import com.SBS_StudentServing_System.repository.academic.Transcript_Issue_Repository;
+import com.SBS_StudentServing_System.repository.student.StudentScholarshipRepository;
+import com.SBS_StudentServing_System.repository.student.VisaPassportRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +48,8 @@ public class StudentService {
 private final StudentEnglishPlacementTestRepository studentEnglishPlacementTestRepository;
     private final StudentProgressSummaryRepository studentProgressSummaryRepository;
     private final Transcript_Issue_Repository transcriptIssueRequestRepository;
+    private final StudentScholarshipRepository studentScholarshipRepository;
+    private final VisaPassportRepository visaPassportRepository;
 
     public StudentService(StudentRepository studentRepository, LoginAccountRepository accountRepository, 
                          CityRepository cityRepository, WardRepository wardRepository, 
@@ -57,7 +61,9 @@ private final StudentEnglishPlacementTestRepository studentEnglishPlacementTestR
                          StudentAcademicBackgroundRepository studentAcademicBackgroundRepository,
                          StudentEnglishPlacementTestRepository studentEnglishPlacementTestRepository,
                         StudentProgressSummaryRepository studentProgressSummaryRepository,
-                         Transcript_Issue_Repository transcriptIssueRequestRepository) {
+                         Transcript_Issue_Repository transcriptIssueRequestRepository,
+                         StudentScholarshipRepository studentScholarshipRepository,
+                         VisaPassportRepository visaPassportRepository) {
         this.studentRepository = studentRepository;
         this.accountRepository = accountRepository;
         this.cityRepository = cityRepository;
@@ -71,6 +77,8 @@ private final StudentEnglishPlacementTestRepository studentEnglishPlacementTestR
         this.studentEnglishPlacementTestRepository = studentEnglishPlacementTestRepository;
         this.studentProgressSummaryRepository = studentProgressSummaryRepository;
         this.transcriptIssueRequestRepository = transcriptIssueRequestRepository;
+        this.studentScholarshipRepository = studentScholarshipRepository;
+        this.visaPassportRepository = visaPassportRepository;
     }
 
    public List<StudentDto> getAllStudents() {
@@ -243,6 +251,11 @@ ward.setWardName(dto.getWardName());
         // Note: We're not deleting City and Ward entities as they can be shared among students
         deleteRelatedAcademicData(studentId);
 
+        // Delete student scholarship records
+        studentScholarshipRepository.deleteAll(
+            studentScholarshipRepository.findByStudent_StudentId(studentId)
+        );
+
         Student student = studentOpt.get();
         LoginAccount account = student.getLoginAccount();
 
@@ -297,6 +310,11 @@ ward.setWardName(dto.getWardName());
         // Delete transcript issue requests
         transcriptIssueRequestRepository.deleteAll(
             transcriptIssueRequestRepository.findByStudentStudentId(studentId)
+        );
+        
+        // Delete student visa passports
+        visaPassportRepository.deleteAll(
+            visaPassportRepository.findByStudent_StudentId(studentId)
         );
     }
 
