@@ -21,6 +21,9 @@ import com.SBS_StudentServing_System.repository.academic.StudentProgressSummaryR
 import com.SBS_StudentServing_System.repository.academic.Transcript_Issue_Repository;
 import com.SBS_StudentServing_System.repository.student.StudentScholarshipRepository;
 import com.SBS_StudentServing_System.repository.student.VisaPassportRepository;
+import com.SBS_StudentServing_System.repository.student.VisaExtensionRequestRepository;
+import com.SBS_StudentServing_System.repository.student.TuitionPaymentRepository;
+import com.SBS_StudentServing_System.repository.student.HealthInsuranceRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +53,9 @@ private final StudentEnglishPlacementTestRepository studentEnglishPlacementTestR
     private final Transcript_Issue_Repository transcriptIssueRequestRepository;
     private final StudentScholarshipRepository studentScholarshipRepository;
     private final VisaPassportRepository visaPassportRepository;
+    private final VisaExtensionRequestRepository visaExtensionRequestRepository;
+    private final TuitionPaymentRepository tuitionPaymentRepository;
+    private final HealthInsuranceRepository healthInsuranceRepository;
 
     public StudentService(StudentRepository studentRepository, LoginAccountRepository accountRepository, 
                          CityRepository cityRepository, WardRepository wardRepository, 
@@ -63,7 +69,10 @@ private final StudentEnglishPlacementTestRepository studentEnglishPlacementTestR
                         StudentProgressSummaryRepository studentProgressSummaryRepository,
                          Transcript_Issue_Repository transcriptIssueRequestRepository,
                          StudentScholarshipRepository studentScholarshipRepository,
-                         VisaPassportRepository visaPassportRepository) {
+                         VisaPassportRepository visaPassportRepository,
+                         VisaExtensionRequestRepository visaExtensionRequestRepository,
+                         TuitionPaymentRepository tuitionPaymentRepository,
+                         HealthInsuranceRepository healthInsuranceRepository) {
         this.studentRepository = studentRepository;
         this.accountRepository = accountRepository;
         this.cityRepository = cityRepository;
@@ -79,6 +88,9 @@ private final StudentEnglishPlacementTestRepository studentEnglishPlacementTestR
         this.transcriptIssueRequestRepository = transcriptIssueRequestRepository;
         this.studentScholarshipRepository = studentScholarshipRepository;
         this.visaPassportRepository = visaPassportRepository;
+        this.visaExtensionRequestRepository = visaExtensionRequestRepository;
+        this.tuitionPaymentRepository = tuitionPaymentRepository;
+        this.healthInsuranceRepository = healthInsuranceRepository;
     }
 
    public List<StudentDto> getAllStudents() {
@@ -315,6 +327,21 @@ ward.setWardName(dto.getWardName());
         // Delete student visa passports
         visaPassportRepository.deleteAll(
             visaPassportRepository.findByStudent_StudentId(studentId)
+        );
+        
+        // Delete student visa extension requests
+        visaExtensionRequestRepository.deleteAll(
+            visaExtensionRequestRepository.findByStudent_StudentId(studentId)
+        );
+        
+        // Delete student tuition payments
+        tuitionPaymentRepository.deleteAll(
+            tuitionPaymentRepository.findByStudent_StudentId(studentId)
+        );
+        
+        // Delete student health insurance records
+        healthInsuranceRepository.deleteAll(
+            healthInsuranceRepository.findByStudent_StudentId(studentId)
         );
     }
 
