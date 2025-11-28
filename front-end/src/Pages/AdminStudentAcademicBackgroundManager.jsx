@@ -19,7 +19,8 @@ const AdminStudentAcademicBackgroundManager = () => {
     englishQualification: '',
     englishScore: '',
     requiredForPlacementTest: false,
-    documentUrl: ''
+    documentUrl: '',
+    documentFile: null // 添加文件字段
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [backgroundIdToDelete, setBackgroundIdToDelete] = useState(null);
@@ -172,6 +173,15 @@ const AdminStudentAcademicBackgroundManager = () => {
     });
   };
 
+  // 处理文件选择变化
+  const handleFileChange = (e) => {
+    setFormData({
+      ...formData,
+      documentFile: e.target.files[0],
+      documentUrl: e.target.files[0] ? e.target.files[0].name : ''
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -200,8 +210,25 @@ const AdminStudentAcademicBackgroundManager = () => {
         const response = await axiosInstance.put(`/admin/academic/student-academic-backgrounds/${trimmedFormData.backgroundId}`, trimmedFormData);
         console.log('Update response:', response);
       } else {
-        // Create new record
-        await axiosInstance.post('/admin/academic/student-academic-backgrounds', formData);
+        // Create new record with file upload
+        const formDataToSend = new FormData();
+        formDataToSend.append('backgroundId', formData.backgroundId);
+        formDataToSend.append('studentId', formData.studentId);
+        formDataToSend.append('highestQualification', formData.highestQualification);
+        formDataToSend.append('institutionName', formData.institutionName);
+        formDataToSend.append('englishQualification', formData.englishQualification);
+        formDataToSend.append('englishScore', formData.englishScore);
+        formDataToSend.append('requiredForPlacementTest', formData.requiredForPlacementTest);
+        
+        if (formData.documentFile) {
+          formDataToSend.append('documentFile', formData.documentFile);
+        }
+        
+        await axiosInstance.post('/admin/academic/student-academic-backgrounds-file/upload', formDataToSend, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
       }
       
       // Reset form and refresh data
@@ -213,7 +240,8 @@ const AdminStudentAcademicBackgroundManager = () => {
         englishQualification: '',
         englishScore: '',
         requiredForPlacementTest: false,
-        documentUrl: ''
+        documentUrl: '',
+        documentFile: null
       });
       setEditingBackground(null);
       setShowForm(false);
@@ -234,7 +262,8 @@ const AdminStudentAcademicBackgroundManager = () => {
       englishQualification: background.englishQualification?.trim() || '',
       englishScore: background.englishScore || '',
       requiredForPlacementTest: background.requiredForPlacementTest,
-      documentUrl: background.documentUrl?.trim() || ''
+      documentUrl: background.documentUrl?.trim() || '',
+      documentFile: null // 不编辑文件时保持为null
     });
     setEditingBackground(background);
     setShowForm(true);
@@ -278,10 +307,18 @@ const AdminStudentAcademicBackgroundManager = () => {
       englishQualification: '',
       englishScore: '',
       requiredForPlacementTest: false,
-      documentUrl: ''
+      documentUrl: '',
+      documentFile: null
     });
     setEditingBackground(null);
     setShowForm(false);
+  };
+
+  // 查看文档函数
+  const viewDocument = (documentUrl) => {
+    if (documentUrl) {
+      window.open(documentUrl, '_blank');
+    }
   };
 
   if (loading) {
@@ -505,13 +542,23 @@ const AdminStudentAcademicBackgroundManager = () => {
                   </FormRow>
                   
                   <FormGroup>
-                    <FormLabel>Document URL</FormLabel>
-                    <FormInput
-                      type="text"
-                      name="documentUrl"
-                      value={formData.documentUrl}
-                      onChange={handleInputChange}
+                    <FormLabel>Document</FormLabel>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleFileChange}
+                      className="block w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-md file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100"
                     />
+                    {formData.documentUrl && (
+                      <div className="mt-2 text-sm text-gray-500">
+                        Selected file: {formData.documentUrl}
+                      </div>
+                    )}
                   </FormGroup>
                   
                   <div className="flex items-center mb-4">
@@ -575,6 +622,9 @@ const AdminStudentAcademicBackgroundManager = () => {
                   Required for Placement Test
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Document
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -604,6 +654,18 @@ const AdminStudentAcademicBackgroundManager = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {background.requiredForPlacementTest ? 'Yes' : 'No'}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {background.documentUrl ? (
+                        <button
+                          onClick={() => viewDocument(background.documentUrl)}
+                          className="text-blue-600 hover:text-blue-900 underline"
+                        >
+                          View PDF
+                        </button>
+                      ) : (
+                        'No Document'
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => handleEdit(background)}
@@ -628,7 +690,7 @@ const AdminStudentAcademicBackgroundManager = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="text-center py-12 bg-gray-50">
+                  <td colSpan="9" className="text-center py-12 bg-gray-50">
                     <p className="text-gray-500 text-lg">
                       {searchTerm || filters.student || filters.qualification || filters.institution 
                         ? 'No student academic backgrounds match your search criteria' 

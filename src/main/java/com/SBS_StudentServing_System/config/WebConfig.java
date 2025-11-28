@@ -9,12 +9,16 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     @Value("${profile.image.upload.dir:uploads/profile-images/}")
-    private String uploadDir;
+    private String profileImageUploadDir;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + uploadDir);
-        // points to the filesystem folder
+        // Serve profile images
+        registry.addResourceHandler("/uploads/profile-images/**")
+                .addResourceLocations("file:" + profileImageUploadDir);
+        
+        // Serve academic background documents
+        registry.addResourceHandler("/uploads/academic-backgrounds/**")
+                .addResourceLocations("file:uploads/academic-backgrounds/");
     }
 }
